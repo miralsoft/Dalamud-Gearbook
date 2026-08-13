@@ -100,6 +100,21 @@ dotnet_naming_rule.members_are_pascal_case.style = pascal_case_style
 dotnet_naming_symbols.member_symbols.applicable_kinds = property,method,event
 dotnet_naming_symbols.member_symbols.applicable_accessibilities = public,internal,protected,protected_internal,private_protected
 
+# Naming rules are applied in the order they appear, first match wins, so the two specific
+# field rules have to sit above the general one. Constants and static readonly fields are
+# PascalCase whatever their accessibility; only ordinary private fields are camelCase.
+dotnet_naming_rule.constants_are_pascal_case.severity = warning
+dotnet_naming_rule.constants_are_pascal_case.symbols = constant_symbols
+dotnet_naming_rule.constants_are_pascal_case.style = pascal_case_style
+dotnet_naming_symbols.constant_symbols.applicable_kinds = field
+dotnet_naming_symbols.constant_symbols.required_modifiers = const
+
+dotnet_naming_rule.static_readonly_are_pascal_case.severity = warning
+dotnet_naming_rule.static_readonly_are_pascal_case.symbols = static_readonly_symbols
+dotnet_naming_rule.static_readonly_are_pascal_case.style = pascal_case_style
+dotnet_naming_symbols.static_readonly_symbols.applicable_kinds = field
+dotnet_naming_symbols.static_readonly_symbols.required_modifiers = static,readonly
+
 dotnet_naming_rule.private_fields_are_camel_case.severity = warning
 dotnet_naming_rule.private_fields_are_camel_case.symbols = private_field_symbols
 dotnet_naming_rule.private_fields_are_camel_case.style = camel_case_style
