@@ -1,0 +1,125 @@
+# The stack-specific half of CI. The checks that are the same for every MIRAL Soft project
+# live in content-checks.yml, which is a straight copy of the foundation's template.
+#
+# The job name below is the name a branch protection rule refers to. Renaming the job renames
+# the check and silently breaks the requirement, so it is not cosmetic.
+
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+# A workflow that only reads should not be able to write.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+
+    steps:
+      # Third-party actions are pinned to a commit digest, with the version as a trailing
+      # comment. A tag is movable, so a tag reference is somebody else's code running with this
+      # repository's token at a moment of their choosing. Pinning stops the reference from
+      # moving; it does not vouch for what was at that digest.
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # The only route by which a published build could carry the developer tools is this file
+      # being committed, so it is checked here rather than left to the ignore file. The check
+      # proves it can fire before it examines the repository (R-20).
+      - name: The developer-tools switch must not be committed
+        shell: pwsh
+        run: |
+          $tracked = git ls-files
+          $probe = @($tracked) + @('Directory.Build.local.props')
+          $detector = { param($files) @($files | Where-Object { $_ -eq 'Directory.Build.local.props' }).Count }
+
+          if ((& $detector $probe) -ne 1) {
+            Write-Error "Self-test failed: the detector missed a planted file. Nothing below can be trusted."
+            exit 1
+          }
+          if ((& $detector @('README.md', 'Directory.Build.local.props.example')) -ne 0) {
+            Write-Error "Self-test failed: the detector matched a file it should ignore."
+            exit 1
+          }
+
+          $found = & $detector $tracked
+          if ($found -ne 0) {
+            Write-Error "Directory.Build.local.props is committed. A release built from this checkout would carry the developer tools."
+            exit 1
+          }
+
+          Write-Host "The developer-tools switch is not committed."
+
+      # The runner needs a real installation of the framework this plugin builds against.
+      # Nothing framework-owned is committed to the repository: it is fetched here and it is
+      # never bundled into what ships.
+      - name: Install Dalamud
+        shell: pwsh
+        run: |
+          $target = "$env:APPDATA\XIVLauncher\addon\Hooks\dev"
+          New-Item -ItemType Directory -Path $target -Force | Out-Null
+          Invoke-WebRequest -Uri "https://goatcorp.github.io/dalamud-distrib/latest.zip" -OutFile "$env:RUNNER_TEMP\dalamud.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\dalamud.zip" -DestinationPath $target -Force
+          if (-not (Test-Path "$target\Dalamud.dll")) {
+            Write-Error "Dalamud.dll is not where the SDK expects it. The build would fail later and less clearly."
+            exit 1
+          }
+
+      # Locked mode, so an unnoticed version drift fails the build instead of shipping.
+      - name: Restore
+        run: dotnet restore Gearbook.slnx --locked-mode
+
+      - name: Build
+        run: dotnet build Gearbook.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Gearbook.slnx --configuration Release --no-build
+
+      # This is the check the C# profile points at for code style. It exits non-zero when files
+      # would have been reformatted, which makes it usable as a gate without extra tooling.
+      - name: Check formatting
+        run: dotnet format Gearbook.slnx --verify-no-changes
+
+      # `dotnet list package` reports findings and still exits zero, so the output has to be
+      # read. That makes this a guard whose failure would look exactly like its success, so it
+      # demonstrates itself on every run before it looks at the real output.
+      - name: Audit dependencies
+        shell: pwsh
+        run: |
+          $detector = { param($text) $text -match 'has the following vulnerable packages' }
+
+          if (-not (& $detector 'Project X has the following vulnerable packages')) {
+            Write-Error "Self-test failed: the detector missed a planted finding. A clean result here would mean nothing."
+            exit 1
+          }
+          if (& $detector 'Project X has no vulnerable packages given the current sources.') {
+            Write-Error "Self-test failed: the detector matched a clean result."
+            exit 1
+          }
+
+          $output = dotnet list Gearbook.slnx package --vulnerable --include-transitive | Out-String
+          Write-Host $output
+
+          if (& $detector $output) {
+            Write-Error "A dependency has a known vulnerability. See the list above."
+            exit 1
+          }
+
+          # Honest about the limit: this reports what the advisory database knows today, so a
+          # clean result means nothing published is known to be wrong, not that nothing is.
+          Write-Host "No known vulnerabilities in the advisory database as of this run."

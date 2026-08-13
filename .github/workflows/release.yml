@@ -1,0 +1,136 @@
+# Runs on a version tag. Separate from CI because it publishes, and a workflow that only reads
+# should not be able to write.
+#
+# It never pushes to the branch releases are cut from. That is what allows that branch to be
+# fully protected, and the protection is what makes a tag mean "this passed the checks".
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # A clean checkout, where the developer-tools file does not exist. Checked rather than
+      # assumed, because "it cannot be there" is the kind of statement that stops being true
+      # quietly.
+      - name: The build must not contain the developer tools
+        shell: pwsh
+        run: |
+          if (Test-Path 'Directory.Build.local.props') {
+            Write-Error "Directory.Build.local.props exists in the release checkout. This build would carry the developer tools."
+            exit 1
+          }
+
+      - name: Install Dalamud
+        shell: pwsh
+        run: |
+          $target = "$env:APPDATA\XIVLauncher\addon\Hooks\dev"
+          New-Item -ItemType Directory -Path $target -Force | Out-Null
+          Invoke-WebRequest -Uri "https://goatcorp.github.io/dalamud-distrib/latest.zip" -OutFile "$env:RUNNER_TEMP\dalamud.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\dalamud.zip" -DestinationPath $target -Force
+
+      - name: Restore
+        run: dotnet restore Gearbook.slnx --locked-mode
+
+      - name: Build
+        run: dotnet build Gearbook.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Gearbook.slnx --configuration Release --no-build
+
+      # The version is not derived from the tag. Deriving it would make the tag the source of
+      # truth, and the tag is the one thing written by hand at the end. Keeping the version in
+      # the build settings means a mismatch fails loudly rather than publishing whichever the
+      # tag happened to say.
+      #
+      # The comparison is against the manifest inside the built package, not the one in the
+      # repository, because that is the copy the index and the installer read.
+      - name: The tag must match the version that was built
+        shell: pwsh
+        run: |
+          $manifestPath = 'src/Gearbook/bin/Release/Gearbook/Gearbook.json'
+          if (-not (Test-Path $manifestPath)) {
+            Write-Error "The packager did not produce a manifest at $manifestPath. There is nothing to publish."
+            exit 1
+          }
+
+          $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
+          $built = [string]$manifest.AssemblyVersion
+          $tagged = "${{ github.ref_name }}".TrimStart('v')
+
+          Write-Host "Tag says $tagged, the built manifest says $built."
+
+          # The packager writes a four-part assembly version, the tag carries three parts.
+          $normalisedBuilt = ([version]$built).ToString(3)
+          $normalisedTag = ([version]$tagged).ToString(3)
+
+          if ($normalisedBuilt -ne $normalisedTag) {
+            Write-Error "The tag and the built version disagree. Nothing has been published. Raise the version in Directory.Build.props, or tag the version that was actually built."
+            exit 1
+          }
+
+      - name: Build the single-entry index
+        shell: pwsh
+        run: |
+          ./scripts/New-PluginIndex.ps1 `
+            -ManifestPath 'src/Gearbook/bin/Release/Gearbook/Gearbook.json' `
+            -Repository '${{ github.repository }}' `
+            -Tag '${{ github.ref_name }}' `
+            -OutputPath 'artifacts/pluginmaster.json'
+
+      - name: Publish the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $archive = 'src/Gearbook/bin/Release/Gearbook/latest.zip'
+          if (-not (Test-Path $archive)) {
+            Write-Error "The packaged archive is missing. The index looks for it under a fixed asset name, so a release without it cannot be installed."
+            exit 1
+          }
+
+          gh release create '${{ github.ref_name }}' `
+            $archive `
+            'artifacts/pluginmaster.json' `
+            --title '${{ github.ref_name }}' `
+            --notes 'See CHANGELOG.md for what changed, and the release notes inside the plugin for what it means in play.'
+
+      # A green run is the automation's statement about itself. The failures that matter here
+      # are the ones where every step succeeded and the outcome is still wrong, so the last
+      # thing this does is look at what it actually published.
+      - name: Confirm what was published
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = gh release view '${{ github.ref_name }}' --json assets | ConvertFrom-Json
+          $names = @($assets.assets | ForEach-Object { $_.name })
+
+          Write-Host "Assets on the release: $($names -join ', ')"
+
+          foreach ($expected in @('latest.zip', 'pluginmaster.json')) {
+            if ($names -notcontains $expected) {
+              Write-Error "The release is missing $expected. Nobody can install this."
+              exit 1
+            }
+          }
+
+          Write-Host "Both assets are present. The remaining checks in docs/release.md are done by hand: the index entry and the public address."
