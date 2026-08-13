@@ -1,0 +1,103 @@
+using System.Globalization;
+
+namespace Gearbook.Core.Settings;
+
+/// <summary>
+/// Brings a stored configuration forward one layout version at a time.
+/// </summary>
+/// <remarks>
+/// <para>
+/// An update never silently changes what a player configured. The file carries a version, each
+/// step from one version to the next has a migration, and a setting that is removed or renamed
+/// is migrated rather than dropped. The failure this prevents is a configuration file that no
+/// longer loads, and it surfaces on the player's machine rather than on ours.
+/// </para>
+/// <para>
+/// There is exactly one version so far. The mechanism exists anyway, because retrofitting it
+/// at the moment the second version is needed means the first one shipped without a way to be
+/// upgraded, and by then the files it wrote are on other people's machines.
+/// </para>
+/// </remarks>
+public static class SettingsMigrator
+{
+    /// <summary>The layout version this build writes.</summary>
+    public const int CurrentVersion = 1;
+
+    /// <summary>
+    /// Migrates in place and reports what it did.
+    /// </summary>
+    /// <param name="settings">The freshly loaded configuration.</param>
+    /// <param name="log">Called with a line per step, because a migration that ran silently is
+    /// indistinguishable from one that did not, and the difference matters when somebody is
+    /// looking at a value they cannot explain.</param>
+    /// <returns>True when the configuration is safe to use.</returns>
+    public static bool Migrate(GearbookSettings settings, Action<string> log)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(log);
+
+        if (settings.LayoutVersion > CurrentVersion)
+        {
+            // Written by a newer build. Downgrading would mean guessing what a value this build
+            // has never heard of used to mean, so it is left exactly as it is and reported.
+            // Failing closed here keeps the file intact for the build that understands it.
+            log(string.Format(
+                CultureInfo.InvariantCulture,
+                "Configuration is layout version {0}, which is newer than this build understands ({1}). "
+                    + "It is being used as it stands and nothing will be rewritten. "
+                    + "Install the newer version of Gearbook, or the settings this build does not know about will be lost.",
+                settings.LayoutVersion,
+                CurrentVersion));
+
+            return false;
+        }
+
+        while (settings.LayoutVersion < CurrentVersion)
+        {
+            var from = settings.LayoutVersion;
+
+            switch (from)
+            {
+                case 0:
+                    // Version 0 is a file written before this plugin had a layout version at
+                    // all, which in practice means a hand-edited or truncated file. Nothing
+                    // needs converting, the fields are the same, so the step only stamps the
+                    // version on it.
+                    settings.LayoutVersion = 1;
+                    break;
+
+                default:
+                    // Reached only if CurrentVersion was raised without adding the step. Stop
+                    // rather than spin, and say so.
+                    log(string.Format(
+                        CultureInfo.InvariantCulture,
+                        "No migration exists from layout version {0}. The configuration is left as it is.",
+                        from));
+                    return false;
+            }
+
+            log(string.Format(
+                CultureInfo.InvariantCulture,
+                "Migrated the configuration from layout version {0} to {1}.",
+                from,
+                settings.LayoutVersion));
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Corrects a default that nobody ever chose, and leaves a value somebody did choose alone.
+    /// </summary>
+    /// <remarks>
+    /// The test is whether the stored value still stands at exactly the old default. If it
+    /// does, no opinion was ever expressed and the corrected default should reach the people who
+    /// already installed. If it moved, that was a decision and it stays theirs.
+    /// </remarks>
+    /// <param name="stored">What is in the file.</param>
+    /// <param name="oldDefault">What this build used to ship as the default.</param>
+    /// <param name="newDefault">What it ships now.</param>
+    public static T CorrectUnchosenDefault<T>(T stored, T oldDefault, T newDefault)
+        where T : IEquatable<T> =>
+        stored.Equals(oldDefault) ? newDefault : stored;
+}

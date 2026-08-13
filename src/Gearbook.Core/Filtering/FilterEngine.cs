@@ -1,0 +1,237 @@
+using Gearbook.Core.Identity;
+using Gearbook.Core.Model;
+
+namespace Gearbook.Core.Filtering;
+
+/// <summary>
+/// Applies a <see cref="FilterSpec"/> and an order to a list of gearsets.
+/// </summary>
+/// <remarks>
+/// Pure, and given the job table rather than reading it, so every rule below is testable
+/// without a running game. Job facts arrive as <see cref="JobInfo"/> from the plugin side.
+/// </remarks>
+public static class FilterEngine
+{
+    /// <summary>
+    /// Filters and sorts in one pass.
+    /// </summary>
+    /// <param name="gearsets">Everything currently in the game, with its record attached.</param>
+    /// <param name="filter">What to keep.</param>
+    /// <param name="jobs">The job table, keyed by job id.</param>
+    /// <param name="now">The clock, for the "not used in N days" axis.</param>
+    public static IReadOnlyList<ReconciledGearset> Apply(
+        IEnumerable<ReconciledGearset> gearsets,
+        FilterSpec filter,
+        IReadOnlyDictionary<uint, JobInfo> jobs,
+        DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(gearsets);
+        ArgumentNullException.ThrowIfNull(filter);
+        ArgumentNullException.ThrowIfNull(jobs);
+
+        var terms = SplitTerms(filter.Text);
+
+        var kept = gearsets.Where(g => Matches(g, filter, jobs, terms, now));
+
+        return Sort(kept, filter.Sort, jobs);
+    }
+
+    /// <summary>
+    /// Orders a list without filtering it. Every order falls back to the game's own number for
+    /// ties, so two sets that compare equal keep a stable position.
+    /// </summary>
+    public static IReadOnlyList<ReconciledGearset> Sort(
+        IEnumerable<ReconciledGearset> gearsets,
+        GearsetSortOrder order,
+        IReadOnlyDictionary<uint, JobInfo> jobs)
+    {
+        ArgumentNullException.ThrowIfNull(gearsets);
+        ArgumentNullException.ThrowIfNull(jobs);
+
+        return order switch
+        {
+            GearsetSortOrder.Name =>
+                [.. gearsets
+                    .OrderBy(g => g.Gearset.Name, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(g => g.Gearset.Slot)],
+
+            GearsetSortOrder.Job =>
+                [.. gearsets
+                    .OrderBy(g => JobFor(g, jobs).Name, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(g => g.Gearset.Slot)],
+
+            GearsetSortOrder.ItemLevel =>
+                [.. gearsets
+                    .OrderByDescending(g => g.Gearset.ItemLevel)
+                    .ThenBy(g => g.Gearset.Slot)],
+
+            // Never equipped goes last rather than first. A set with no history is not the
+            // oldest, it is unknown, and sorting it to the top of "least recently used" would
+            // be an answer drawn from an absence.
+            GearsetSortOrder.LastUsed =>
+                [.. gearsets
+                    .OrderBy(g => g.Record.LastUsedUtc is null ? 1 : 0)
+                    .ThenByDescending(g => g.Record.LastUsedUtc ?? DateTimeOffset.MinValue)
+                    .ThenBy(g => g.Gearset.Slot)],
+
+            GearsetSortOrder.Slot or _ =>
+                [.. gearsets.OrderBy(g => g.Gearset.Slot)],
+        };
+    }
+
+    /// <summary>
+    /// The gearsets that share a job and a name with at least one other, which is the case the
+    /// game itself cannot help the player with.
+    /// </summary>
+    public static IReadOnlyList<ReconciledGearset> FindDuplicates(
+        IEnumerable<ReconciledGearset> gearsets)
+    {
+        ArgumentNullException.ThrowIfNull(gearsets);
+
+        return [.. gearsets
+            .GroupBy(g => (g.Gearset.ClassJobId, g.Gearset.Name), TupleComparer.Instance)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group)
+            .OrderBy(g => g.Gearset.Slot)];
+    }
+
+    /// <summary>
+    /// Every tag in use, sorted, deduplicated case-insensitively. What the filter panel offers.
+    /// </summary>
+    public static IReadOnlyList<string> CollectTags(IEnumerable<ReconciledGearset> gearsets)
+    {
+        ArgumentNullException.ThrowIfNull(gearsets);
+
+        return [.. gearsets
+            .SelectMany(g => g.Record.Tags)
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t.Trim())
+            .Distinct(StringComparer.CurrentCultureIgnoreCase)
+            .OrderBy(t => t, StringComparer.CurrentCultureIgnoreCase)];
+    }
+
+    private static bool Matches(
+        ReconciledGearset gearset,
+        FilterSpec filter,
+        IReadOnlyDictionary<uint, JobInfo> jobs,
+        string[] terms,
+        DateTimeOffset now)
+    {
+        if (filter.FavouritesOnly && !gearset.Record.IsFavourite)
+        {
+            return false;
+        }
+
+        var job = JobFor(gearset, jobs);
+
+        if (filter.Roles.Count > 0 && !filter.Roles.Contains(job.Role))
+        {
+            return false;
+        }
+
+        if (filter.Categories.Count > 0 && !filter.Categories.Contains(job.Category))
+        {
+            return false;
+        }
+
+        if (filter.Completeness == CompletenessFilter.IncompleteOnly && !gearset.Gearset.IsIncomplete)
+        {
+            return false;
+        }
+
+        if (filter.Completeness == CompletenessFilter.CompleteOnly && gearset.Gearset.IsIncomplete)
+        {
+            return false;
+        }
+
+        var onBar = gearset.Record.BarPosition is not null;
+        if (filter.BarMembership == BarMembershipFilter.OnBarOnly && !onBar)
+        {
+            return false;
+        }
+
+        if (filter.BarMembership == BarMembershipFilter.NotOnBarOnly && onBar)
+        {
+            return false;
+        }
+
+        if (filter.GlamourLinkedOnly && gearset.Gearset.GlamourPlateLink is null)
+        {
+            return false;
+        }
+
+        if (filter.UnusedForDays is { } days)
+        {
+            // A set this plugin has never equipped counts as unused. That is honest: the
+            // plugin genuinely has no record of it being worn, and saying so is more useful
+            // than hiding it behind an absence.
+            var lastUsed = gearset.Record.LastUsedUtc;
+            if (lastUsed is not null && lastUsed > now.AddDays(-days))
+            {
+                return false;
+            }
+        }
+
+        if (filter.Tags.Count > 0)
+        {
+            foreach (var wanted in filter.Tags)
+            {
+                if (!gearset.Record.Tags.Any(t =>
+                        string.Equals(t.Trim(), wanted.Trim(), StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        // Every term has to match somewhere. Two words are a narrowing, not a widening: typing
+        // "dark ultimate" should find the ultimate set of the dark knight rather than every
+        // dark knight set plus every ultimate set.
+        foreach (var term in terms)
+        {
+            if (!MatchesTerm(gearset, job, term))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool MatchesTerm(ReconciledGearset gearset, JobInfo job, string term) =>
+        Contains(gearset.Gearset.Name, term)
+        || Contains(job.Name, term)
+        || Contains(job.Abbreviation, term)
+        || Contains(gearset.Record.Note, term)
+        || gearset.Record.Tags.Any(t => Contains(t, term));
+
+    private static bool Contains(string? haystack, string needle) =>
+        haystack is not null
+        && haystack.Contains(needle, StringComparison.CurrentCultureIgnoreCase);
+
+    private static string[] SplitTerms(string? text) =>
+        string.IsNullOrWhiteSpace(text)
+            ? []
+            : text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private static JobInfo JobFor(ReconciledGearset gearset, IReadOnlyDictionary<uint, JobInfo> jobs) =>
+        jobs.TryGetValue(gearset.Gearset.ClassJobId, out var job)
+            ? job
+            : JobInfo.Unknown(gearset.Gearset.ClassJobId);
+
+    /// <summary>
+    /// Groups a job id and a name with the same case-insensitive comparison the rest of the
+    /// product uses for names, so "Dark Knight" and "dark knight" count as the same duplicate.
+    /// </summary>
+    private sealed class TupleComparer : IEqualityComparer<(uint Job, string Name)>
+    {
+        public static TupleComparer Instance { get; } = new();
+
+        public bool Equals((uint Job, string Name) x, (uint Job, string Name) y) =>
+            x.Job == y.Job
+            && string.Equals(x.Name, y.Name, StringComparison.CurrentCultureIgnoreCase);
+
+        public int GetHashCode((uint Job, string Name) obj) =>
+            HashCode.Combine(obj.Job, obj.Name.ToUpperInvariant());
+    }
+}

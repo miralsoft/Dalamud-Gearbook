@@ -127,6 +127,20 @@ dotnet_diagnostic.IDE0005.severity = warning
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1707.severity = none
 
+[src/Gearbook.Core/Settings/*.cs]
+# CA2227 and CA1002 want collection properties to be read-only and not to expose List<T>.
+# These types are the object graph the host's configuration store serialises, and that
+# serialiser needs settable properties and concrete collection types to round-trip them. A
+# scoped suppression naming the reason, rather than a solution-wide one hiding it.
+dotnet_diagnostic.CA2227.severity = none
+dotnet_diagnostic.CA1002.severity = none
+
+[src/Gearbook/**.cs]
+# CA1031 objects to catching general exception types. At the boundaries the host calls into,
+# catching broadly is the requirement rather than the lapse: an exception escaping into the
+# game process is a crash, not a logged error. The catches are at those boundaries only.
+dotnet_diagnostic.CA1031.severity = none
+
 [tests/**/*.cs]
 # A test name says what it asserts, which is a sentence, and a sentence with underscores in it
 # reads better than one in PascalCase.

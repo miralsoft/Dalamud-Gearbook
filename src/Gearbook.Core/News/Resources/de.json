@@ -1,0 +1,20 @@
+{
+  "versions": [
+    {
+      "version": "0.1.0",
+      "date": "2026-08-13",
+      "summary": "Die erste Fassung. Eine Leiste zum Anklicken, statt Hotbars mit Ausrüstungssets zu belegen, und ein Fenster, in dem sich die Sets suchen und ordnen lassen.",
+      "added": [
+        "Eine Leiste mit Klassensymbolen. Ein Klick wechselt. Hinlegen, wo du magst, dann feststellen, damit sie bleibt.",
+        "Ein Übersichtsfenster mit einer Suche über Namen, Klassen, Schlagwörter und deine eigenen Notizen.",
+        "Favoriten, eigene Schlagwörter und eine Notiz je Ausrüstungsset.",
+        "Filter nach Rolle und Kategorie, dazu unvollständige Sets, Sets auf der Leiste und Sets mit Projektionsplatte.",
+        "Gespeicherte Ansichten, damit ein Filter, den du jede Woche brauchst, ein Klick ist statt fünf.",
+        "Drei Stufen für den Filterbereich, von nur Favoriten bis alles, damit das Fenster so einfach sein kann, wie du es willst.",
+        "Hinweise, wenn zwei deiner Sets dieselbe Klasse und denselben Namen tragen, wobei dir das Spiel selbst nicht hilft.",
+        "Textbefehle für alles, damit sich alles aus einem Makro heraus bedienen lässt.",
+        "Deutsch und Englisch, der Sprache von Dalamud folgend, solange du keine auswählst."
+      ]
+    }
+  ]
+}

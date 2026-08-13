@@ -42,6 +42,34 @@ public sealed record GearsetRecord(
     DateTimeOffset? LastSeenUtc)
 {
     /// <summary>
+    /// Compares two records by their contents, including the tags.
+    /// </summary>
+    /// <remarks>
+    /// Written out rather than left to the compiler. A record's generated equality compares
+    /// <see cref="Tags"/> by reference, so two records carrying the same tags in two different
+    /// lists would count as different. That is a trap rather than a nuisance: a record read back
+    /// from the configuration never shares a list with the one that wrote it, so anything asking
+    /// "did this change" would always answer yes.
+    /// </remarks>
+    public bool Equals(GearsetRecord? other) =>
+        other is not null
+        && Id == other.Id
+        && ClassJobId == other.ClassJobId
+        && string.Equals(LastKnownName, other.LastKnownName, StringComparison.Ordinal)
+        && LastKnownSlot == other.LastKnownSlot
+        && string.Equals(LastKnownFingerprint, other.LastKnownFingerprint, StringComparison.Ordinal)
+        && IsFavourite == other.IsFavourite
+        && string.Equals(Note, other.Note, StringComparison.Ordinal)
+        && BarPosition == other.BarPosition
+        && LastUsedUtc == other.LastUsedUtc
+        && LastSeenUtc == other.LastSeenUtc
+        && Tags.SequenceEqual(other.Tags, StringComparer.Ordinal);
+
+    /// <inheritdoc />
+    public override int GetHashCode() =>
+        HashCode.Combine(Id, ClassJobId, LastKnownName, LastKnownSlot, IsFavourite, Note, BarPosition);
+
+    /// <summary>
     /// A fresh record for a gearset seen for the first time. Everything the player owns starts
     /// empty; nothing is guessed from the set itself.
     /// </summary>

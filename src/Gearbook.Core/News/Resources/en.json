@@ -1,0 +1,20 @@
+{
+  "versions": [
+    {
+      "version": "0.1.0",
+      "date": "2026-08-13",
+      "summary": "The first version. A bar you can click instead of filling hotbars with gearsets, and a window that lets you search and organise them.",
+      "added": [
+        "A bar of job icons. One click switches. Put it where you like, then lock it so it stays there.",
+        "A library window with a search that covers names, jobs, tags and your own notes.",
+        "Favourites, your own tags, and a note per gearset.",
+        "Filters by role and category, plus incomplete sets, sets on the bar, and sets linked to a glamour plate.",
+        "Saved views, so a filter you use every week is one click rather than five.",
+        "Three levels of filter panel, from favourites only to everything, so the window can be as simple as you want it.",
+        "Warnings where two of your gearsets share a job and a name, which the game itself cannot help you with.",
+        "Text commands for everything, so it all works from a macro.",
+        "German and English, following whatever language Dalamud is set to unless you pick one."
+      ]
+    }
+  ]
+}
