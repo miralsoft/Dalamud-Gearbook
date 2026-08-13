@@ -1,0 +1,18 @@
+# Normalise line endings on the way in, so a checkout on any platform is consistent and a
+# diff never shows a whole file as changed because somebody's editor rewrote the endings.
+* text=auto
+
+# Files that must keep LF whatever the platform. The git hooks are shell scripts and the
+# workflows are read by a Linux runner; CRLF breaks both.
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Files that must keep CRLF.
+*.ps1 text eol=crlf
+
+# Binary, never diffed and never converted.
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary

@@ -1,0 +1,29 @@
+# Build output. Only sources, lock files and configuration are committed.
+bin/
+obj/
+[Bb]uild/
+artifacts/
+
+# The developer-tools switch. This file defines the symbol that compiles the developer
+# surfaces in, so a committed copy is the one route by which a published build could carry
+# them. CI fails if it ever appears here (C-10).
+Directory.Build.local.props
+
+# The staging folder a development build publishes into.
+dist/
+
+# Generated during a release and never committed. A committed copy names the version that was
+# current when it was written, so it can only ever be stale.
+pluginmaster.json
+
+# Editors and tooling.
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Windows and macOS leftovers.
+Thumbs.db
+desktop.ini
+.DS_Store
