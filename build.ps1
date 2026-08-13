@@ -98,9 +98,10 @@ if ($NoStage) {
 
 Write-Step 'Staging a loadable build'
 
-if (Test-Path $stagingDir) {
-    Remove-Item $stagingDir -Recurse -Force
-}
+# The staging folder is written into rather than emptied first. While the game is running with
+# this plugin loaded, the host holds the assemblies open: they can be overwritten but the folder
+# cannot be deleted, so wiping it would fail exactly when a rebuild is most wanted. The publish
+# folder below is not held by anything and is emptied normally.
 New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
 
 $publishDir = Join-Path $root 'dist/.publish'
@@ -143,12 +144,24 @@ if (Test-Path $icon) {
     Copy-Item $icon (Join-Path $stagingDir 'icon.png') -Force
 }
 
-# The main assembly last. This is the line the whole staging step exists for.
+# The main assembly last. This is the line the whole staging step exists for: the host reloads
+# on a change to it, so it must not see it until everything it depends on is already complete.
 $mainSource = Join-Path $publishDir $mainAssembly
 if (-not (Test-Path $mainSource)) {
     throw "The main assembly $mainAssembly was not found in the publish output."
 }
-Copy-Item $mainSource (Join-Path $stagingDir $mainAssembly) -Force
+
+try {
+    Copy-Item $mainSource (Join-Path $stagingDir $mainAssembly) -Force
+}
+catch [System.IO.IOException] {
+    # A file lock with no obvious owner, and the natural first guess is an editor or a virus
+    # scanner. It is neither: the host has the assembly open. Saying so here saves the twenty
+    # minutes it otherwise takes to work out.
+    throw "The staged copy of $mainAssembly could not be replaced because something has it open. " +
+          "That is almost certainly the game, with this plugin loaded. Unload it in the plugin " +
+          "installer or close the client, then run this again. Everything else has already been staged."
+}
 
 Write-Host ''
 Write-Host 'Done.' -ForegroundColor Green
