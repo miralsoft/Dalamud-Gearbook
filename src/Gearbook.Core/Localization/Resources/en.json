@@ -25,6 +25,7 @@
   "library.column.itemLevel": "Item level",
   "library.column.tags": "Tags",
   "library.column.bis": "BiS",
+  "library.detail.equip": "Wear this",
   "library.detail.note": "Note",
   "library.detail.tags": "Tags",
   "library.detail.tagsHint": "Separate tags with a comma.",

@@ -1,0 +1,618 @@
+using System.Globalization;
+using System.Numerics;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
+using Dalamud.Interface.Windowing;
+using Gearbook.Adapters;
+using Gearbook.Core.Bis;
+using Gearbook.Core.Filtering;
+using Gearbook.Core.Identity;
+using Gearbook.Core.Localization;
+using Gearbook.Core.Model;
+using Gearbook.Core.Sorting;
+using Gearbook.Core.Views;
+
+namespace Gearbook.UI;
+
+/// <summary>
+/// The management view: search, filters, and everything the player owns about a gearset.
+/// </summary>
+internal sealed class LibraryWindow : Window
+{
+    private const string WindowId = "Gearbook###GearbookLibrary";
+    private const int NoteMaxLength = 2000;
+    private const int TagsMaxLength = 500;
+
+    private readonly GearbookState state;
+    private readonly Action openSettings;
+    private readonly Action openNews;
+
+    private int selectedRecordId = -1;
+    private string noteBuffer = string.Empty;
+    private string tagsBuffer = string.Empty;
+    private int editingRecordId = -1;
+    private string newViewName = string.Empty;
+
+    public LibraryWindow(GearbookState state, Action openSettings, Action openNews)
+        : base(WindowId)
+    {
+        this.state = state;
+        this.openSettings = openSettings;
+        this.openNews = openNews;
+
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(760, 420),
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+        };
+    }
+
+    /// <inheritdoc />
+    public override void Draw()
+    {
+        var loc = state.Loc;
+        var character = state.Character;
+
+        if (character is null)
+        {
+            UiTheme.Muted(loc.Get(LocKeys.LibraryEmpty));
+            return;
+        }
+
+        var filter = character.CurrentFilter;
+        var effective = filter.AtLevel(character.FilterLevel);
+        var shown = FilterEngine.Apply(state.Gearsets, effective, state.Jobs, DateTimeOffset.UtcNow);
+
+        DrawHeader(character, filter, shown.Count);
+        ImGui.Separator();
+
+        var showSidebar = character.FilterLevel != FilterLevel.FavouritesOnly;
+        var sidebarWidth = showSidebar ? 190f : 0f;
+
+        if (showSidebar)
+        {
+            using (var sidebar = ImRaii.Child("##filters", new Vector2(sidebarWidth, 0), true))
+            {
+                if (sidebar)
+                {
+                    DrawFilters(character, filter);
+                }
+            }
+
+            ImGui.SameLine();
+        }
+
+        using (var list = ImRaii.Child("##list", new Vector2(-300f, 0), true))
+        {
+            if (list)
+            {
+                DrawList(character, shown);
+            }
+        }
+
+        ImGui.SameLine();
+
+        using var detail = ImRaii.Child("##detail", new Vector2(0, 0), true);
+        if (detail)
+        {
+            DrawDetail(character, shown);
+        }
+    }
+
+    private void DrawHeader(Core.Settings.CharacterSettings character, FilterSpec filter, int shownCount)
+    {
+        var loc = state.Loc;
+
+        ImGui.SetNextItemWidth(240f);
+        var text = filter.Text;
+        if (ImGui.InputTextWithHint("##search", loc.Get(LocKeys.CommonSearch), ref text, 200))
+        {
+            filter.Text = text;
+            state.Save();
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button(loc.Get(LocKeys.CommonClear)))
+        {
+            filter.Text = string.Empty;
+            state.Save();
+        }
+
+        ImGui.SameLine();
+        UiTheme.Muted(loc.Get(LocKeys.LibraryCount, shownCount, state.Gearsets.Count));
+
+        ImGui.SameLine();
+        var right = ImGui.GetWindowWidth() - 170f;
+        if (right > ImGui.GetCursorPosX())
+        {
+            ImGui.SetCursorPosX(right);
+        }
+
+        if (ImGui.Button(loc.Get(LocKeys.SettingsTabGeneral)))
+        {
+            openSettings();
+        }
+
+        ImGui.SameLine();
+
+        // The control that opens the notes shows there is something unread. After the one
+        // automatic appearance it is the only route back into them, and a control that never
+        // signals it has anything is one nobody presses. Set every frame rather than once,
+        // because it has to go out the moment the notes are opened.
+        var unread = ReleaseNotesState.HasUnread(character);
+        using (ImRaii.PushColor(ImGuiCol.Text, new Vector4(1f, 0.85f, 0.35f, 1f), unread))
+        {
+            if (ImGui.Button(unread ? $"{loc.Get(LocKeys.NewsOpen)} *" : loc.Get(LocKeys.NewsOpen)))
+            {
+                openNews();
+            }
+        }
+
+        if (unread && ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(loc.Get(LocKeys.NewsUnread));
+        }
+    }
+
+    private void DrawFilters(Core.Settings.CharacterSettings character, FilterSpec filter)
+    {
+        var loc = state.Loc;
+        var changed = false;
+
+        var favourites = filter.FavouritesOnly;
+        if (ImGui.Checkbox(loc.Get(LocKeys.FilterFavouritesOnly), ref favourites))
+        {
+            filter.FavouritesOnly = favourites;
+            changed = true;
+        }
+
+        ImGui.Separator();
+        UiTheme.Muted(loc.Get(LocKeys.FilterRoles));
+
+        foreach (var role in Enum.GetValues<JobRole>())
+        {
+            if (role == JobRole.Unknown)
+            {
+                continue;
+            }
+
+            var selected = filter.Roles.Contains(role);
+            if (ImGui.Checkbox(RoleName(role), ref selected))
+            {
+                if (selected)
+                {
+                    filter.Roles.Add(role);
+                }
+                else
+                {
+                    filter.Roles.Remove(role);
+                }
+
+                changed = true;
+            }
+        }
+
+        if (character.FilterLevel == FilterLevel.Full)
+        {
+            changed |= DrawFullFilters(filter);
+        }
+
+        if (changed)
+        {
+            state.Save();
+        }
+    }
+
+    private bool DrawFullFilters(FilterSpec filter)
+    {
+        var loc = state.Loc;
+        var changed = false;
+
+        ImGui.Separator();
+        UiTheme.Muted(loc.Get(LocKeys.FilterTags));
+
+        foreach (var tag in FilterEngine.CollectTags(state.Gearsets))
+        {
+            var selected = filter.Tags.Any(t =>
+                string.Equals(t, tag, StringComparison.CurrentCultureIgnoreCase));
+
+            if (ImGui.Checkbox(tag, ref selected))
+            {
+                if (selected)
+                {
+                    filter.Tags.Add(tag);
+                }
+                else
+                {
+                    filter.Tags.RemoveAll(t =>
+                        string.Equals(t, tag, StringComparison.CurrentCultureIgnoreCase));
+                }
+
+                changed = true;
+            }
+        }
+
+        ImGui.Separator();
+
+        var incomplete = filter.Completeness == CompletenessFilter.IncompleteOnly;
+        if (ImGui.Checkbox(loc.Get(LocKeys.FilterIncompleteOnly), ref incomplete))
+        {
+            filter.Completeness = incomplete ? CompletenessFilter.IncompleteOnly : CompletenessFilter.Any;
+            changed = true;
+        }
+
+        var onBar = filter.BarMembership == BarMembershipFilter.OnBarOnly;
+        if (ImGui.Checkbox(loc.Get(LocKeys.FilterOnBarOnly), ref onBar))
+        {
+            filter.BarMembership = onBar ? BarMembershipFilter.OnBarOnly : BarMembershipFilter.Any;
+            changed = true;
+        }
+
+        var notOnBar = filter.BarMembership == BarMembershipFilter.NotOnBarOnly;
+        if (ImGui.Checkbox(loc.Get(LocKeys.FilterNotOnBarOnly), ref notOnBar))
+        {
+            filter.BarMembership = notOnBar ? BarMembershipFilter.NotOnBarOnly : BarMembershipFilter.Any;
+            changed = true;
+        }
+
+        var glamour = filter.GlamourLinkedOnly;
+        if (ImGui.Checkbox(loc.Get(LocKeys.FilterGlamourLinkedOnly), ref glamour))
+        {
+            filter.GlamourLinkedOnly = glamour;
+            changed = true;
+        }
+
+        var unusedDays = filter.UnusedForDays ?? 0;
+        ImGui.SetNextItemWidth(120f);
+        if (ImGui.SliderInt(loc.Get(LocKeys.FilterUnusedSince, unusedDays), ref unusedDays, 0, 365))
+        {
+            filter.UnusedForDays = unusedDays == 0 ? null : unusedDays;
+            changed = true;
+        }
+
+        changed |= DrawViews(filter);
+
+        return changed;
+    }
+
+    private bool DrawViews(FilterSpec filter)
+    {
+        var loc = state.Loc;
+        var character = state.Character;
+        if (character is null)
+        {
+            return false;
+        }
+
+        ImGui.Separator();
+        UiTheme.Muted(loc.Get(LocKeys.ViewActive));
+
+        var changed = false;
+
+        foreach (var view in character.Views.ToList())
+        {
+            using var id = ImRaii.PushId(view.Name);
+
+            var active = string.Equals(character.ActiveViewName, view.Name, StringComparison.Ordinal);
+            if (ImGui.Selectable(view.Name, active))
+            {
+                character.ActiveViewName = view.Name;
+                character.CurrentFilter = view.Filter.Clone();
+                changed = true;
+            }
+
+            using var context = ImRaii.ContextPopupItem($"##view-{view.Name}");
+            if (context)
+            {
+                if (ImGui.MenuItem(loc.Get(LocKeys.CommonDelete)))
+                {
+                    character.Views.Remove(view);
+                    if (active)
+                    {
+                        character.ActiveViewName = string.Empty;
+                    }
+
+                    changed = true;
+                }
+            }
+        }
+
+        ImGui.SetNextItemWidth(120f);
+        ImGui.InputTextWithHint("##newview", loc.Get(LocKeys.ViewNew), ref newViewName, 60);
+
+        var problem = SavedViews.CheckName(character.Views, newViewName);
+
+        using (ImRaii.Disabled(problem != SavedViews.NameProblem.None))
+        {
+            if (ImGui.Button(loc.Get(LocKeys.CommonSave)))
+            {
+                character.Views.Add(new SavedView
+                {
+                    Name = newViewName.Trim(),
+                    Filter = filter.Clone(),
+                });
+
+                character.ActiveViewName = newViewName.Trim();
+                newViewName = string.Empty;
+                changed = true;
+            }
+        }
+
+        if (problem == SavedViews.NameProblem.AlreadyTaken)
+        {
+            UiTheme.Muted(loc.Get(LocKeys.ViewNameTaken));
+        }
+
+        return changed;
+    }
+
+    private void DrawList(Core.Settings.CharacterSettings character, IReadOnlyList<ReconciledGearset> shown)
+    {
+        var loc = state.Loc;
+
+        if (shown.Count == 0)
+        {
+            UiTheme.Muted(loc.Get(LocKeys.LibraryNoMatches));
+            return;
+        }
+
+        var duplicates = character.Library.WarnAboutDuplicates
+            ? FilterEngine.FindDuplicates(state.Gearsets).Select(g => g.Record.Id).ToHashSet()
+            : [];
+
+        // The best-in-slot column takes no width at all unless there is something to put in it.
+        // The common failure with an integration like this is building the interface around the
+        // extra information, after which the plugin looks broken to everybody without it.
+        var showBis = state.Bis.HasAnything;
+
+        var columns = 4 + (character.Library.ShowGameNumber ? 1 : 0) + (showBis ? 1 : 0);
+
+        using var table = ImRaii.Table("##gearsets", columns,
+            ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.SizingStretchProp);
+
+        if (!table)
+        {
+            return;
+        }
+
+        if (character.Library.ShowGameNumber)
+        {
+            ImGui.TableSetupColumn(loc.Get(LocKeys.LibraryColumnNumber), ImGuiTableColumnFlags.WidthFixed, 34f);
+        }
+
+        ImGui.TableSetupColumn(loc.Get(LocKeys.LibraryColumnName));
+        ImGui.TableSetupColumn(loc.Get(LocKeys.LibraryColumnJob), ImGuiTableColumnFlags.WidthFixed, 120f);
+        ImGui.TableSetupColumn(loc.Get(LocKeys.LibraryColumnItemLevel), ImGuiTableColumnFlags.WidthFixed, 60f);
+
+        if (showBis)
+        {
+            ImGui.TableSetupColumn(loc.Get(LocKeys.LibraryColumnBis), ImGuiTableColumnFlags.WidthFixed, 70f);
+        }
+
+        ImGui.TableSetupColumn(loc.Get(LocKeys.LibraryColumnTags));
+        ImGui.TableHeadersRow();
+
+        foreach (var gearset in shown)
+        {
+            ImGui.TableNextRow();
+            using var id = ImRaii.PushId(gearset.Record.Id);
+
+            if (character.Library.ShowGameNumber)
+            {
+                ImGui.TableNextColumn();
+                UiTheme.Muted((gearset.Gearset.Slot + 1).ToString(CultureInfo.CurrentCulture));
+            }
+
+            ImGui.TableNextColumn();
+
+            var selected = selectedRecordId == gearset.Record.Id;
+            if (ImGui.Selectable(gearset.Gearset.Name, selected, ImGuiSelectableFlags.SpanAllColumns))
+            {
+                Select(gearset);
+            }
+
+            if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            {
+                state.RequestEquip(gearset.Gearset.Slot, EquipTrigger.Library);
+            }
+
+            if (duplicates.Contains(gearset.Record.Id))
+            {
+                ImGui.SameLine();
+                UiTheme.Muted("!");
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip(loc.Get(LocKeys.LibraryDuplicateWarning));
+                }
+            }
+
+            ImGui.TableNextColumn();
+            UiTheme.Muted(state.Jobs.TryGetValue(gearset.Gearset.ClassJobId, out var job)
+                ? job.Name
+                : loc.Get(LocKeys.CommonUnknownJob));
+
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(gearset.Gearset.ItemLevel.ToString(CultureInfo.CurrentCulture));
+
+            if (showBis)
+            {
+                ImGui.TableNextColumn();
+                var badge = state.Bis.For(gearset.Gearset.Slot);
+                if (badge is not null)
+                {
+                    ImGui.TextUnformatted($"{badge.Matched}/{badge.Total}");
+                }
+            }
+
+            ImGui.TableNextColumn();
+            UiTheme.Muted(string.Join(", ", gearset.Record.Tags));
+        }
+    }
+
+    private void DrawDetail(Core.Settings.CharacterSettings character, IReadOnlyList<ReconciledGearset> shown)
+    {
+        var loc = state.Loc;
+
+        var selected = state.Gearsets.FirstOrDefault(g => g.Record.Id == selectedRecordId);
+        if (selected is null)
+        {
+            UiTheme.Muted(loc.Get(LocKeys.LibraryDetailNothingSelected));
+            DrawOrphans(character);
+            return;
+        }
+
+        if (editingRecordId != selected.Record.Id)
+        {
+            Select(selected);
+        }
+
+        ImGui.TextUnformatted(selected.Gearset.Name);
+        UiTheme.Muted(state.Jobs.TryGetValue(selected.Gearset.ClassJobId, out var job)
+            ? job.Name
+            : loc.Get(LocKeys.CommonUnknownJob));
+
+        var blocked = state.CheckCanEquip(selected);
+        using (ImRaii.Disabled(blocked != EquipOutcome.Sent))
+        {
+            if (ImGui.Button(loc.Get(LocKeys.LibraryDetailEquip)))
+            {
+                state.RequestEquip(selected.Gearset.Slot, EquipTrigger.Library);
+            }
+        }
+
+        var reason = UiTheme.BlockedReason(loc, blocked);
+        if (reason is not null)
+        {
+            UiTheme.Muted(reason);
+        }
+
+        ImGui.Separator();
+
+        var favourite = selected.Record.IsFavourite;
+        if (ImGui.Checkbox(loc.Get(LocKeys.LibraryDetailFavourite), ref favourite))
+        {
+            state.UpdateRecords(records =>
+                [.. records.Select(r => r.Id == selected.Record.Id ? r with { IsFavourite = favourite } : r)]);
+        }
+
+        var onBar = selected.Record.BarPosition is not null;
+        if (ImGui.Checkbox(loc.Get(LocKeys.LibraryDetailOnBar), ref onBar))
+        {
+            state.UpdateRecords(records => BarOrder.SetOnBar(records, selected.Record.Id, onBar));
+        }
+
+        ImGui.Separator();
+        ImGui.TextUnformatted(loc.Get(LocKeys.LibraryDetailTags));
+        UiTheme.HelpMarker(loc.Get(LocKeys.LibraryDetailTagsHint));
+
+        if (ImGui.InputText("##tags", ref tagsBuffer, TagsMaxLength))
+        {
+            var tags = tagsBuffer
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Distinct(StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+
+            state.UpdateRecords(records =>
+                [.. records.Select(r => r.Id == selected.Record.Id ? r with { Tags = tags } : r)]);
+        }
+
+        ImGui.TextUnformatted(loc.Get(LocKeys.LibraryDetailNote));
+        if (ImGui.InputTextMultiline("##note", ref noteBuffer, NoteMaxLength, new Vector2(-1, 90)))
+        {
+            var note = noteBuffer;
+            state.UpdateRecords(records =>
+                [.. records.Select(r => r.Id == selected.Record.Id ? r with { Note = note } : r)]);
+        }
+
+        ImGui.Separator();
+
+        if (selected.Gearset.GlamourPlateLink is { } plate)
+        {
+            UiTheme.Muted(loc.Get(LocKeys.LibraryDetailGlamourPlate, plate));
+        }
+
+        UiTheme.Muted($"{loc.Get(LocKeys.LibraryDetailLastUsed)}: " +
+                      (selected.Record.LastUsedUtc is { } used
+                          ? used.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)
+                          : loc.Get(LocKeys.CommonNever)));
+
+        if (selected.Gearset.IsIncomplete)
+        {
+            UiTheme.Muted(loc.Get(LocKeys.SwitchBlockedIncomplete));
+        }
+
+        DrawBisState();
+        DrawOrphans(character);
+    }
+
+    private void DrawBisState()
+    {
+        var loc = state.Loc;
+
+        // A feature that switches itself off says so somewhere the player can find, otherwise
+        // the whole plugin is assumed broken. Nothing is drawn when no provider is installed at
+        // all, because that is not a state, it is the normal case.
+        var message = state.Bis.State switch
+        {
+            BisProviderState.NoAccount => loc.Get(LocKeys.BisStateNoAccount),
+            BisProviderState.Loading => loc.Get(LocKeys.BisStateLoading),
+            BisProviderState.NoData => loc.Get(LocKeys.BisStateNoData),
+            _ => null,
+        };
+
+        if (message is null)
+        {
+            return;
+        }
+
+        ImGui.Separator();
+        UiTheme.Muted(message);
+    }
+
+    private void DrawOrphans(Core.Settings.CharacterSettings character)
+    {
+        if (!character.Library.ShowOrphans || state.Orphans.Count == 0)
+        {
+            return;
+        }
+
+        var loc = state.Loc;
+
+        ImGui.Separator();
+        ImGui.TextUnformatted(loc.Get(LocKeys.LibraryOrphanHeading));
+        UiTheme.HelpMarker(loc.Get(LocKeys.LibraryOrphanExplain));
+
+        foreach (var orphan in state.Orphans)
+        {
+            using var id = ImRaii.PushId($"orphan-{orphan.Id}");
+
+            UiTheme.Muted(orphan.LastKnownName);
+
+            ImGui.SameLine();
+            if (ImGui.SmallButton(loc.Get(LocKeys.LibraryOrphanForget)))
+            {
+                state.UpdateRecords(records => [.. records.Where(r => r.Id != orphan.Id)]);
+            }
+        }
+    }
+
+    private void Select(ReconciledGearset gearset)
+    {
+        selectedRecordId = gearset.Record.Id;
+        editingRecordId = gearset.Record.Id;
+        noteBuffer = gearset.Record.Note;
+        tagsBuffer = string.Join(", ", gearset.Record.Tags);
+    }
+
+    private string RoleName(JobRole role) => state.Loc.Get(role switch
+    {
+        JobRole.Tank => LocKeys.RoleTank,
+        JobRole.Healer => LocKeys.RoleHealer,
+        JobRole.MeleeDps => LocKeys.RoleMeleeDps,
+        JobRole.PhysicalRangedDps => LocKeys.RolePhysicalRangedDps,
+        JobRole.MagicalRangedDps => LocKeys.RoleMagicalRangedDps,
+        JobRole.Crafter => LocKeys.RoleCrafter,
+        JobRole.Gatherer => LocKeys.RoleGatherer,
+        _ => LocKeys.RoleUnknown,
+    });
+}

@@ -41,6 +41,7 @@ public static class LocKeys
     public const string LibraryColumnItemLevel = "library.column.itemLevel";
     public const string LibraryColumnTags = "library.column.tags";
     public const string LibraryColumnBis = "library.column.bis";
+    public const string LibraryDetailEquip = "library.detail.equip";
     public const string LibraryDetailNote = "library.detail.note";
     public const string LibraryDetailTags = "library.detail.tags";
     public const string LibraryDetailTagsHint = "library.detail.tagsHint";

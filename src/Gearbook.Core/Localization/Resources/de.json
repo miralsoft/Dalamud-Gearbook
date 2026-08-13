@@ -25,6 +25,7 @@
   "library.column.itemLevel": "Gegenstandsstufe",
   "library.column.tags": "Schlagwörter",
   "library.column.bis": "BiS",
+  "library.detail.equip": "Anlegen",
   "library.detail.note": "Notiz",
   "library.detail.tags": "Schlagwörter",
   "library.detail.tagsHint": "Schlagwörter mit Komma trennen.",
