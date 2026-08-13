@@ -8,8 +8,15 @@
 *.yml text eol=lf
 *.yaml text eol=lf
 
-# Files that must keep CRLF.
+# Files that must keep CRLF, on every platform including a Linux runner. The .editorconfig
+# rule for C# says CRLF and `dotnet format --verify-no-changes` enforces it, so leaving these
+# to `text=auto` would mean the format gate passes on Windows and fails wherever the checkout
+# produced LF. Pinning them here makes the two agree by construction rather than by luck.
 *.ps1 text eol=crlf
+*.cs text eol=crlf
+*.csproj text eol=crlf
+*.props text eol=crlf
+*.slnx text eol=crlf
 
 # Binary, never diffed and never converted.
 *.png binary

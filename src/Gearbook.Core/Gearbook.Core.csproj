@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Pure logic. This project references neither Dalamud nor FFXIVClientStructs nor Lumina, and
+    that absence is the point: the compiler enforces the boundary instead of a reviewer having
+    to notice it. Anything that needs a running game belongs on the other side of it.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Gearbook.Core</RootNamespace>
+    <AssemblyName>Gearbook.Core</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Included by glob on purpose. Adding a language is then a data change: drop in a file,
+      change no code. The loader depends on the resource name, which is the root namespace plus
+      the folder path plus the file name, so moving these folders breaks the load silently and
+      the failure shows as an empty window rather than an error.
+    -->
+    <EmbeddedResource Include="Localization\Resources\*.json" />
+    <EmbeddedResource Include="News\Resources\*.json" />
+  </ItemGroup>
+
+</Project>

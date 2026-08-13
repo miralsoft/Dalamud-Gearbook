@@ -1,0 +1,73 @@
+<Project>
+
+  <!--
+    Shared build settings for every project in the solution (C-01). One file, because two
+    projects built to different strictness is a defect that stays invisible until a warning
+    appears in only one of them.
+
+    Note what is deliberately absent: TargetFramework, PlatformTarget and the framework
+    references. The plugin project gets those from Dalamud.NET.Sdk, and overriding what that SDK
+    sets is how a plugin drifts out of sync with the API level it claims.
+  -->
+
+  <PropertyGroup>
+    <!--
+      C-09: the version has exactly one authoritative place, and this is it. Everything else is
+      derived from it or checked against it. The packager writes the assembly version into the
+      built manifest, and the release workflow refuses to publish when the tag disagrees.
+    -->
+    <Version>0.1.0</Version>
+
+    <Authors>Sanaka</Authors>
+    <Company>Sanaka</Company>
+    <Product>Gearbook</Product>
+    <Copyright>Copyright (c) 2026 Sanaka</Copyright>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/miralsoft/Dalamud-Gearbook</RepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- A nullable warning is a real defect, not noise, and it removes a whole class of errors
+         at build time rather than at run time. -->
+    <Nullable>enable</Nullable>
+
+    <!-- A warning that does not break the build runs along for years. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>9999</WarningLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+
+    <!--
+      Required, and not for the documentation. The unnecessary-usings analyser (IDE0005) only
+      runs at build time when the documentation file is generated, so without this pairing
+      unused usings are never reported at all. In return CS1591 is suppressed, which is the one
+      solution-wide suppression this project allows, and it names the tool limitation that
+      forces it right here.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- An unnoticed version drift fails the build instead of shipping (S-08). CI restores in
+         locked mode, so the lock files below are committed and are what CI restores from. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NeutralLanguage>en</NeutralLanguage>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <!--
+    C-10 and the blueprint: developer surfaces are absent from a released build, not switched
+    off in it. The symbol comes from a file git ignores, so a clean checkout cannot define it,
+    and CI fails if that file is ever committed. A guarded constant would leave the window in
+    the assembly, and "off" is a state a person can go looking for. Absent is not.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.local.props"
+          Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.local.props')" />
+
+</Project>

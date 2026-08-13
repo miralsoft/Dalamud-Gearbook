@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Gearbook.Core/Gearbook.Core.csproj" />
+    <Project Path="src/Gearbook/Gearbook.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Gearbook.Core.Tests/Gearbook.Core.Tests.csproj" />
+  </Folder>
+</Solution>

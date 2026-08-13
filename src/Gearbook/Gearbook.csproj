@@ -1,0 +1,36 @@
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+
+  <!--
+    The plugin. It restates nothing the SDK already sets: the target framework, the platform
+    target, the framework references and the packaging step all come from Dalamud.NET.Sdk, and
+    overriding them is how a plugin drifts out of sync with the API level it claims.
+
+    Dalamud and game assemblies are never committed and never bundled. The SDK resolves them
+    from the local installation.
+  -->
+
+  <PropertyGroup>
+    <!-- Must equal InternalName in the manifest: the loader derives one from the other and
+         loads the assembly as <InternalName>.dll. -->
+    <AssemblyName>Gearbook</AssemblyName>
+    <RootNamespace>Gearbook</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gearbook.Core\Gearbook.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      One source file, copied into the package by the build and pointed at by IconUrl in the
+      manifest. Dalamud resolves the icon along two separate paths, and a plugin that feeds only
+      one shows a different picture depending on where you look. Conditional on existence so a
+      repository without artwork yet still builds.
+    -->
+    <Content Include="images\icon.png"
+             Condition="Exists('images\icon.png')"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,28 @@
+<Project>
+
+  <!--
+    The developer-tools switch.
+
+    Copy this file next to it as `Directory.Build.local.props` to compile the developer surfaces
+    into your local build. That name is git-ignored and CI fails if it is ever committed, because
+    that is the only route by which a published build could carry the tools.
+
+        copy Directory.Build.local.props.example Directory.Build.local.props
+
+    What the symbol adds: a diagnostics window that shows the raw gearset entries as they are
+    read, the reconciliation result including which stage matched each record, and the state of
+    the cached snapshot.
+
+    What it does not affect: logging. Removing the tools from a release must not remove the
+    ability to work out what went wrong on a player's machine, so the log survives and only the
+    interactive surface goes. Otherwise a bug report arrives with no evidence attached.
+
+    Verify the claim against the built assembly rather than against the source: build both ways
+    and read the type table. The source is what you intended, the artefact is what shipped.
+  -->
+
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);GEARBOOK_DEVTOOLS</DefineConstants>
+  </PropertyGroup>
+
+</Project>
