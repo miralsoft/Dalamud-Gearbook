@@ -125,6 +125,16 @@ Get-ChildItem -Path $publishDir -File -Recurse |
         Copy-Item $_.FullName $target -Force
     }
 
+# The manifest the packager built, not the one in the repository. The host reads it next to the
+# assembly to learn what the plugin is, and the built copy is the authoritative one because it
+# carries the fields the packager adds: the API level and the assembly version. Publishing does
+# not copy it, which is why this line exists rather than being implied by the publish step.
+$builtManifest = Join-Path $root "src/Gearbook/bin/$Configuration/Gearbook/Gearbook.json"
+if (-not (Test-Path $builtManifest)) {
+    throw "The built manifest was not found at $builtManifest. The host would load an assembly it knows nothing about."
+}
+Copy-Item $builtManifest (Join-Path $stagingDir 'Gearbook.json') -Force
+
 # The icon, because a development build reads it from its own directory rather than from the
 # manifest. Without this the local build shows the default picture while the plugin list shows
 # the real one, and the two never agree.

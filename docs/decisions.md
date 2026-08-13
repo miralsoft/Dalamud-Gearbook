@@ -135,6 +135,33 @@ Each entry: date, decision, rationale, and what was rejected.
   bar plus the commands already cover the need that motivated the project. Recorded rather than
   dropped, so the next session does not rediscover it as a gap.
 
+- **(2026-08-13) The bar falls back to favourites, and then to the current filter, when nothing
+  has been arranged on it.** Rationale: a bar that starts empty and stays empty until its owner
+  reads an explanation is a bar nobody keeps, and P-04 requires the shipped defaults to be the
+  working configuration. Putting a gearset on the bar explicitly still wins over both fallbacks,
+  so arranging it is never undone by this. Rejected: starting empty with a hint, which is honest
+  but means the first impression of the product is a blank rectangle.
+
+- **(2026-08-13) `GearsetRecord` has its equality written out rather than generated.** Rationale:
+  a record's generated equality compares the tags by reference, and a record read back from the
+  configuration never shares a list with the one that wrote it, so anything asking whether it had
+  changed would always have answered yes. Found by a round-trip test that failed for a reason
+  that had nothing to do with what it was testing. The cost is a field list written twice, which
+  is why the round-trip test now covers it.
+
+- **(2026-08-13) A command that matches several gearsets refuses rather than picking one.**
+  Rationale: several sets sharing a name is this product's whole reason for existing, so guessing
+  there would be the one place it does exactly what it was built to avoid. The message says to
+  use the number instead, which is unambiguous.
+
+- **(2026-08-13) Two values in the job classification could not be derived from a flag and are
+  named constants.** Rationale: the job table gives physical and magical ranged jobs the same
+  role, and gives crafters and gatherers the same role as the starting classes. The constants
+  carry the reason at the point where they are set. What matters is the failure mode chosen: when
+  a constant is wrong the job lands under "Other" rather than under a confidently wrong role, so
+  the mistake is visible in the filter rather than silent. Rejected: a hardcoded list of job ids,
+  which would be correct today and wrong the first time a job is added.
+
 - **(2026-08-13) Item level is read from the gearset entry, not computed from its equipment.**
   Rationale: `GearsetEntry.ItemLevel` exists and is the number the game itself shows in the gearset
   list, established by reflection. The alternative was reading fourteen equipment slots per set and

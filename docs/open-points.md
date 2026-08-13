@@ -14,7 +14,22 @@ an item cannot sit unanswered without that being visible.
 
 - **(open since 2026-08-13) Is `GearsetEntry.Id` zero-based or one-based?** The game's list shows
   numbers from 1. Whether the field matches that or is offset by one decides whether the number
-  shown in the library window is the number the player sees.
+  shown in the library window is the number the player sees. The library currently adds one to
+  the slot before displaying it, on the assumption that the field is zero-based; comparing the
+  two lists side by side answers it in a second.
+
+- **(open since 2026-08-13) The two attribute constants in `JobClassifier`.** The job table gives
+  physical and magical ranged jobs the same role value, and the only thing separating them is the
+  attribute they scale from. The two numbers used for that were derived from the table's structure
+  rather than read off a running game. If either is wrong, the affected jobs classify as unknown
+  and appear under "Other" in the role filter, which is the designed failure: visible and
+  reportable rather than a black mage quietly filed under physical ranged. Check a machinist and
+  a black mage in the filter and the answer is immediate.
+
+- **(open since 2026-08-13) The hand and land boundary in `JobClassifier`.** Crafters and
+  gatherers are told apart by where they sit in the table's hand-and-land sequence, on the basis
+  that the eight crafting jobs come first. If that is wrong the two categories swap wholesale,
+  which is equally visible. Same check, one crafter and one gatherer.
 
 ## Waiting on the owner
 
