@@ -1,0 +1,142 @@
+# Decisions: Gearbook
+
+Purpose: append-only decision log. Never edit or delete past decisions, only add new ones. A later
+decision may supersede an earlier one, but the history stays (M-08). The paths that were rejected
+are recorded with the reason, not only the ones that were taken (M-15).
+
+Each entry: date, decision, rationale, and what was rejected.
+
+## Log
+
+- **(2026-08-13) Gearbook is a standalone plugin, not a feature of Eorzea Arsenal.** Rationale: a
+  gearset switcher needs no account, and Arsenal is at its core the client of a service. Building
+  this into Arsenal would force everybody who wants a better selection to install a plugin that
+  asks them for a web account, which most will not do. Binding a tool with a broad audience to a
+  bottleneck it does not need is the expensive mistake here and is hard to undo later. Two further
+  reasons: Arsenal's release rhythm hangs on its server contract, so a stuck filter would either
+  wait for that or force a server release; and Arsenal is already large. Rejected: building it into
+  Arsenal, and the older counter-argument that users will not install a second plugin, which the
+  shared plugin index has since made false.
+
+- **(2026-08-13) The plugin works completely without Eorzea Arsenal, without an account and without
+  an internet connection.** Rationale: this follows from the decision above and is stated separately
+  because it is the one that constrains every later feature. There is no function that requires a
+  connection. None.
+
+- **(2026-08-13) Named `Gearbook`.** Rationale: checked against all 480 entries of the official
+  API-15 plugin index; the word "book" appears in no plugin name at all, so it is distinctive in a
+  list where "gear something" is not. The internal name lowercased is `/gearbook`, so the command
+  needs no deviation from the blueprint. And the metaphor covers the whole feature set rather than
+  just the switching: a book has bookmarks (favourites), margin notes (notes), a register (filters)
+  and tabs (saved views).
+
+  Rejected: anything containing "Helper", because `GearsetHelperPlugin` by KhloeLeclair is in the
+  official index and the display name "Gearset Helper" is effectively taken; a collision there does
+  not look untidy, it makes a plugin impossible to install, and the failure surfaces in the client
+  log where nobody looks. Rejected: `Eorzea Quartermaster`, which fit the sibling plugin's family
+  and the act of issuing equipment precisely, but would have cost a deviation from the blueprint's
+  command convention and a name nobody wants to type. Rejected: `Gearset Palette`, whose only
+  advantage was being found by somebody searching for "gearset", which the manifest's own search
+  terms cover independently of the name. Accepted cost: Gearbook and Eorzea Arsenal do not sort
+  next to each other in the plugin list.
+
+- **(2026-08-13) The repository is `miralsoft/Dalamud-Gearbook`, renamed from
+  `Dalamud-Gearset-Helper`.** Rationale: done before the first commit, when it is one click. After
+  the first release it is a move, and the old name echoed a competing product.
+
+- **(2026-08-13) Licence AGPL-3.0-or-later.** Rationale: the standing proposal for plugins of this
+  kind, put to the owner rather than set quietly, and accepted. The failure this ecosystem actually
+  sees is somebody taking an open plugin, renaming it, and putting it behind a paywall, which a
+  permissive licence expressly allows. Accepted cost, recorded so it is not a surprise later: nobody
+  can lift parts of this into a closed plugin, and relicensing would need the agreement of every
+  accepted contributor.
+
+- **(2026-08-13) Committer identity `Sanaka`.** Rationale: a private project, so not the company
+  name (R-03, R-19). `.miralsoft-enforcement` matches the declaration in `project.md`.
+
+- **(2026-08-13) German and English, with English as the technical fallback.** Rationale: German is
+  the language the texts are written in, English is what a missing key resolves to and what the
+  completeness tests compare against. Keeping English as the fallback is the blueprint's convention,
+  so no deviation is recorded. Layout is still checked in the longest shipped language, which in
+  practice will be German. Rejected: making German the technical fallback, which would have been a
+  convention deviation and would have shown German text to an English player when a translation
+  slipped through.
+
+- **(2026-08-13) The active language follows Dalamud's own interface language by default, and an
+  explicit choice in the plugin wins and keeps winning.** Rationale: required by the framework
+  profile. Worth recording because the original briefing said the language should follow the plugin
+  setting "and not the game client", which is not a contradiction: Dalamud's interface language is
+  not the game client's language, so following the host satisfies both.
+
+- **(2026-08-13) The plugin assigns its own stable id per gearset and re-derives the mapping on
+  every load.** Rationale: the game offers nothing stable. `GearsetEntry.Id` is the displayed number
+  and the game's own "change number" reassigns it; the name is free text and can repeat, including
+  for the same job, which this owner's setup actually does. The reconciler matches in stages, most
+  certain first, keeps unmatched records as orphans rather than deleting them, and logs an ambiguity
+  rather than resolving it silently.
+
+  Rejected: keying on the slot number, which breaks the first time anything is reordered and takes
+  favourites and notes with it, silently. Rejected: keying on job plus name, which breaks on a
+  rename and is ambiguous for this owner's duplicate sets. Rejected: deleting records that no longer
+  match, because a failed match and a deleted gearset look identical and only one of them should
+  cost the player their notes.
+
+- **(2026-08-13) Switching is done through `RaptureGearsetModule.EquipGearset`, not through the
+  game's gearset text command.** Rationale: established by reflecting over the installed Dalamud
+  15.0.3 with FFXIVClientStructs 7.51.0, not from memory. The direct call is one function reached
+  from one component, whereas the text command route means composing a command and handing it to
+  the game's own input processing, which is a wider surface and closer to the line the framework
+  profile draws around operating a game window.
+
+- **(2026-08-13) Exactly one type may equip a gearset, and nothing else holds an instance of it.**
+  Rationale: the framework profile requires one gate to the server. This records the shape it takes
+  here, so that the automation boundary can be reviewed by reading one file and a reviewer can prove
+  a negative.
+
+- **(2026-08-13) A switch that cannot happen now is reported and dropped, never queued.** Rationale:
+  the tile greys out and the tooltip says why. A switch that fires later by itself is exactly the
+  automatic interaction with the game servers that the framework profile forbids, and it would look
+  like a convenience while being the one thing the plugin must not do.
+
+- **(2026-08-13) All persisted state is per character, including the settings that look global.**
+  Rationale: recorded as GB-02 with its reasoning. Rejected: keeping the language choice and the
+  filter level global, which was the original proposal and was overruled because a player with a
+  crafter on one character and a raider on another would have to change them twice a session.
+
+- **(2026-08-13) Four windows rather than the blueprint's three.** The blueprint names main,
+  settings and release notes as a convention. Gearbook adds a fourth, the bar, because the bar and
+  the library are genuinely different objects: one is a permanently visible control surface with no
+  title bar, the other is a management view opened rarely. Folding them into one window would mean
+  a single window that is either too heavy to leave on screen or too thin to manage a hundred
+  gearsets. This is a convention deviation and costs only this line.
+
+- **(2026-08-13) The long command is `/gearbook`, the short form `/gb`.** Rationale: the internal
+  name in lowercase, so the blueprint's convention holds with no deviation. The short form is
+  registered and allowed to fail, because another plugin may already own it; the failure is logged,
+  not treated as an error, and teardown only removes what was actually claimed.
+
+- **(2026-08-13) The foundation's `content-checks.yml` is taken as its own workflow rather than
+  pasted into the build job.** Rationale: the foundation's own README says pasting is the right
+  answer where branch protection names a single required check by job name, and this repository has
+  no such constraint yet. As a separate workflow it stays a straight copy, which makes re-copying it
+  when the declared foundation version is raised a replacement rather than a merge. Consequence to
+  honour when protection is switched on: "Content checks" has to be added to the required status
+  checks, or it reports without blocking.
+
+- **(2026-08-13) The BiS integration is designed now and built later.** Rationale: the interface,
+  the model and the payload parser exist from the first version so nothing has to be rebuilt, but
+  no call is made, because the other side does not offer the gate yet. Building the plugin alone
+  first also means the information it eventually shows is chosen from use rather than guessed, and
+  no interface is created on the Arsenal side on suspicion. The proposed contract and the feedback
+  on it are in `open-points.md`, marked as belonging to that repository (M-18).
+
+- **(2026-08-13) Globally bound keyboard shortcuts are deferred.** Rationale: they compete with the
+  game for input focus, which is the part of a Dalamud interface most likely to misbehave, and the
+  bar plus the commands already cover the need that motivated the project. Recorded rather than
+  dropped, so the next session does not rediscover it as a gap.
+
+- **(2026-08-13) Item level is read from the gearset entry, not computed from its equipment.**
+  Rationale: `GearsetEntry.ItemLevel` exists and is the number the game itself shows in the gearset
+  list, established by reflection. The alternative was reading fourteen equipment slots per set and
+  averaging, which was expected to be the most expensive read in the plugin and would have needed a
+  cache with its own invalidation. It turned out not to be necessary at all.
