@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Core.Identity;
 using Gearbook.Core.Localization;
+using Gearbook.Core.Model;
 using Gearbook.Services;
 
 namespace Gearbook.UI;
@@ -29,10 +30,22 @@ internal static class UiTheme
     /// into some of them. For something meant to be glanced at, that is the whole failure rather
     /// than a blemish.
     /// </remarks>
-    public static void OutlinedText(ImDrawListPtr drawList, Vector2 position, string text, Vector4 colour)
+    public static void OutlinedText(
+        ImDrawListPtr drawList,
+        Vector2 position,
+        string text,
+        Vector4 colour,
+        float fontSize = 0f)
     {
         var outline = ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 0.85f));
         var foreground = ImGui.GetColorU32(colour);
+
+        var font = ImGui.GetFont();
+        var drawn = fontSize > 0f ? fontSize : ImGui.GetFontSize();
+
+        // The outline thins with the text. A one pixel ring around a nine pixel glyph is a third
+        // of its stroke and swallows it; around an eighteen pixel one it disappears.
+        var ring = Math.Max(1f, drawn / 12f);
 
         for (var dx = -1; dx <= 1; dx++)
         {
@@ -43,12 +56,27 @@ internal static class UiTheme
                     continue;
                 }
 
-                drawList.AddText(position + new Vector2(dx, dy), outline, text);
+                drawList.AddText(font, drawn, position + (new Vector2(dx, dy) * ring), outline, text);
             }
         }
 
-        drawList.AddText(position, foreground, text);
+        drawList.AddText(font, drawn, position, foreground, text);
     }
+
+    /// <summary>
+    /// How large the marks drawn over a tile are, for a tile of a given size.
+    /// </summary>
+    /// <remarks>
+    /// Tied to the icon rather than to the interface font. The item level and the favourite mark
+    /// are painted onto the picture, so they have to hold a fixed share of it: at the interface
+    /// font size they filled a third of a small tile, and on a large one they looked like a
+    /// caption that had been left behind.
+    ///
+    /// The floor keeps a number legible on the smallest tile anybody sets, and the ceiling stops
+    /// a very large tile from carrying a number bigger than the window's own text.
+    /// </remarks>
+    public static float TileMarkFontSize(float tileSize) =>
+        Math.Clamp(tileSize * 0.38f, 9f, ImGui.GetFontSize() * 1.5f);
 
     /// <summary>
     /// A question mark that explains a setting on hover.
@@ -312,6 +340,14 @@ internal static class UiTheme
 
         var pressed = false;
 
+        // The highlight under the pointer carries the role, in the colours the game uses for it
+        // everywhere else. It costs nothing: the tile is already lighting up, and the light may
+        // as well say something. A job the job table does not describe keeps the host's own
+        // colour rather than being painted a deliberate-looking grey.
+        var roleColour = RoleColours.For(RoleOf(state, gearset));
+
+        using (ImRaii.PushColor(ImGuiCol.ButtonHovered, RoleColours.Lit(roleColour ?? default, 0.30f), roleColour is not null))
+        using (ImRaii.PushColor(ImGuiCol.ButtonActive, RoleColours.Lit(roleColour ?? default, 0.50f), roleColour is not null))
         using (ImRaii.PushId(gearset.Record.Id))
         {
             // Deliberately not disabled while a switch is blocked. A disabled item takes no
@@ -357,18 +393,26 @@ internal static class UiTheme
             drawList.AddRect(min, max, ImGui.GetColorU32(ActiveOutline), 2f, ImDrawFlags.None, 2.5f);
         }
 
+        var markSize = TileMarkFontSize(size);
+        var markScale = markSize / ImGui.GetFontSize();
+        var margin = Math.Max(2f, size * 0.07f);
+
         if (showFavourite && gearset.Record.IsFavourite)
         {
-            OutlinedText(drawList, min + new Vector2(2f, 0f), "*", FavouriteColour);
+            OutlinedText(drawList, min + new Vector2(margin, 0f), "*", FavouriteColour, markSize);
         }
 
         if (showItemLevel && gearset.Gearset.ItemLevel > 0)
         {
             var text = gearset.Gearset.ItemLevel.ToString(System.Globalization.CultureInfo.CurrentCulture);
-            var textSize = ImGui.CalcTextSize(text);
+
+            // Measured at the interface font and scaled, rather than measured at the drawn size.
+            // The two agree because the font is the same shape at every size, and this way the
+            // measurement does not depend on which overload the host's binding exposes.
+            var textSize = ImGui.CalcTextSize(text) * markScale;
             var colour = gearset.Gearset.IsIncomplete ? IncompleteColour : new Vector4(1f, 1f, 1f, 1f);
 
-            OutlinedText(drawList, max - textSize - new Vector2(3f, 2f), text, colour);
+            OutlinedText(drawList, max - textSize - new Vector2(margin, margin * 0.7f), text, colour, markSize);
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
@@ -492,6 +536,12 @@ internal static class UiTheme
 
         ImGui.PopTextWrapPos();
     }
+
+    /// <summary>The role of a gearset's job, or unknown when the job table does not describe it.</summary>
+    private static Core.Model.JobRole RoleOf(GearbookState state, ReconciledGearset gearset) =>
+        state.Jobs.TryGetValue(gearset.Gearset.ClassJobId, out var job)
+            ? job.Role
+            : Core.Model.JobRole.Unknown;
 
     /// <summary>Muted text that wraps wherever the caller already said it should.</summary>
     private static void MutedInherited(string text)
