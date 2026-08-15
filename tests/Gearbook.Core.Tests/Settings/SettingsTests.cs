@@ -94,6 +94,28 @@ public class SettingsMigratorTests
     }
 
     [Fact]
+    public void Anything_that_was_on_the_bar_becomes_a_favourite()
+    {
+        // The two ideas were merged, and what the player arranged has to survive that. A set
+        // sitting on the bar was a deliberate act; losing it would be the migration taking away
+        // exactly the thing migrations exist to protect.
+        var settings = new GearbookSettings { LayoutVersion = 2 };
+        settings.For(1).Gearsets =
+        [
+            new() { Id = 1, BarPosition = 0, IsFavourite = false },
+            new() { Id = 2, BarPosition = null, IsFavourite = true },
+            new() { Id = 3, BarPosition = null, IsFavourite = false },
+        ];
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+
+        var records = settings.For(1).Gearsets;
+        Assert.True(records[0].IsFavourite);
+        Assert.True(records[1].IsFavourite);
+        Assert.False(records[2].IsFavourite);
+    }
+
+    [Fact]
     public void A_default_nobody_chose_is_corrected_on_upgrade()
     {
         Assert.Equal(6, SettingsMigrator.CorrectUnchosenDefault(stored: 4, oldDefault: 4, newDefault: 6));

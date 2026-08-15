@@ -13,6 +13,13 @@ public enum GearsetSortOrder
     Job,
     ItemLevel,
 
+    /// <summary>
+    /// Grouped by role, in the order the player put the roles in. Tanks, healers, melee, then
+    /// the two ranged kinds by default, which is the order the game's own character window uses.
+    /// Within a role the jobs stay together and the game's numbering breaks the ties.
+    /// </summary>
+    Role,
+
     /// <summary>Most recently equipped first. Sets this plugin has never equipped go last.</summary>
     LastUsed,
 }

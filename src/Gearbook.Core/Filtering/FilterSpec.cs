@@ -23,14 +23,6 @@ public enum CompletenessFilter
     CompleteOnly,
 }
 
-/// <summary>Whether a gearset on the quick-switch bar should be shown.</summary>
-public enum BarMembershipFilter
-{
-    Any = 0,
-    OnBarOnly,
-    NotOnBarOnly,
-}
-
 /// <summary>
 /// What the player is asking to see. Mutable because the interface edits it directly and this
 /// is also the shape that gets persisted inside a saved view.
@@ -51,8 +43,6 @@ public sealed class FilterSpec
 
     public CompletenessFilter Completeness { get; set; }
 
-    public BarMembershipFilter BarMembership { get; set; }
-
     public bool GlamourLinkedOnly { get; set; }
 
     /// <summary>Show only sets this plugin has not equipped in this many days, or null.</summary>
@@ -69,7 +59,6 @@ public sealed class FilterSpec
         && Tags.Count == 0
         && !FavouritesOnly
         && Completeness == CompletenessFilter.Any
-        && BarMembership == BarMembershipFilter.Any
         && !GlamourLinkedOnly
         && UnusedForDays is null;
 
@@ -82,7 +71,6 @@ public sealed class FilterSpec
         Tags = [.. Tags],
         FavouritesOnly = FavouritesOnly,
         Completeness = Completeness,
-        BarMembership = BarMembership,
         GlamourLinkedOnly = GlamourLinkedOnly,
         UnusedForDays = UnusedForDays,
         Sort = Sort,

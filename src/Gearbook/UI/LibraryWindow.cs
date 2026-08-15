@@ -24,6 +24,8 @@ internal sealed class LibraryWindow : Window
     private const int NoteMaxLength = 2000;
     private const int TagsMaxLength = 500;
 
+    private static readonly Vector4 FavouriteStarColour = new(1.00f, 0.82f, 0.30f, 1f);
+
     private readonly GearbookState state;
 
     private int selectedRecordId = -1;
@@ -95,7 +97,7 @@ internal sealed class LibraryWindow : Window
 
         var filter = character.CurrentFilter;
         var effective = filter.AtLevel(character.FilterLevel);
-        var shown = FilterEngine.Apply(state.Gearsets, effective, state.Jobs, DateTimeOffset.UtcNow);
+        var shown = FilterEngine.Apply(state.Gearsets, effective, state.Jobs, DateTimeOffset.UtcNow, character.RoleOrder);
 
         DrawHeader(character, filter, shown.Count);
         ImGui.Separator();
@@ -313,20 +315,6 @@ internal sealed class LibraryWindow : Window
             changed = true;
         }
 
-        var onBar = filter.BarMembership == BarMembershipFilter.OnBarOnly;
-        if (UiTheme.WrappedCheckbox("onbaronly", loc.Get(LocKeys.FilterOnBarOnly), ref onBar))
-        {
-            filter.BarMembership = onBar ? BarMembershipFilter.OnBarOnly : BarMembershipFilter.Any;
-            changed = true;
-        }
-
-        var notOnBar = filter.BarMembership == BarMembershipFilter.NotOnBarOnly;
-        if (UiTheme.WrappedCheckbox("notonbar", loc.Get(LocKeys.FilterNotOnBarOnly), ref notOnBar))
-        {
-            filter.BarMembership = notOnBar ? BarMembershipFilter.NotOnBarOnly : BarMembershipFilter.Any;
-            changed = true;
-        }
-
         var glamour = filter.GlamourLinkedOnly;
         if (UiTheme.WrappedCheckbox("glamlinked", loc.Get(LocKeys.FilterGlamourLinkedOnly), ref glamour))
         {
@@ -454,7 +442,7 @@ internal sealed class LibraryWindow : Window
         // extra information, after which the plugin looks broken to everybody without it.
         var showBis = state.Bis.HasAnything;
 
-        var columns = 4 + (character.Library.ShowGameNumber ? 1 : 0) + (showBis ? 1 : 0);
+        var columns = 5 + (character.Library.ShowGameNumber ? 1 : 0) + (showBis ? 1 : 0);
 
         using var table = ImRaii.Table("##gearsets", columns,
             ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollY | ImGuiTableFlags.SizingStretchProp);
@@ -463,6 +451,11 @@ internal sealed class LibraryWindow : Window
         {
             return;
         }
+
+        // The favourite mark gets a column of its own rather than a symbol tucked beside the
+        // name. It is the one property that decides what the bar holds, so it is worth being
+        // able to read straight down the list.
+        ImGui.TableSetupColumn(loc.Get(LocKeys.LibraryColumnFavourite), ImGuiTableColumnFlags.WidthFixed, 24f);
 
         if (character.Library.ShowGameNumber)
         {
@@ -485,6 +478,23 @@ internal sealed class LibraryWindow : Window
         {
             ImGui.TableNextRow();
             using var id = ImRaii.PushId(gearset.Record.Id);
+
+            ImGui.TableNextColumn();
+
+            // Clickable, so the column is not only a report. A star that shows the state and
+            // cannot change it makes somebody hunt for the control that can.
+            using (ImRaii.PushColor(ImGuiCol.Text, FavouriteStarColour, gearset.Record.IsFavourite))
+            {
+                if (ImGui.Selectable(gearset.Record.IsFavourite ? "*" : " ", false))
+                {
+                    UiTheme.ToggleFavourite(state, gearset);
+                }
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(loc.Get(LocKeys.LibraryDetailFavouriteHelp));
+            }
 
             if (character.Library.ShowGameNumber)
             {
@@ -589,22 +599,19 @@ internal sealed class LibraryWindow : Window
 
         ImGui.Separator();
 
+        // One control, because there is one idea. A favourite is what the bar shows, and the
+        // help text says so rather than leaving somebody to work it out.
         var favourite = selected.Record.IsFavourite;
         if (UiTheme.WrappedCheckbox("detailfav", loc.Get(LocKeys.LibraryDetailFavourite), ref favourite))
         {
-            state.UpdateRecords(records =>
-                [.. records.Select(r => r.Id == selected.Record.Id ? r with { IsFavourite = favourite } : r)]);
+            UiTheme.ToggleFavourite(state, selected);
         }
 
-        var onBar = selected.Record.BarPosition is not null;
-        if (UiTheme.WrappedCheckbox("detailonbar", loc.Get(LocKeys.LibraryDetailOnBar), ref onBar))
-        {
-            state.UpdateRecords(records => BarOrder.SetOnBar(records, selected.Record.Id, onBar));
-        }
+        UiTheme.HelpMarker(loc.Get(LocKeys.LibraryDetailFavouriteHelp));
 
-        // The bar's order is the player's, so it needs a control. Only shown for a set that is
-        // actually on it, because moving something that is not there has no meaning.
-        if (onBar)
+        // The bar's order is the player's, so it needs a control. Only shown for a favourite,
+        // because moving something that is not on the bar has no meaning.
+        if (favourite)
         {
             ImGui.SameLine();
             if (ImGui.SmallButton("<##barleft"))
@@ -619,7 +626,7 @@ internal sealed class LibraryWindow : Window
             }
 
             ImGui.SameLine();
-            UiTheme.Muted((selected.Record.BarPosition!.Value + 1).ToString(CultureInfo.CurrentCulture));
+            UiTheme.Muted(((selected.Record.BarPosition ?? 0) + 1).ToString(CultureInfo.CurrentCulture));
         }
 
         ImGui.Separator();
@@ -740,6 +747,7 @@ internal sealed class LibraryWindow : Window
         GearsetSortOrder.Job => LocKeys.SortByJob,
         GearsetSortOrder.ItemLevel => LocKeys.SortByItemLevel,
         GearsetSortOrder.LastUsed => LocKeys.SortByLastUsed,
+        GearsetSortOrder.Role => LocKeys.SortByRole,
         _ => LocKeys.SortBySlot,
     });
 

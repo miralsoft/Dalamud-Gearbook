@@ -39,6 +39,30 @@ public sealed class CharacterSettings
     public FilterLevel FilterLevel { get; set; } = FilterLevel.Simple;
 
     /// <summary>
+    /// The order the roles are grouped in when the list is sorted by role.
+    /// </summary>
+    /// <remarks>
+    /// The default is the order the game's own character window uses, so the grouping matches
+    /// what a player already knows before they touch it. A role missing from this list, which is
+    /// what an older stored order looks like after a new role is added, sorts to the end rather
+    /// than to the front.
+    /// </remarks>
+    public List<JobRole> RoleOrder { get; set; } = [.. DefaultRoleOrder];
+
+    /// <summary>The order the roles ship in.</summary>
+    public static IReadOnlyList<JobRole> DefaultRoleOrder { get; } =
+    [
+        JobRole.Tank,
+        JobRole.Healer,
+        JobRole.MeleeDps,
+        JobRole.PhysicalRangedDps,
+        JobRole.MagicalRangedDps,
+        JobRole.Crafter,
+        JobRole.Gatherer,
+        JobRole.Unknown,
+    ];
+
+    /// <summary>
     /// The language, or <see cref="LanguageResolver.Automatic"/> to follow the host. The
     /// reserved code is a value of the same type as a language code rather than a separate
     /// flag, so this stays one field and the resolver has one input.

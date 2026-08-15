@@ -31,6 +31,7 @@ public static class LocKeys
     public const string LibraryEmpty = "library.empty";
     public const string LibraryNoMatches = "library.noMatches";
     public const string LibraryColumnNumber = "library.column.number";
+    public const string LibraryColumnFavourite = "library.column.favourite";
     public const string LibraryColumnName = "library.column.name";
     public const string LibraryColumnJob = "library.column.job";
     public const string LibraryColumnItemLevel = "library.column.itemLevel";
@@ -41,7 +42,7 @@ public static class LocKeys
     public const string LibraryDetailTags = "library.detail.tags";
     public const string LibraryDetailTagsHint = "library.detail.tagsHint";
     public const string LibraryDetailFavourite = "library.detail.favourite";
-    public const string LibraryDetailOnBar = "library.detail.onBar";
+    public const string LibraryDetailFavouriteHelp = "library.detail.favourite.help";
     public const string LibraryDetailPieces = "library.detail.pieces";
     public const string LibraryDetailGlamourPlate = "library.detail.glamourPlate";
     public const string LibraryDetailLastUsed = "library.detail.lastUsed";
@@ -54,8 +55,6 @@ public static class LocKeys
     public const string FilterHeading = "filter.heading";
     public const string FilterFavouritesOnly = "filter.favouritesOnly";
     public const string FilterIncompleteOnly = "filter.incompleteOnly";
-    public const string FilterOnBarOnly = "filter.onBarOnly";
-    public const string FilterNotOnBarOnly = "filter.notOnBarOnly";
     public const string FilterGlamourLinkedOnly = "filter.glamourLinkedOnly";
     public const string FilterRoles = "filter.roles";
     public const string FilterCategories = "filter.categories";
@@ -89,6 +88,7 @@ public static class LocKeys
     public const string SortByJob = "sort.byJob";
     public const string SortByItemLevel = "sort.byItemLevel";
     public const string SortByLastUsed = "sort.byLastUsed";
+    public const string SortByRole = "sort.byRole";
 
     public const string BarLock = "bar.lock";
     public const string BarUnlock = "bar.unlock";
@@ -139,6 +139,8 @@ public static class LocKeys
     public const string SettingsLibraryShowGameNumber = "settings.library.showGameNumber";
     public const string SettingsLibraryShowOrphans = "settings.library.showOrphans";
     public const string SettingsLibraryWarnDuplicates = "settings.library.warnDuplicates";
+    public const string SettingsRoleOrder = "settings.roleOrder";
+    public const string SettingsRoleOrderHelp = "settings.roleOrder.help";
     public const string SettingsNewsAutoOpen = "settings.news.autoOpen";
     public const string SettingsPerCharacterNote = "settings.perCharacterNote";
     public const string SettingsAboutVersion = "settings.about.version";

@@ -281,11 +281,59 @@ internal sealed class SettingsWindow : Window
 
         UiTheme.HelpMarker(loc.Get(LocKeys.LibraryDuplicateWarning));
 
+        ImGui.Spacing();
+        ImGui.Separator();
+
+        UiTheme.Caption(loc.Get(LocKeys.SettingsRoleOrder), loc.Get(LocKeys.SettingsRoleOrderHelp));
+
+        // Up and down rather than dragging. Eight entries do not need a drag, and a drag that is
+        // only worth having for a long list is a control that goes wrong on a short one.
+        var order = character.RoleOrder;
+        for (var i = 0; i < order.Count; i++)
+        {
+            using var id = ImRaii.PushId(i);
+
+            using (ImRaii.Disabled(i == 0))
+            {
+                if (ImGui.SmallButton("^"))
+                {
+                    (order[i - 1], order[i]) = (order[i], order[i - 1]);
+                    changed = true;
+                }
+            }
+
+            ImGui.SameLine();
+
+            using (ImRaii.Disabled(i == order.Count - 1))
+            {
+                if (ImGui.SmallButton("v"))
+                {
+                    (order[i + 1], order[i]) = (order[i], order[i + 1]);
+                    changed = true;
+                }
+            }
+
+            ImGui.SameLine();
+            UiTheme.Wrapped(RoleName(order[i]));
+        }
+
         if (changed)
         {
             state.Save();
         }
     }
+
+    private string RoleName(JobRole role) => state.Loc.Get(role switch
+    {
+        JobRole.Tank => LocKeys.RoleTank,
+        JobRole.Healer => LocKeys.RoleHealer,
+        JobRole.MeleeDps => LocKeys.RoleMeleeDps,
+        JobRole.PhysicalRangedDps => LocKeys.RolePhysicalRangedDps,
+        JobRole.MagicalRangedDps => LocKeys.RoleMagicalRangedDps,
+        JobRole.Crafter => LocKeys.RoleCrafter,
+        JobRole.Gatherer => LocKeys.RoleGatherer,
+        _ => LocKeys.RoleUnknown,
+    });
 
     private void DrawAboutTab()
     {

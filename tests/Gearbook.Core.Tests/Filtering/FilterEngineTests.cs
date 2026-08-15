@@ -88,13 +88,6 @@ public class FilterEngineTests
     }
 
     [Fact]
-    public void Bar_membership_can_be_asked_from_both_sides()
-    {
-        Assert.Equal([4], Apply(new FilterSpec { BarMembership = BarMembershipFilter.OnBarOnly }));
-        Assert.Equal([1, 2, 3, 5], Apply(new FilterSpec { BarMembership = BarMembershipFilter.NotOnBarOnly }));
-    }
-
-    [Fact]
     public void The_glamour_filter_keeps_only_linked_sets()
     {
         Assert.Equal([3], Apply(new FilterSpec { GlamourLinkedOnly = true }));
@@ -231,7 +224,6 @@ public class FilterSpecTests
         Tags = ["raid"],
         FavouritesOnly = false,
         Completeness = CompletenessFilter.IncompleteOnly,
-        BarMembership = BarMembershipFilter.OnBarOnly,
         GlamourLinkedOnly = true,
         UnusedForDays = 30,
         Sort = GearsetSortOrder.Name,

@@ -189,17 +189,9 @@ internal static class UiTheme
         var loc = state.Loc;
         var record = gearset.Record;
 
-        var favourite = record.IsFavourite;
-        if (ImGui.MenuItem(loc.Get(LocKeys.LibraryDetailFavourite), string.Empty, favourite))
+        if (ImGui.MenuItem(loc.Get(LocKeys.LibraryDetailFavourite), string.Empty, record.IsFavourite))
         {
-            state.UpdateRecords(records =>
-                [.. records.Select(r => r.Id == record.Id ? r with { IsFavourite = !favourite } : r)]);
-        }
-
-        var onBar = record.BarPosition is not null;
-        if (ImGui.MenuItem(loc.Get(LocKeys.LibraryDetailOnBar), string.Empty, onBar))
-        {
-            state.UpdateRecords(records => Core.Sorting.BarOrder.SetOnBar(records, record.Id, !onBar));
+            ToggleFavourite(state, gearset);
         }
     }
 
@@ -304,7 +296,10 @@ internal static class UiTheme
     /// </remarks>
     public static bool FavouriteModifierHeld => ImGui.GetIO().KeyCtrl;
 
-    /// <summary>Toggles the favourite mark on one gearset.</summary>
+    /// <summary>
+    /// Toggles the favourite mark, which is the same thing as putting the gearset on the bar or
+    /// taking it off. One mark, one meaning.
+    /// </summary>
     public static void ToggleFavourite(GearbookState state, ReconciledGearset gearset)
     {
         ArgumentNullException.ThrowIfNull(state);
@@ -312,7 +307,7 @@ internal static class UiTheme
 
         var record = gearset.Record;
         state.UpdateRecords(records =>
-            [.. records.Select(r => r.Id == record.Id ? r with { IsFavourite = !record.IsFavourite } : r)]);
+            Core.Sorting.BarOrder.SetFavourite(records, record.Id, !record.IsFavourite));
     }
 
     private static void DrawTooltip(

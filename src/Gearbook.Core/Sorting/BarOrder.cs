@@ -14,14 +14,23 @@ namespace Gearbook.Core.Sorting;
 /// </remarks>
 public static class BarOrder
 {
-    /// <summary>The gearsets on the bar, in the player's order.</summary>
+    /// <summary>
+    /// The gearsets on the bar, in the player's order.
+    /// </summary>
+    /// <remarks>
+    /// Membership is the favourite mark and nothing else. There used to be two ideas here, a
+    /// favourite and a separate "on the bar", and the rule that joined them could not be
+    /// explained: favourite meant on the bar right up until the first set was placed explicitly,
+    /// and then it stopped meaning it. One mark, one meaning. The position only decides the order
+    /// among them.
+    /// </remarks>
     public static IReadOnlyList<ReconciledGearset> OnBar(IEnumerable<ReconciledGearset> gearsets)
     {
         ArgumentNullException.ThrowIfNull(gearsets);
 
         return [.. gearsets
-            .Where(g => g.Record.BarPosition is not null)
-            .OrderBy(g => g.Record.BarPosition!.Value)
+            .Where(g => g.Record.IsFavourite)
+            .OrderBy(g => g.Record.BarPosition ?? int.MaxValue)
             .ThenBy(g => g.Gearset.Slot)];
     }
 
@@ -33,9 +42,11 @@ public static class BarOrder
     {
         ArgumentNullException.ThrowIfNull(records);
 
+        // A favourite with no position yet goes to the end. That is what a set marked from the
+        // context menu looks like a moment before this runs.
         var ordered = records
-            .Where(r => r.BarPosition is not null)
-            .OrderBy(r => r.BarPosition!.Value)
+            .Where(r => r.IsFavourite)
+            .OrderBy(r => r.BarPosition ?? int.MaxValue)
             .ThenBy(r => r.Id)
             .ToList();
 
@@ -52,17 +63,17 @@ public static class BarOrder
     }
 
     /// <summary>
-    /// Puts a gearset on the bar at the end, or takes it off. Taking one off closes the gap it
-    /// leaves behind.
+    /// Marks a gearset as a favourite, which is the same thing as putting it on the bar, or
+    /// removes the mark. Removing one closes the gap it leaves behind.
     /// </summary>
-    public static IReadOnlyList<GearsetRecord> SetOnBar(
+    public static IReadOnlyList<GearsetRecord> SetFavourite(
         IReadOnlyList<GearsetRecord> records,
         int recordId,
-        bool onBar)
+        bool favourite)
     {
         ArgumentNullException.ThrowIfNull(records);
 
-        var next = records.Count(r => r.BarPosition is not null);
+        var next = records.Count(r => r.IsFavourite);
 
         var updated = records.Select(r =>
         {
@@ -71,12 +82,14 @@ public static class BarOrder
                 return r;
             }
 
-            if (!onBar)
+            if (!favourite)
             {
-                return r with { BarPosition = null };
+                return r with { IsFavourite = false, BarPosition = null };
             }
 
-            return r.BarPosition is not null ? r : r with { BarPosition = next };
+            return r.IsFavourite
+                ? r
+                : r with { IsFavourite = true, BarPosition = next };
         });
 
         return Normalise([.. updated]);
@@ -100,8 +113,8 @@ public static class BarOrder
         var normalised = Normalise(records);
 
         var ordered = normalised
-            .Where(r => r.BarPosition is not null)
-            .OrderBy(r => r.BarPosition!.Value)
+            .Where(r => r.IsFavourite)
+            .OrderBy(r => r.BarPosition ?? int.MaxValue)
             .ToList();
 
         var index = ordered.FindIndex(r => r.Id == recordId);

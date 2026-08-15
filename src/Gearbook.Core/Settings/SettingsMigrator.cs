@@ -21,7 +21,7 @@ namespace Gearbook.Core.Settings;
 public static class SettingsMigrator
 {
     /// <summary>The layout version this build writes.</summary>
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
 
     /// <summary>
     /// Migrates in place and reports what it did.
@@ -88,6 +88,34 @@ public static class SettingsMigrator
                     }
 
                     settings.LayoutVersion = 2;
+                    break;
+
+                case 2:
+                    // The favourite mark and "on the bar" used to be two separate things, and
+                    // the rule joining them could not be explained. They are one thing now:
+                    // a favourite is on the bar, and the position only orders them.
+                    //
+                    // Anything that was on the bar becomes a favourite, because that is what the
+                    // player arranged and it must survive. A favourite that was not on the bar
+                    // keeps its mark and joins the bar at the end, which is a change they will
+                    // see, and the alternative is dropping a mark they set deliberately.
+                    foreach (var character in settings.Characters.Values)
+                    {
+                        if (character?.Gearsets is null)
+                        {
+                            continue;
+                        }
+
+                        foreach (var gearset in character.Gearsets)
+                        {
+                            if (gearset.BarPosition is not null)
+                            {
+                                gearset.IsFavourite = true;
+                            }
+                        }
+                    }
+
+                    settings.LayoutVersion = 3;
                     break;
 
                 default:

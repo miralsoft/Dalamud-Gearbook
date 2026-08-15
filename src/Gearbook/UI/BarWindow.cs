@@ -4,7 +4,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Adapters;
-using Gearbook.Core.Filtering;
 using Gearbook.Core.Identity;
 using Gearbook.Core.Localization;
 using Gearbook.Core.Sorting;
@@ -101,6 +100,21 @@ internal sealed class BarWindow : Window
                      | ImGuiWindowFlags.NoBackground;
         }
 
+        // Unlocked, the window has a title bar, and the bar sizes itself to its contents. Two
+        // icons are narrower than the title and its buttons, so the buttons end up half off the
+        // window and cannot be pressed, which is exactly when they are needed.
+        //
+        // The floor is measured rather than guessed: the title, one square per button plus the
+        // close button, the spacing between them, and the window's own padding. A number typed
+        // here would be wrong at the next font size or the next added button.
+        SizeConstraints = locked
+            ? null
+            : new WindowSizeConstraints
+            {
+                MinimumSize = new Vector2(MinimumUnlockedWidth(), 0f),
+                MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+            };
+
         // Pushed before any early return in Draw, and popped unconditionally in PostDraw. An
         // unbalanced style stack does not corrupt this window, it corrupts every window drawn
         // after it, including other plugins'. That is the one drawing mistake you cannot find by
@@ -114,6 +128,22 @@ internal sealed class BarWindow : Window
     /// <inheritdoc />
     public override void PostDraw() => ImGui.PopStyleVar(2);
 
+    /// <summary>
+    /// How wide the window has to be for its own title bar to fit.
+    /// </summary>
+    private float MinimumUnlockedWidth()
+    {
+        var style = ImGui.GetStyle();
+
+        // One square per cross-link, plus the close button the host draws itself.
+        var buttons = TitleBarButtons.Count + 1;
+        var buttonWidth = buttons * (ImGui.GetFrameHeight() + style.ItemInnerSpacing.X);
+
+        var title = ImGui.CalcTextSize(state.Loc.Get(LocKeys.WindowBarTitle)).X;
+
+        return title + buttonWidth + (style.WindowPadding.X * 4f);
+    }
+
     /// <inheritdoc />
     public override void Draw()
     {
@@ -126,7 +156,7 @@ internal sealed class BarWindow : Window
         var loc = state.Loc;
         var settings = character.Bar;
 
-        var shown = Contents(character.FilterLevel, character.CurrentFilter);
+        var shown = Contents();
 
         if (shown.Count == 0)
         {
@@ -187,28 +217,15 @@ internal sealed class BarWindow : Window
     }
 
     /// <summary>
-    /// What the bar shows: the sets the player put on it, or, if they put none there, whatever
-    /// the current filter lets through.
+    /// What the bar shows: the favourites, in the order the player arranged them.
     /// </summary>
     /// <remarks>
-    /// The fallback is what makes the bar useful on the first run, before anybody has arranged
-    /// anything. A bar that starts empty and stays empty until its owner reads the manual is a
-    /// bar nobody keeps.
+    /// One rule, with no fallback behind it. There used to be two more: favourites when nothing
+    /// was placed explicitly, then the whole filtered list when there were no favourites either.
+    /// Both were there to keep the bar from starting empty, and the price was that nobody could
+    /// say what the bar was showing without knowing which of the three cases they were in. An
+    /// empty bar that says how to fill it is easier to understand than a full one that cannot
+    /// explain itself.
     /// </remarks>
-    private IReadOnlyList<ReconciledGearset> Contents(FilterLevel level, FilterSpec filter)
-    {
-        var arranged = BarOrder.OnBar(state.Gearsets);
-        if (arranged.Count > 0)
-        {
-            return arranged;
-        }
-
-        var favourites = state.Gearsets.Where(g => g.Record.IsFavourite).ToList();
-        if (favourites.Count > 0)
-        {
-            return FilterEngine.Sort(favourites, GearsetSortOrder.Slot, state.Jobs);
-        }
-
-        return FilterEngine.Apply(state.Gearsets, filter.AtLevel(level), state.Jobs, DateTimeOffset.UtcNow);
-    }
+    private IReadOnlyList<ReconciledGearset> Contents() => BarOrder.OnBar(state.Gearsets);
 }
