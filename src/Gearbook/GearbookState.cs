@@ -102,6 +102,10 @@ internal sealed class GearbookState : IDisposable
     /// <summary>The icon the game itself uses for a gearset.</summary>
     public uint IconFor(int slot) => jobData.IconIdFor(slot);
 
+    /// <summary>The host's symbol font, for the controls that are not gearsets.</summary>
+    public static Dalamud.Interface.ManagedFontAtlas.IFontHandle IconFont =>
+        GearbookServices.PluginInterface.UiBuilder.IconFontHandle;
+
     /// <summary>Asks for a re-read on the next tick.</summary>
     public void RequestRefresh() => refreshRequested = true;
 

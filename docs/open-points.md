@@ -36,6 +36,14 @@ Both `JobClassifier` questions that sat here were closed on 2026-08-15 by readin
 table out of the installed client. One of the two constants was wrong and had already reached a
 player. See the entries of that date in `decisions.md`.
 
+- **(open since 2026-08-15) The role symbols on the bar's view switcher.** The game has its own
+  role icons, the ones its character window draws beside Verteidiger, Heiler and the rest, and
+  they would look more at home than the host's symbol font that is used instead. Their icon
+  numbers could not be established from outside a running client, and a picture guessed wrong is
+  worse than one that is merely plainer, because a wrong one looks deliberate. Establish them
+  with the client in front of you and swap them in; the switcher already has one place where the
+  symbol per view is decided.
+
 ## Waiting on the owner
 
 - **(open since 2026-08-13) The icon.** Needed before the first release, not before the first

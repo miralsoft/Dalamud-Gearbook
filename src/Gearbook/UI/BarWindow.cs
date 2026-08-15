@@ -254,8 +254,9 @@ internal sealed class BarWindow : Window
         var size = new Vector2(settings.IconSize, settings.IconSize);
 
         using (ImRaii.PushId("##gearbookview"))
+        using (GearbookState.IconFont.Push())
         {
-            ImGui.Button(ViewShortLabel(settings), size);
+            ImGui.Button(ViewIcon(settings).ToIconString(), size);
         }
 
         if (ImGui.IsItemHovered())
@@ -274,19 +275,10 @@ internal sealed class BarWindow : Window
             return;
         }
 
-        if (ImGui.MenuItem(loc.Get(LocKeys.SettingsBarContentsFavourites), string.Empty,
-                settings.ViewKind == BarViewKind.Favourites))
-        {
-            SetView(settings, BarViewKind.Favourites);
-        }
-
-        if (ImGui.MenuItem(loc.Get(LocKeys.SettingsBarContentsAll), string.Empty,
-                settings.ViewKind == BarViewKind.All))
-        {
-            SetView(settings, BarViewKind.All);
-        }
-
-        ImGui.Separator();
+        // The views as a fold-out strip of the same symbols, at the same size as the tiles, so
+        // choosing one is the same gesture as pressing a gearset rather than reading a list of
+        // words about pictures.
+        var iconSize = settings.IconSize;
 
         foreach (var role in Enum.GetValues<JobRole>())
         {
@@ -295,8 +287,12 @@ internal sealed class BarWindow : Window
                 continue;
             }
 
-            var active = settings.ViewKind == BarViewKind.Role && settings.ViewRole == role;
-            if (ImGui.MenuItem(RoleName(role), string.Empty, active))
+            if (ViewButton(
+                    settings,
+                    iconSize,
+                    ViewIconFor(BarViewKind.Role, role, JobCategory.Combat),
+                    RoleName(role),
+                    settings.ViewKind == BarViewKind.Role && settings.ViewRole == role))
             {
                 settings.ViewRole = role;
                 SetView(settings, BarViewKind.Role);
@@ -312,16 +308,37 @@ internal sealed class BarWindow : Window
                 continue;
             }
 
-            var active = settings.ViewKind == BarViewKind.Category && settings.ViewCategory == category;
-            if (ImGui.MenuItem(CategoryName(category), string.Empty, active))
+            if (ViewButton(
+                    settings,
+                    iconSize,
+                    ViewIconFor(BarViewKind.Category, JobRole.Unknown, category),
+                    CategoryName(category),
+                    settings.ViewKind == BarViewKind.Category && settings.ViewCategory == category))
             {
                 settings.ViewCategory = category;
                 SetView(settings, BarViewKind.Category);
             }
         }
 
-        // The player's own words, so this part of the menu grows without anybody adding a
-        // feature: tag a few sets as glamour and the bar can show exactly those.
+        ImGui.Separator();
+
+        if (ViewButton(settings, iconSize, FontAwesomeIcon.Star,
+                loc.Get(LocKeys.SettingsBarContentsFavourites),
+                settings.ViewKind == BarViewKind.Favourites))
+        {
+            SetView(settings, BarViewKind.Favourites);
+        }
+
+        if (ViewButton(settings, iconSize, FontAwesomeIcon.ThLarge,
+                loc.Get(LocKeys.SettingsBarContentsAll),
+                settings.ViewKind == BarViewKind.All))
+        {
+            SetView(settings, BarViewKind.All);
+        }
+
+        // The player's own words, so this part grows without anybody adding a feature: tag a few
+        // sets as glamour and the bar can show exactly those. Tags stay as text, because one
+        // symbol repeated for every tag would say nothing about which is which.
         var tags = FilterEngine.CollectTags(state.Gearsets);
         if (tags.Count == 0)
         {
@@ -343,20 +360,96 @@ internal sealed class BarWindow : Window
         }
     }
 
+    /// <summary>
+    /// One entry of the fold-out strip: the symbol, its name beside it, and a frame when it is
+    /// the view currently showing.
+    /// </summary>
+    /// <remarks>
+    /// The name is kept beside the symbol rather than left to a tooltip. A strip of unfamiliar
+    /// glyphs is a guessing game the first few times, and the words cost one row of width in a
+    /// menu that opens on demand.
+    /// </remarks>
+    private static bool ViewButton(
+        BarSettings settings,
+        float size,
+        FontAwesomeIcon icon,
+        string label,
+        bool active)
+    {
+        using var id = ImRaii.PushId(label);
+
+        var origin = ImGui.GetCursorScreenPos();
+        bool pressed;
+
+        using (GearbookState.IconFont.Push())
+        {
+            pressed = ImGui.Button(icon.ToIconString(), new Vector2(size, size));
+        }
+
+        if (active)
+        {
+            var padding = ImGui.GetStyle().FramePadding * 2f;
+            ImGui.GetWindowDrawList().AddRect(
+                origin,
+                origin + new Vector2(size, size) + padding,
+                ImGui.GetColorU32(UiTheme.UnreadColour),
+                2f,
+                ImDrawFlags.None,
+                2.5f);
+        }
+
+        ImGui.SameLine();
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextUnformatted(label);
+
+        return pressed;
+    }
+
+    private static FontAwesomeIcon ViewIconFor(BarViewKind kind, JobRole role, JobCategory category) =>
+        ViewIcon(new BarSettings { ViewKind = kind, ViewRole = role, ViewCategory = category });
+
     private void SetView(BarSettings settings, BarViewKind kind)
     {
         settings.ViewKind = kind;
         state.Save();
     }
 
-    /// <summary>What fits on a tile: a couple of characters saying which view is active.</summary>
-    private string ViewShortLabel(BarSettings settings) => settings.ViewKind switch
+    /// <summary>
+    /// The symbol on the switcher tile.
+    /// </summary>
+    /// <remarks>
+    /// From the host's own symbol font rather than from the game's role icons. The game has
+    /// those, and they would look more at home, but their numbers could not be established from
+    /// outside a running client, and a picture guessed wrong is worse than one that is merely
+    /// plainer: it looks deliberate. Recorded in the project's open points so it can be revisited
+    /// with the client in front of somebody.
+    /// </remarks>
+    private static FontAwesomeIcon ViewIcon(BarSettings settings) => settings.ViewKind switch
     {
-        BarViewKind.All => "***",
-        BarViewKind.Role => Shorten(RoleName(settings.ViewRole)),
-        BarViewKind.Category => Shorten(CategoryName(settings.ViewCategory)),
-        BarViewKind.Tag => Shorten(settings.ViewTag),
-        _ => "*",
+        BarViewKind.All => FontAwesomeIcon.ThLarge,
+        BarViewKind.Tag => FontAwesomeIcon.Tag,
+
+        BarViewKind.Role => settings.ViewRole switch
+        {
+            JobRole.Tank => FontAwesomeIcon.Shield,
+            JobRole.Healer => FontAwesomeIcon.Plus,
+            JobRole.MeleeDps => FontAwesomeIcon.FistRaised,
+            JobRole.PhysicalRangedDps => FontAwesomeIcon.Bullseye,
+            JobRole.MagicalRangedDps => FontAwesomeIcon.HatWizard,
+            JobRole.Crafter => FontAwesomeIcon.Hammer,
+            JobRole.Gatherer => FontAwesomeIcon.Leaf,
+            _ => FontAwesomeIcon.Filter,
+        },
+
+        BarViewKind.Category => settings.ViewCategory switch
+        {
+            JobCategory.Combat => FontAwesomeIcon.Khanda,
+            JobCategory.Crafting => FontAwesomeIcon.Hammer,
+            JobCategory.Gathering => FontAwesomeIcon.Leaf,
+            _ => FontAwesomeIcon.Filter,
+        },
+
+        _ => FontAwesomeIcon.Star,
     };
 
     /// <summary>The full name of the active view, for the tooltip.</summary>
