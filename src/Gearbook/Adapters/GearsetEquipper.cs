@@ -28,7 +28,7 @@ internal sealed unsafe class GearsetEquipper : IGearsetEquipper
     }
 
     /// <inheritdoc />
-    public EquipOutcome CheckCanEquip(int slot, bool isIncomplete)
+    public EquipOutcome CheckCanEquip(int slot)
     {
         if (!gameState.IsLoggedIn)
         {
@@ -50,11 +50,9 @@ internal sealed unsafe class GearsetEquipper : IGearsetEquipper
             return EquipOutcome.Occupied;
         }
 
-        if (isIncomplete)
-        {
-            return EquipOutcome.Incomplete;
-        }
-
+        // A set missing a piece is not refused here. The game answers that case itself, by
+        // asking whether to use a suitable substitute, and the player decides. Nothing in this
+        // plugin touches that dialog; it appears because the game put it there.
         if (gameState.CurrentGearsetSlot == slot)
         {
             return EquipOutcome.AlreadyWorn;
@@ -68,7 +66,7 @@ internal sealed unsafe class GearsetEquipper : IGearsetEquipper
     {
         // The check runs again here rather than trusting the interface to have run it. The
         // interface asked a frame ago, and combat can start in between.
-        var allowed = CheckCanEquip(slot, isIncomplete: false);
+        var allowed = CheckCanEquip(slot);
         if (allowed != EquipOutcome.Sent)
         {
             GearbookServices.Log.Debug(

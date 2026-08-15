@@ -77,7 +77,61 @@ internal static class UiTheme
     public static void Muted(string text)
     {
         using var colour = ImRaii.PushColor(ImGuiCol.Text, MutedColour);
+        Wrapped(text);
+    }
+
+    /// <summary>
+    /// Text that wraps at the edge of whatever it is drawn in, rather than running past it.
+    /// </summary>
+    /// <remarks>
+    /// The default is not to wrap, so a caption that fits in English disappears off the side in
+    /// German, where the same sentence is reliably longer. Layout is checked in the longest
+    /// shipped language for exactly this reason, and wrapping is what makes that check pass
+    /// without shortening the German into something clipped in meaning instead of in pixels.
+    /// </remarks>
+    public static void Wrapped(string text)
+    {
+        ImGui.PushTextWrapPos(0f);
         ImGui.TextUnformatted(text);
+        ImGui.PopTextWrapPos();
+    }
+
+    /// <summary>
+    /// A caption above a control, with an optional explanation behind a help affordance.
+    /// </summary>
+    /// <remarks>
+    /// Above rather than beside. ImGui puts a widget's own label to its right, which adds the
+    /// caption's width to the widget's and makes the pair as wide as the longest translation. A
+    /// caption on its own line wraps instead, so the window can be any width and nothing is cut
+    /// off.
+    /// </remarks>
+    public static void Caption(string text, string? help = null)
+    {
+        Wrapped(text);
+
+        if (help is not null)
+        {
+            HelpMarker(help);
+        }
+    }
+
+    /// <summary>
+    /// A checkbox whose caption wraps instead of running off the edge.
+    /// </summary>
+    /// <remarks>
+    /// The caption is drawn as text beside a label-less box, because an ImGui checkbox label
+    /// does not wrap at all. The cost is that only the box is clickable rather than the whole
+    /// line. That is a smaller loss than a sentence with its ending cut off, which is what the
+    /// alternative produced in German.
+    /// </remarks>
+    public static bool WrappedCheckbox(string id, string caption, ref bool value)
+    {
+        var changed = ImGui.Checkbox($"##{id}", ref value);
+
+        ImGui.SameLine();
+        Wrapped(caption);
+
+        return changed;
     }
 
     /// <summary>
@@ -184,6 +238,17 @@ internal static class UiTheme
             Muted(string.Join(", ", gearset.Record.Tags));
         }
 
+        // Said out loud rather than left to the colour of a number, and phrased as what will
+        // happen rather than as a refusal, because the set is still perfectly equippable.
+        if (gearset.Gearset.IsIncomplete)
+        {
+            ImGui.Separator();
+            using var incomplete = ImRaii.PushColor(ImGuiCol.Text, IncompleteColour);
+            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 24f);
+            ImGui.TextUnformatted(loc.Get(LocKeys.GearsetIncomplete));
+            ImGui.PopTextWrapPos();
+        }
+
         var badge = state.Bis.For(gearset.Gearset.Slot);
         if (badge is not null)
         {
@@ -214,7 +279,6 @@ internal static class UiTheme
         Adapters.EquipOutcome.InCombat => loc.Get(LocKeys.SwitchBlockedInCombat),
         Adapters.EquipOutcome.InCutscene => loc.Get(LocKeys.SwitchBlockedInCutscene),
         Adapters.EquipOutcome.Occupied => loc.Get(LocKeys.SwitchBlockedOccupied),
-        Adapters.EquipOutcome.Incomplete => loc.Get(LocKeys.SwitchBlockedIncomplete),
         Adapters.EquipOutcome.AlreadyWorn => loc.Get(LocKeys.SwitchAlreadyActive),
         Adapters.EquipOutcome.Refused => loc.Get(LocKeys.SwitchFailed),
         _ => null,

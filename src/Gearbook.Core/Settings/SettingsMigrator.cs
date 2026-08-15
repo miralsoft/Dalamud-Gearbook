@@ -21,7 +21,7 @@ namespace Gearbook.Core.Settings;
 public static class SettingsMigrator
 {
     /// <summary>The layout version this build writes.</summary>
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     /// <summary>
     /// Migrates in place and reports what it did.
@@ -64,6 +64,30 @@ public static class SettingsMigrator
                     // needs converting, the fields are the same, so the step only stamps the
                     // version on it.
                     settings.LayoutVersion = 1;
+                    break;
+
+                case 1:
+                    // The shipped bar icon size changed from forty to thirty. Forty was chosen
+                    // before the bar had been seen in a real client, where it sits noticeably
+                    // larger than the game's own hotbars.
+                    //
+                    // Corrected only where the stored value still stands at exactly the old
+                    // default, which is the test for whether anybody ever expressed an opinion
+                    // about it. A value that moved was a decision and stays the player's.
+                    foreach (var character in settings.Characters.Values)
+                    {
+                        if (character?.Bar is null)
+                        {
+                            continue;
+                        }
+
+                        character.Bar.IconSize = CorrectUnchosenDefault(
+                            character.Bar.IconSize,
+                            BarSettings.PreviousDefaultIconSize,
+                            BarSettings.DefaultIconSize);
+                    }
+
+                    settings.LayoutVersion = 2;
                     break;
 
                 default:

@@ -18,9 +18,6 @@ internal enum EquipOutcome
     /// <summary>Busy with something the game will not interrupt.</summary>
     Occupied,
 
-    /// <summary>The set is missing a piece and cannot be worn as it stands.</summary>
-    Incomplete,
-
     /// <summary>It is already worn.</summary>
     AlreadyWorn,
 
@@ -69,5 +66,11 @@ internal interface IGearsetEquipper
     /// can. What the interface asks before greying a tile out, so that the reason in the tooltip
     /// and the reason in the log are the same answer from the same code.
     /// </summary>
-    EquipOutcome CheckCanEquip(int slot, bool isIncomplete);
+    /// <remarks>
+    /// A set missing a piece is deliberately not one of the reasons. The game handles that case
+    /// itself: it asks whether to use a substitute and lets the player decide. Refusing here
+    /// would take away something the player has in the game's own window, which is a worse
+    /// failure than letting a dialog appear.
+    /// </remarks>
+    EquipOutcome CheckCanEquip(int slot);
 }

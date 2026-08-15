@@ -43,6 +43,57 @@ public class SettingsMigratorTests
     }
 
     [Fact]
+    public void The_bar_icon_size_is_corrected_for_anybody_still_on_the_old_default()
+    {
+        var settings = new GearbookSettings { LayoutVersion = 1 };
+        settings.For(1).Bar.IconSize = 40f;
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+        Assert.Equal(30f, settings.For(1).Bar.IconSize);
+    }
+
+    [Fact]
+    public void An_icon_size_the_player_chose_survives_the_same_migration()
+    {
+        // The whole point of the step: somebody who moved the slider to 64 expressed an
+        // opinion, and a corrected default must not overwrite it.
+        var settings = new GearbookSettings { LayoutVersion = 1 };
+        settings.For(1).Bar.IconSize = 64f;
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+        Assert.Equal(64f, settings.For(1).Bar.IconSize);
+    }
+
+    [Fact]
+    public void The_icon_size_migration_reaches_every_character_rather_than_the_first()
+    {
+        var settings = new GearbookSettings { LayoutVersion = 1 };
+        settings.For(1).Bar.IconSize = 40f;
+        settings.For(2).Bar.IconSize = 40f;
+        settings.For(3).Bar.IconSize = 48f;
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+
+        Assert.Equal(30f, settings.For(1).Bar.IconSize);
+        Assert.Equal(30f, settings.For(2).Bar.IconSize);
+        Assert.Equal(48f, settings.For(3).Bar.IconSize);
+    }
+
+    [Fact]
+    public void A_file_from_before_versioning_walks_every_step_rather_than_jumping_to_the_end()
+    {
+        // Version 0 has to pass through the version 1 step to reach 2, or a file that skipped
+        // it would arrive stamped as current without having been converted.
+        var settings = new GearbookSettings { LayoutVersion = 0 };
+        settings.For(1).Bar.IconSize = 40f;
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+
+        Assert.Equal(SettingsMigrator.CurrentVersion, settings.LayoutVersion);
+        Assert.Equal(30f, settings.For(1).Bar.IconSize);
+    }
+
+    [Fact]
     public void A_default_nobody_chose_is_corrected_on_upgrade()
     {
         Assert.Equal(6, SettingsMigrator.CorrectUnchosenDefault(stored: 4, oldDefault: 4, newDefault: 6));

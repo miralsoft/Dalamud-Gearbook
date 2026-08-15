@@ -122,7 +122,7 @@ internal sealed class GearbookState : IDisposable
     /// answer the equipper will give, so the tooltip and the log cannot disagree.
     /// </summary>
     public EquipOutcome CheckCanEquip(ReconciledGearset gearset) =>
-        equipper.CheckCanEquip(gearset.Gearset.Slot, gearset.Gearset.IsIncomplete);
+        equipper.CheckCanEquip(gearset.Gearset.Slot);
 
     /// <summary>Saves the configuration.</summary>
     public void Save() => configuration.Save();

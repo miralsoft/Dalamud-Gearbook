@@ -13,7 +13,19 @@ public sealed class BarSettings
     public int Columns { get; set; } = 6;
 
     /// <summary>Icon edge length in pixels before the interface scale is applied.</summary>
-    public float IconSize { get; set; } = 40f;
+    /// <remarks>
+    /// Thirty rather than the forty this shipped with first. Forty was chosen before anybody had
+    /// seen the bar in a real client, and against the game's own hotbars it is oversized. The
+    /// migration to layout version 2 corrects it for anybody still sitting on the old default,
+    /// and leaves it alone for anybody who moved the slider.
+    /// </remarks>
+    public float IconSize { get; set; } = DefaultIconSize;
+
+    /// <summary>The shipped icon size, named because the migration compares against it.</summary>
+    internal const float DefaultIconSize = 30f;
+
+    /// <summary>What <see cref="IconSize"/> shipped as before layout version 2.</summary>
+    internal const float PreviousDefaultIconSize = 40f;
 
     /// <summary>Spacing between icons in pixels.</summary>
     public float IconSpacing { get; set; } = 4f;

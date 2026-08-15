@@ -162,6 +162,34 @@ Each entry: date, decision, rationale, and what was rejected.
   the mistake is visible in the filter rather than silent. Rejected: a hardcoded list of job ids,
   which would be correct today and wrong the first time a job is added.
 
+- **(2026-08-15) A gearset missing a piece is no longer refused. This supersedes the entry of
+  2026-08-13 that made incompleteness a blocking reason.** Rationale: the first session with the
+  game running showed what the game itself does in that case. It does not refuse. It opens a
+  dialog naming the missing piece, offers a suitable substitute already in the armoury, and lets
+  the player answer. Blocking the switch therefore took away something the player has in the
+  game's own window, which is the worst kind of helpfulness: a restriction invented by a tool
+  that exists to remove friction.
+
+  Nothing here touches that dialog. The plugin calls the same function the game's own gearset
+  window calls; the dialog appears because the game put it there, and the player answers it. That
+  keeps this on the allowed side of the platform's restriction about operating game windows,
+  which the earlier caution was not needed for in the first place.
+
+  The set is still marked: the item level is drawn in the warning colour, and the tooltip and the
+  detail panel say that a piece is missing and that the game will offer a replacement. The key
+  behind that sentence was renamed from `switch.blocked.incomplete` to `gearset.incomplete`, so
+  that the name describes a state rather than a refusal and nobody reintroduces the block by
+  reading it. Rejected: keeping the block behind a setting, which would have made a wrong default
+  configurable rather than fixing it.
+
+- **(2026-08-15) The bar's default icon size is 30 rather than 40, with a migration.** Rationale:
+  forty was chosen before the bar had been seen in a real client, where it sits noticeably larger
+  than the game's own hotbars. The layout version goes to 2 and the step corrects the stored value
+  only where it still stands at exactly the old default, which is the test for whether anybody
+  ever expressed an opinion about it. A slider that was moved is a decision and stays the player's.
+  This is the first real use of the migration mechanism, which existed with one version and no
+  steps until now.
+
 - **(2026-08-13) Item level is read from the gearset entry, not computed from its equipment.**
   Rationale: `GearsetEntry.ItemLevel` exists and is the number the game itself shows in the gearset
   list, established by reflection. The alternative was reading fourteen equipment slots per set and

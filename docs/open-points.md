@@ -4,6 +4,20 @@ Purpose: open questions and unresolved items. Distinct from `todos.md`, which is
 These still need a decision or a verification. Each entry names who it waits on and since when, so
 an item cannot sit unanswered without that being visible.
 
+## Answered by the first session with the game running (2026-08-15)
+
+Kept rather than deleted, because what was checked is as useful to the next reader as what is
+still open.
+
+- **The plugin loads, the bar draws, and a gearset actually changes.** Observed switching to a
+  black mage set and to a dark knight set from the bar, with the game's own log confirming both.
+- **`EquipGearset` with a glamour plate argument of zero works** for a set that is not linked to
+  a plate. The linked case is still open, below.
+- **The slot numbering lines up.** The bar's order and item levels matched the game's own gearset
+  list entry for entry, which it could not do if the index were off by one.
+- **German reaches the interface**, including the settings window and its tabs.
+- **The job icons are the game's own**, so the bar looks like the hotbar it replaces.
+
 ## Waiting on a running game, not on a decision
 
 - **(open since 2026-08-13) What does the second parameter of `EquipGearset(int, byte)` expect

@@ -22,10 +22,10 @@ namespace Gearbook.Adapters;
 internal sealed unsafe class GearsetReader : IGearsetReader
 {
     /// <summary>
-    /// The module holds a fixed array of this many entries. Read from the structure rather than
-    /// assumed, and it is also the limit the game itself shows in its gearset window.
+    /// The module holds a fixed array of this many entries. Named in the core so that this loop
+    /// and the bar's column ceiling cannot drift apart about what the limit is.
     /// </summary>
-    private const int MaxGearsets = 100;
+    private const int MaxGearsets = GameLimits.MaxGearsets;
 
     /// <summary>
     /// The value <see cref="RaptureGearsetModule.GearsetEntry.GlamourSetLink"/> carries when no

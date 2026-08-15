@@ -98,7 +98,12 @@ public static class LocKeys
     public const string SwitchBlockedInCombat = "switch.blocked.inCombat";
     public const string SwitchBlockedInCutscene = "switch.blocked.inCutscene";
     public const string SwitchBlockedOccupied = "switch.blocked.occupied";
-    public const string SwitchBlockedIncomplete = "switch.blocked.incomplete";
+    /// <summary>
+    /// Not a refusal. A set missing a piece is still equipped; the game asks whether to use a
+    /// substitute and the player answers. The key is named for the state, not for a block, so
+    /// that nobody reintroduces the block by reading the name.
+    /// </summary>
+    public const string GearsetIncomplete = "gearset.incomplete";
     public const string SwitchBlockedNotLoggedIn = "switch.blocked.notLoggedIn";
     public const string SwitchAlreadyActive = "switch.alreadyActive";
     public const string SwitchFailed = "switch.failed";
@@ -127,6 +132,7 @@ public static class LocKeys
     public const string SettingsBarShowOnStart = "settings.bar.showOnStart";
     public const string SettingsLibraryShowGameNumber = "settings.library.showGameNumber";
     public const string SettingsLibraryShowOrphans = "settings.library.showOrphans";
+    public const string SettingsLibraryWarnDuplicates = "settings.library.warnDuplicates";
     public const string SettingsNewsAutoOpen = "settings.news.autoOpen";
     public const string SettingsPerCharacterNote = "settings.perCharacterNote";
     public const string SettingsAboutVersion = "settings.about.version";

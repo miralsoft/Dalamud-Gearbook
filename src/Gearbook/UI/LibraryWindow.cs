@@ -71,7 +71,7 @@ internal sealed class LibraryWindow : Window
         ImGui.Separator();
 
         var showSidebar = character.FilterLevel != FilterLevel.FavouritesOnly;
-        var sidebarWidth = showSidebar ? 190f : 0f;
+        var sidebarWidth = showSidebar ? 230f : 0f;
 
         if (showSidebar)
         {
@@ -132,11 +132,18 @@ internal sealed class LibraryWindow : Window
         var orderLabels = orders.Select(SortName).ToList();
         var orderIndex = Math.Max(0, Array.IndexOf(orders, filter.Sort));
 
+        // The caption goes inside the control rather than beside it, because the header is a
+        // single row and a label to the right of a combo pushes everything after it off the end.
         ImGui.SetNextItemWidth(190f);
-        if (ImGui.Combo(loc.Get(LocKeys.SortHeading), ref orderIndex, orderLabels, orderLabels.Count))
+        if (ImGui.Combo("##sort", ref orderIndex, orderLabels, orderLabels.Count))
         {
             filter.Sort = orders[orderIndex];
             state.Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(loc.Get(LocKeys.SortHeading));
         }
 
         ImGui.SameLine();
@@ -197,7 +204,7 @@ internal sealed class LibraryWindow : Window
         ImGui.Separator();
 
         var favourites = filter.FavouritesOnly;
-        if (ImGui.Checkbox(loc.Get(LocKeys.FilterFavouritesOnly), ref favourites))
+        if (UiTheme.WrappedCheckbox("favonly", loc.Get(LocKeys.FilterFavouritesOnly), ref favourites))
         {
             filter.FavouritesOnly = favourites;
             changed = true;
@@ -214,7 +221,7 @@ internal sealed class LibraryWindow : Window
             }
 
             var selected = filter.Roles.Contains(role);
-            if (ImGui.Checkbox(RoleName(role), ref selected))
+            if (UiTheme.WrappedCheckbox($"role{role}", RoleName(role), ref selected))
             {
                 if (selected)
                 {
@@ -240,7 +247,7 @@ internal sealed class LibraryWindow : Window
             }
 
             var selected = filter.Categories.Contains(category);
-            if (ImGui.Checkbox(CategoryName(category), ref selected))
+            if (UiTheme.WrappedCheckbox($"cat{category}", CategoryName(category), ref selected))
             {
                 if (selected)
                 {
@@ -279,7 +286,7 @@ internal sealed class LibraryWindow : Window
             var selected = filter.Tags.Any(t =>
                 string.Equals(t, tag, StringComparison.CurrentCultureIgnoreCase));
 
-            if (ImGui.Checkbox(tag, ref selected))
+            if (UiTheme.WrappedCheckbox($"tag{tag}", tag, ref selected))
             {
                 if (selected)
                 {
@@ -298,36 +305,37 @@ internal sealed class LibraryWindow : Window
         ImGui.Separator();
 
         var incomplete = filter.Completeness == CompletenessFilter.IncompleteOnly;
-        if (ImGui.Checkbox(loc.Get(LocKeys.FilterIncompleteOnly), ref incomplete))
+        if (UiTheme.WrappedCheckbox("incomplete", loc.Get(LocKeys.FilterIncompleteOnly), ref incomplete))
         {
             filter.Completeness = incomplete ? CompletenessFilter.IncompleteOnly : CompletenessFilter.Any;
             changed = true;
         }
 
         var onBar = filter.BarMembership == BarMembershipFilter.OnBarOnly;
-        if (ImGui.Checkbox(loc.Get(LocKeys.FilterOnBarOnly), ref onBar))
+        if (UiTheme.WrappedCheckbox("onbaronly", loc.Get(LocKeys.FilterOnBarOnly), ref onBar))
         {
             filter.BarMembership = onBar ? BarMembershipFilter.OnBarOnly : BarMembershipFilter.Any;
             changed = true;
         }
 
         var notOnBar = filter.BarMembership == BarMembershipFilter.NotOnBarOnly;
-        if (ImGui.Checkbox(loc.Get(LocKeys.FilterNotOnBarOnly), ref notOnBar))
+        if (UiTheme.WrappedCheckbox("notonbar", loc.Get(LocKeys.FilterNotOnBarOnly), ref notOnBar))
         {
             filter.BarMembership = notOnBar ? BarMembershipFilter.NotOnBarOnly : BarMembershipFilter.Any;
             changed = true;
         }
 
         var glamour = filter.GlamourLinkedOnly;
-        if (ImGui.Checkbox(loc.Get(LocKeys.FilterGlamourLinkedOnly), ref glamour))
+        if (UiTheme.WrappedCheckbox("glamlinked", loc.Get(LocKeys.FilterGlamourLinkedOnly), ref glamour))
         {
             filter.GlamourLinkedOnly = glamour;
             changed = true;
         }
 
         var unusedDays = filter.UnusedForDays ?? 0;
-        ImGui.SetNextItemWidth(120f);
-        if (ImGui.SliderInt(loc.Get(LocKeys.FilterUnusedSince, unusedDays), ref unusedDays, 0, 365))
+        UiTheme.Caption(loc.Get(LocKeys.FilterUnusedSince, unusedDays));
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.SliderInt("##unuseddays", ref unusedDays, 0, 365))
         {
             filter.UnusedForDays = unusedDays == 0 ? null : unusedDays;
             changed = true;
@@ -380,7 +388,7 @@ internal sealed class LibraryWindow : Window
             }
         }
 
-        ImGui.SetNextItemWidth(120f);
+        ImGui.SetNextItemWidth(-1f);
         ImGui.InputTextWithHint("##newview", loc.Get(LocKeys.ViewNew), ref newViewName, 60);
 
         var problem = SavedViews.CheckName(character.Views, newViewName);
@@ -568,14 +576,14 @@ internal sealed class LibraryWindow : Window
         ImGui.Separator();
 
         var favourite = selected.Record.IsFavourite;
-        if (ImGui.Checkbox(loc.Get(LocKeys.LibraryDetailFavourite), ref favourite))
+        if (UiTheme.WrappedCheckbox("detailfav", loc.Get(LocKeys.LibraryDetailFavourite), ref favourite))
         {
             state.UpdateRecords(records =>
                 [.. records.Select(r => r.Id == selected.Record.Id ? r with { IsFavourite = favourite } : r)]);
         }
 
         var onBar = selected.Record.BarPosition is not null;
-        if (ImGui.Checkbox(loc.Get(LocKeys.LibraryDetailOnBar), ref onBar))
+        if (UiTheme.WrappedCheckbox("detailonbar", loc.Get(LocKeys.LibraryDetailOnBar), ref onBar))
         {
             state.UpdateRecords(records => BarOrder.SetOnBar(records, selected.Record.Id, onBar));
         }
@@ -646,7 +654,7 @@ internal sealed class LibraryWindow : Window
 
         if (selected.Gearset.IsIncomplete)
         {
-            UiTheme.Muted(loc.Get(LocKeys.SwitchBlockedIncomplete));
+            UiTheme.Muted(loc.Get(LocKeys.GearsetIncomplete));
         }
 
         DrawBisState();

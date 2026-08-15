@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Core.Filtering;
 using Gearbook.Core.Localization;
+using Gearbook.Core.Model;
 using Gearbook.Core.Settings;
 
 namespace Gearbook.UI;
@@ -27,8 +28,16 @@ internal sealed class SettingsWindow : Window
     {
         this.state = state;
 
-        Size = new Vector2(470, 430);
+        Size = new Vector2(520, 470);
         SizeCondition = ImGuiCond.FirstUseEver;
+
+        // A floor, because below it even wrapped captions become a column of single words. The
+        // wrapping is what makes any width above this one work, so there is no ceiling.
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(360, 260),
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+        };
     }
 
     /// <inheritdoc />
@@ -82,15 +91,14 @@ internal sealed class SettingsWindow : Window
         var index = Math.Max(0, codes.FindIndex(c =>
             string.Equals(c, character.Language, StringComparison.OrdinalIgnoreCase)));
 
-        ImGui.SetNextItemWidth(200f);
-        if (ImGui.Combo(loc.Get(LocKeys.SettingsLanguage), ref index, labels, labels.Count))
+        UiTheme.Caption(loc.Get(LocKeys.SettingsLanguage), loc.Get(LocKeys.SettingsLanguageHelp));
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.Combo("##language", ref index, labels, labels.Count))
         {
             character.Language = codes[index];
             state.ApplyLanguage();
             state.Save();
         }
-
-        UiTheme.HelpMarker(loc.Get(LocKeys.SettingsLanguageHelp));
 
         ImGui.Spacing();
 
@@ -105,19 +113,18 @@ internal sealed class SettingsWindow : Window
         var levelIndex = Array.IndexOf(levels, character.FilterLevel);
         levelIndex = levelIndex < 0 ? 1 : levelIndex;
 
-        ImGui.SetNextItemWidth(200f);
-        if (ImGui.Combo(loc.Get(LocKeys.SettingsFilterLevel), ref levelIndex, levelLabels, levelLabels.Count))
+        UiTheme.Caption(loc.Get(LocKeys.SettingsFilterLevel), loc.Get(LocKeys.SettingsFilterLevelHelp));
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.Combo("##filterlevel", ref levelIndex, levelLabels, levelLabels.Count))
         {
             character.FilterLevel = levels[levelIndex];
             state.Save();
         }
 
-        UiTheme.HelpMarker(loc.Get(LocKeys.SettingsFilterLevelHelp));
-
         ImGui.Spacing();
 
         var openNews = character.OpenNewsAfterUpdate;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsNewsAutoOpen), ref openNews))
+        if (UiTheme.WrappedCheckbox("newsauto", loc.Get(LocKeys.SettingsNewsAutoOpen), ref openNews))
         {
             character.OpenNewsAfterUpdate = openNews;
             state.Save();
@@ -137,17 +144,22 @@ internal sealed class SettingsWindow : Window
         var bar = character.Bar;
         var changed = false;
 
+        // The ceiling is the gearset limit rather than a round number somebody liked. One column
+        // gives a vertical bar and the limit gives a single row whatever the character owns, so
+        // between them every shape is reachable and no setting is wasted on the impossible.
         var columns = bar.Columns;
-        ImGui.SetNextItemWidth(200f);
-        if (ImGui.SliderInt(loc.Get(LocKeys.SettingsBarColumns), ref columns, 1, 24))
+        UiTheme.Caption(loc.Get(LocKeys.SettingsBarColumns));
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.SliderInt("##columns", ref columns, 1, GameLimits.MaxGearsets))
         {
             bar.Columns = columns;
             changed = true;
         }
 
         var size = bar.IconSize;
-        ImGui.SetNextItemWidth(200f);
-        if (ImGui.SliderFloat(loc.Get(LocKeys.SettingsBarIconSize), ref size, 16f, 96f))
+        UiTheme.Caption(loc.Get(LocKeys.SettingsBarIconSize));
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.SliderFloat("##iconsize", ref size, 16f, 96f))
         {
             bar.IconSize = size;
             changed = true;
@@ -156,21 +168,21 @@ internal sealed class SettingsWindow : Window
         ImGui.Spacing();
 
         var showItemLevel = bar.ShowItemLevel;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsBarShowItemLevel), ref showItemLevel))
+        if (UiTheme.WrappedCheckbox("showitemlevel", loc.Get(LocKeys.SettingsBarShowItemLevel), ref showItemLevel))
         {
             bar.ShowItemLevel = showItemLevel;
             changed = true;
         }
 
         var showFavourite = bar.ShowFavourite;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsBarShowFavourite), ref showFavourite))
+        if (UiTheme.WrappedCheckbox("showfavourite", loc.Get(LocKeys.SettingsBarShowFavourite), ref showFavourite))
         {
             bar.ShowFavourite = showFavourite;
             changed = true;
         }
 
         var highlight = bar.HighlightActive;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsBarHighlightActive), ref highlight))
+        if (UiTheme.WrappedCheckbox("highlight", loc.Get(LocKeys.SettingsBarHighlightActive), ref highlight))
         {
             bar.HighlightActive = highlight;
             changed = true;
@@ -179,14 +191,14 @@ internal sealed class SettingsWindow : Window
         ImGui.Spacing();
 
         var hideCutscene = bar.HideInCutscene;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsBarHideInCutscene), ref hideCutscene))
+        if (UiTheme.WrappedCheckbox("hidecutscene", loc.Get(LocKeys.SettingsBarHideInCutscene), ref hideCutscene))
         {
             bar.HideInCutscene = hideCutscene;
             changed = true;
         }
 
         var hideCombat = bar.HideInCombat;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsBarHideInCombat), ref hideCombat))
+        if (UiTheme.WrappedCheckbox("hidecombat", loc.Get(LocKeys.SettingsBarHideInCombat), ref hideCombat))
         {
             bar.HideInCombat = hideCombat;
             changed = true;
@@ -195,7 +207,7 @@ internal sealed class SettingsWindow : Window
         ImGui.Spacing();
 
         var locked = bar.Locked;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsBarLocked), ref locked))
+        if (UiTheme.WrappedCheckbox("locked", loc.Get(LocKeys.SettingsBarLocked), ref locked))
         {
             bar.Locked = locked;
             changed = true;
@@ -204,7 +216,7 @@ internal sealed class SettingsWindow : Window
         UiTheme.HelpMarker(loc.Get(LocKeys.SettingsBarLockedHelp));
 
         var showOnStart = bar.ShowOnStart;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsBarShowOnStart), ref showOnStart))
+        if (UiTheme.WrappedCheckbox("showonstart", loc.Get(LocKeys.SettingsBarShowOnStart), ref showOnStart))
         {
             bar.ShowOnStart = showOnStart;
             changed = true;
@@ -230,14 +242,14 @@ internal sealed class SettingsWindow : Window
         var changed = false;
 
         var showNumber = library.ShowGameNumber;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsLibraryShowGameNumber), ref showNumber))
+        if (UiTheme.WrappedCheckbox("shownumber", loc.Get(LocKeys.SettingsLibraryShowGameNumber), ref showNumber))
         {
             library.ShowGameNumber = showNumber;
             changed = true;
         }
 
         var showOrphans = library.ShowOrphans;
-        if (ImGui.Checkbox(loc.Get(LocKeys.SettingsLibraryShowOrphans), ref showOrphans))
+        if (UiTheme.WrappedCheckbox("showorphans", loc.Get(LocKeys.SettingsLibraryShowOrphans), ref showOrphans))
         {
             library.ShowOrphans = showOrphans;
             changed = true;
@@ -245,12 +257,16 @@ internal sealed class SettingsWindow : Window
 
         UiTheme.HelpMarker(loc.Get(LocKeys.LibraryOrphanExplain));
 
+        // The setting has a caption of its own rather than borrowing the warning it switches on.
+        // A checkbox labelled with a whole explanation is a checkbox nobody reads twice.
         var warnDuplicates = library.WarnAboutDuplicates;
-        if (ImGui.Checkbox(loc.Get(LocKeys.LibraryDuplicateWarning), ref warnDuplicates))
+        if (UiTheme.WrappedCheckbox("warnduplicates", loc.Get(LocKeys.SettingsLibraryWarnDuplicates), ref warnDuplicates))
         {
             library.WarnAboutDuplicates = warnDuplicates;
             changed = true;
         }
+
+        UiTheme.HelpMarker(loc.Get(LocKeys.LibraryDuplicateWarning));
 
         if (changed)
         {

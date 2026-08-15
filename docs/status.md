@@ -74,23 +74,29 @@ plainly at the end.
 - The packaged output: the manifest inside the built archive reports version `0.1.0.0` at API
   level 15, and the generated index is a JSON array as the client requires.
 
-## What is not verified, and cannot be from here
+## The first session with the game running (2026-08-15)
 
-**The plugin has never been loaded into the game.** Everything above is a build-time and
-test-time statement. Nothing here says the bar draws correctly, that a gearset actually changes,
-or that the reconciler behaves the same against real data as against constructed data.
+**The plugin loads and works.** Observed in a live client: the bar draws with the game's own job
+icons and the item levels beside them, the settings window is in German, and switching a gearset
+from the bar succeeds, with the game's own log confirming both a black mage and a dark knight
+change. The full list of what that session settled is in `open-points.md`.
 
-The first session with the game running should, in this order:
+One design error found the moment it met real data. A gearset missing a piece was being refused,
+and the game itself does not refuse: it offers a suitable substitute and lets the player answer.
+The block is gone, the marking stays. Recorded in `decisions.md` as superseding the original
+decision.
 
-1. Point Dalamud at the staging folder `dist/Gearbook` that `build.ps1` produces, and load it.
-2. Answer the two open questions in `open-points.md` that need a running game: what
-   `EquipGearset` expects as its second argument for a set linked to a glamour plate, and
-   whether `GearsetEntry.Id` is zero-based or one-based. The library window shows the number it
-   believes; compare it against the game's own list.
-3. Check the job classification. Two constants in `JobClassifier` were derived from the table's
+Still to do in the game, in this order:
+
+1. The glamour plate case: what `EquipGearset` expects as its second argument for a set that is
+   linked to a plate. Switching an unlinked set with a zero works; the linked case is untested.
+2. Check the job classification. Two constants in `JobClassifier` were derived from the table's
    structure rather than from a running game, and if either is wrong the affected jobs appear
    under "Other" rather than under their role. That is the designed failure mode, so it is
-   visible rather than silent.
+   visible rather than silent. A machinist and a black mage answer one, a crafter and a gatherer
+   the other.
+3. Exercise the reconciler against real data: rename a set, reorder one, delete one, and check
+   that the notes and favourites follow.
 4. Measure the per-frame cost with Dalamud's own plugin statistics window rather than estimating
    it.
 5. Do the crash-safety audit over every unsafe block, pointer dereference and game call
