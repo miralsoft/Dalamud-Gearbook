@@ -32,6 +32,10 @@ internal sealed class SettingsWindow : Window
     }
 
     /// <inheritdoc />
+    public override void PreDraw() =>
+        WindowName = $"{state.Loc.Get(LocKeys.WindowSettingsTitle)}###GearbookSettings";
+
+    /// <inheritdoc />
     public override void Draw()
     {
         var loc = state.Loc;

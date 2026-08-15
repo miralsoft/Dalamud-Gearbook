@@ -48,6 +48,10 @@ internal sealed class LibraryWindow : Window
     }
 
     /// <inheritdoc />
+    public override void PreDraw() =>
+        WindowName = $"{state.Loc.Get(LocKeys.WindowLibraryTitle)}###GearbookLibrary";
+
+    /// <inheritdoc />
     public override void Draw()
     {
         var loc = state.Loc;
@@ -121,6 +125,20 @@ internal sealed class LibraryWindow : Window
         ImGui.SameLine();
         UiTheme.Muted(loc.Get(LocKeys.LibraryCount, shownCount, state.Gearsets.Count));
 
+        // The order the list is read in. Stored with the filter, so a saved view remembers how
+        // it was being looked at as well as what it showed.
+        ImGui.SameLine();
+        var orders = Enum.GetValues<GearsetSortOrder>();
+        var orderLabels = orders.Select(SortName).ToList();
+        var orderIndex = Math.Max(0, Array.IndexOf(orders, filter.Sort));
+
+        ImGui.SetNextItemWidth(190f);
+        if (ImGui.Combo(loc.Get(LocKeys.SortHeading), ref orderIndex, orderLabels, orderLabels.Count))
+        {
+            filter.Sort = orders[orderIndex];
+            state.Save();
+        }
+
         ImGui.SameLine();
         var right = ImGui.GetWindowWidth() - 170f;
         if (right > ImGui.GetCursorPosX())
@@ -159,6 +177,25 @@ internal sealed class LibraryWindow : Window
         var loc = state.Loc;
         var changed = false;
 
+        ImGui.TextUnformatted(loc.Get(LocKeys.FilterHeading));
+        ImGui.SameLine();
+
+        // Clearing everything is one control rather than unticking eight. It empties the filter
+        // without touching the saved views, which is the difference between starting again and
+        // losing work.
+        using (ImRaii.Disabled(filter.IsEverything))
+        {
+            if (ImGui.SmallButton(loc.Get(LocKeys.ViewEverything)))
+            {
+                character.CurrentFilter = new FilterSpec { Sort = filter.Sort };
+                character.ActiveViewName = string.Empty;
+                state.Save();
+                return;
+            }
+        }
+
+        ImGui.Separator();
+
         var favourites = filter.FavouritesOnly;
         if (ImGui.Checkbox(loc.Get(LocKeys.FilterFavouritesOnly), ref favourites))
         {
@@ -186,6 +223,32 @@ internal sealed class LibraryWindow : Window
                 else
                 {
                     filter.Roles.Remove(role);
+                }
+
+                changed = true;
+            }
+        }
+
+        ImGui.Separator();
+        UiTheme.Muted(loc.Get(LocKeys.FilterCategories));
+
+        foreach (var category in Enum.GetValues<JobCategory>())
+        {
+            if (category == JobCategory.Unknown)
+            {
+                continue;
+            }
+
+            var selected = filter.Categories.Contains(category);
+            if (ImGui.Checkbox(CategoryName(category), ref selected))
+            {
+                if (selected)
+                {
+                    filter.Categories.Add(category);
+                }
+                else
+                {
+                    filter.Categories.Remove(category);
                 }
 
                 changed = true;
@@ -338,9 +401,25 @@ internal sealed class LibraryWindow : Window
             }
         }
 
-        if (problem == SavedViews.NameProblem.AlreadyTaken)
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiTheme.Muted(loc.Get(LocKeys.ViewNameTaken));
+            ImGui.SetTooltip(loc.Get(LocKeys.ViewSaveAs));
+        }
+
+        // Both reasons a name is refused are said out loud. A disabled button with no
+        // explanation is a control somebody presses twice and then gives up on.
+        switch (problem)
+        {
+            case SavedViews.NameProblem.AlreadyTaken:
+                UiTheme.Muted(loc.Get(LocKeys.ViewNameTaken));
+                break;
+
+            case SavedViews.NameProblem.Empty when newViewName.Length > 0:
+                UiTheme.Muted(loc.Get(LocKeys.ViewNameEmpty));
+                break;
+
+            default:
+                break;
         }
 
         return changed;
@@ -501,6 +580,26 @@ internal sealed class LibraryWindow : Window
             state.UpdateRecords(records => BarOrder.SetOnBar(records, selected.Record.Id, onBar));
         }
 
+        // The bar's order is the player's, so it needs a control. Only shown for a set that is
+        // actually on it, because moving something that is not there has no meaning.
+        if (onBar)
+        {
+            ImGui.SameLine();
+            if (ImGui.SmallButton("<##barleft"))
+            {
+                state.UpdateRecords(records => BarOrder.Move(records, selected.Record.Id, -1));
+            }
+
+            ImGui.SameLine();
+            if (ImGui.SmallButton(">##barright"))
+            {
+                state.UpdateRecords(records => BarOrder.Move(records, selected.Record.Id, 1));
+            }
+
+            ImGui.SameLine();
+            UiTheme.Muted((selected.Record.BarPosition!.Value + 1).ToString(CultureInfo.CurrentCulture));
+        }
+
         ImGui.Separator();
         ImGui.TextUnformatted(loc.Get(LocKeys.LibraryDetailTags));
         UiTheme.HelpMarker(loc.Get(LocKeys.LibraryDetailTagsHint));
@@ -525,6 +624,15 @@ internal sealed class LibraryWindow : Window
         }
 
         ImGui.Separator();
+
+        // What the game knows about the set's equipment. Only the counts, because that is what
+        // the gearset entry carries; reading the fourteen slots individually would mean reading
+        // the pieces themselves, which this window has no reason to do.
+        var pieces = selected.Gearset.MissingPieceCount == 0 && !selected.Gearset.MainHandMissing
+            ? loc.Get(LocKeys.LibraryDetailPieces)
+            : $"{loc.Get(LocKeys.LibraryDetailPieces)}: {selected.Gearset.MissingPieceCount}";
+
+        UiTheme.Muted(pieces);
 
         if (selected.Gearset.GlamourPlateLink is { } plate)
         {
@@ -603,6 +711,23 @@ internal sealed class LibraryWindow : Window
         noteBuffer = gearset.Record.Note;
         tagsBuffer = string.Join(", ", gearset.Record.Tags);
     }
+
+    private string SortName(GearsetSortOrder order) => state.Loc.Get(order switch
+    {
+        GearsetSortOrder.Name => LocKeys.SortByName,
+        GearsetSortOrder.Job => LocKeys.SortByJob,
+        GearsetSortOrder.ItemLevel => LocKeys.SortByItemLevel,
+        GearsetSortOrder.LastUsed => LocKeys.SortByLastUsed,
+        _ => LocKeys.SortBySlot,
+    });
+
+    private string CategoryName(JobCategory category) => state.Loc.Get(category switch
+    {
+        JobCategory.Combat => LocKeys.CategoryCombat,
+        JobCategory.Crafting => LocKeys.CategoryCrafting,
+        JobCategory.Gathering => LocKeys.CategoryGathering,
+        _ => LocKeys.CategoryUnknown,
+    });
 
     private string RoleName(JobRole role) => state.Loc.Get(role switch
     {

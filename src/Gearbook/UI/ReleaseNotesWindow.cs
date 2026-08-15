@@ -72,6 +72,10 @@ internal sealed class ReleaseNotesWindow : Window
     }
 
     /// <inheritdoc />
+    public override void PreDraw() =>
+        WindowName = $"{state.Loc.Get(LocKeys.WindowNewsTitle)}###GearbookNews";
+
+    /// <inheritdoc />
     public override void Draw()
     {
         var loc = state.Loc;

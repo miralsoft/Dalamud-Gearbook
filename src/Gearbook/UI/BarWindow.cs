@@ -67,6 +67,11 @@ internal sealed class BarWindow : Window
     /// <inheritdoc />
     public override void PreDraw()
     {
+        // The visible half of the title is re-resolved every frame, because the language can
+        // change while the window is up. The identity after the two hashes never changes, which
+        // is what stops the window from forgetting its position and size when it does.
+        WindowName = $"{state.Loc.Get(LocKeys.WindowBarTitle)}###GearbookBar";
+
         var character = state.Character;
         var locked = character?.Bar.Locked ?? false;
 
@@ -110,6 +115,8 @@ internal sealed class BarWindow : Window
         if (shown.Count == 0)
         {
             UiTheme.Muted(loc.Get(LocKeys.BarEmpty));
+            UiTheme.HelpMarker(loc.Get(LocKeys.BarAddHint));
+
             if (ImGui.IsItemClicked())
             {
                 openLibrary();

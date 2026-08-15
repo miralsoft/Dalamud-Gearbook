@@ -20,14 +20,9 @@ public static class LocKeys
     public const string WindowSettingsTitle = "window.settings.title";
     public const string WindowNewsTitle = "window.news.title";
 
-    public const string CommonClose = "common.close";
     public const string CommonSearch = "common.search";
     public const string CommonClear = "common.clear";
-    public const string CommonAll = "common.all";
-    public const string CommonNone = "common.none";
-    public const string CommonCancel = "common.cancel";
     public const string CommonDelete = "common.delete";
-    public const string CommonRename = "common.rename";
     public const string CommonSave = "common.save";
     public const string CommonUnknownJob = "common.unknownJob";
     public const string CommonNever = "common.never";

@@ -1,3 +1,4 @@
+using System.Reflection;
 using Gearbook.Core.Localization;
 using Xunit;
 
@@ -79,6 +80,132 @@ public class LanguageCatalogueCompletenessTests
                     $"Language '{catalogue.Code}' has an empty string for '{key}'.");
             }
         }
+    }
+}
+
+/// <summary>
+/// Keeps the declared keys and the interface honest with each other.
+/// </summary>
+/// <remarks>
+/// The completeness tests above compare the catalogues against the declared keys, which catches
+/// a translation that was never written. They cannot catch the opposite: a key declared and
+/// translated into both languages for a control that was never built. That gap is not
+/// hypothetical. It reached twenty-five keys here before anybody counted, which is twenty-five
+/// pieces of interface that were described, translated, and then not drawn.
+/// </remarks>
+public class LocalizationKeyUsageTests
+{
+    private const string LocKeysFileName = "LocKeys.cs";
+
+    [Fact]
+    public void Every_declared_key_is_used_somewhere_in_the_product()
+    {
+        var source = ReadAllProductSource();
+
+        var unused = typeof(LocKeys)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(f => f is { IsLiteral: true, IsInitOnly: false })
+            .Select(f => f.Name)
+            .Where(name => !source.Contains($"LocKeys.{name}", StringComparison.Ordinal))
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToList();
+
+        Assert.True(
+            unused.Count == 0,
+            "These keys are declared and translated but nothing uses them, which means the "
+            + "control they were written for does not exist. Build it or remove the key: "
+            + string.Join(", ", unused));
+    }
+
+    [Fact]
+    public void The_usage_detector_can_tell_a_used_key_from_an_unused_one()
+    {
+        // A guard whose only observable outcome is silence cannot be told apart from one that
+        // does nothing, so it is tried against something it must find and something it must not
+        // before its verdict above is worth anything (R-20).
+        var source = ReadAllProductSource();
+
+        Assert.Contains("LocKeys.WindowLibraryTitle", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("LocKeys.ZzzNoSuchKeyZzz", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_german_catalogue_still_has_its_umlauts()
+    {
+        // Written after a tooling mistake rewrote this file through the wrong code page and
+        // turned every umlaut into two characters. That damage is valid UTF-8, so an encoding
+        // check would have passed it. This looks for the result instead of the cause.
+        var german = ReadCatalogue("de.json");
+
+        Assert.Contains("ö", german, StringComparison.Ordinal);
+        Assert.DoesNotContain("Ã", german, StringComparison.Ordinal);
+        Assert.DoesNotContain("Â", german, StringComparison.Ordinal);
+        Assert.DoesNotContain("�", german, StringComparison.Ordinal);
+    }
+
+    private static string ReadCatalogue(string fileName)
+    {
+        var path = Path.Combine(
+            RepositoryRoot().FullName,
+            "src",
+            "Gearbook.Core",
+            "Localization",
+            "Resources",
+            fileName);
+
+        Assert.True(File.Exists(path), $"{path} was not found.");
+        return File.ReadAllText(path);
+    }
+
+    private static string ReadAllProductSource()
+    {
+        var root = RepositoryRoot();
+        var sources = new List<string>();
+
+        foreach (var project in new[] { "Gearbook", "Gearbook.Core" })
+        {
+            var directory = Path.Combine(root.FullName, "src", project);
+            if (!Directory.Exists(directory))
+            {
+                continue;
+            }
+
+            foreach (var file in Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories))
+            {
+                // Skip the build output, which holds generated copies, and the declaration file
+                // itself, where every key trivially appears.
+                if (file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                    || file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                    || Path.GetFileName(file).Equals(LocKeysFileName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                sources.Add(File.ReadAllText(file));
+            }
+        }
+
+        Assert.NotEmpty(sources);
+        return string.Join('\n', sources);
+    }
+
+    private static DirectoryInfo RepositoryRoot()
+    {
+        var directory = new DirectoryInfo(
+            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!);
+
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "Gearbook.slnx")))
+            {
+                return directory;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException(
+            "The repository root was not found above the test assembly. These tests read the source.");
     }
 }
 
