@@ -139,6 +139,37 @@ internal sealed class BarWindow : Window
     public override void PostDraw() => ImGui.PopStyleVar(2);
 
     /// <summary>
+    /// The icons per row to actually use, once the screen has had its say.
+    /// </summary>
+    /// <remarks>
+    /// Measured against the host's work area rather than the whole screen, so the bar stays
+    /// inside the part of the game somebody can actually reach.
+    ///
+    /// The room taken off the top for a title bar exists only while the bar is unlocked. A locked
+    /// bar has none, and subtracting one anyway would wrap a row earlier than needed for the
+    /// state the bar spends nearly all its time in.
+    /// </remarks>
+    private static int FittedColumns(BarSettings settings, int tiles)
+    {
+        var style = ImGui.GetStyle();
+        var cell = new Vector2(settings.IconSize, settings.IconSize)
+                   + (style.FramePadding * 2f)
+                   + style.ItemSpacing;
+
+        var work = ImGui.GetMainViewport().WorkSize;
+        var chrome = style.WindowPadding * 2f;
+        var titleBar = settings.Locked ? 0f : ImGui.GetFrameHeight();
+
+        return BarLayout.Columns(
+            tiles,
+            settings.Columns,
+            cell.X,
+            cell.Y,
+            work.X - chrome.X,
+            work.Y - chrome.Y - titleBar);
+    }
+
+    /// <summary>
     /// How wide the window has to be for its own title bar to fit.
     /// </summary>
     private float MinimumUnlockedWidth()
@@ -177,7 +208,6 @@ internal sealed class BarWindow : Window
             openLibrary,
             openSettings);
 
-        var columns = Math.Max(1, settings.Columns);
         var drawn = 0;
 
         if (settings.ShowViewSwitcher)
@@ -185,6 +215,8 @@ internal sealed class BarWindow : Window
             DrawViewSwitcher(settings);
             drawn = 1;
         }
+
+        var columns = FittedColumns(settings, shown.Count + drawn);
 
         if (shown.Count == 0)
         {
