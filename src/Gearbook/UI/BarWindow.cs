@@ -396,7 +396,10 @@ internal sealed class BarWindow : Window
             var active = settings.ViewKind == BarViewKind.Tag
                          && string.Equals(settings.ViewTag, tag, StringComparison.CurrentCultureIgnoreCase);
 
-            if (ImGui.MenuItem(tag, string.Empty, active))
+            // The same symbol on every tag, deliberately. A row of bare words under a column of
+            // pictures reads as a list that ran out, and numbering them instead would claim an
+            // order among the player's own words that nothing here means.
+            if (ViewButton(iconSize, RoleIcons.None, FontAwesomeIcon.Tag, tag, active))
             {
                 settings.ViewTag = tag;
                 SetView(settings, BarViewKind.Tag);
@@ -617,13 +620,18 @@ internal sealed class BarWindow : Window
 
         // Outside the favourites view the arrangement orders a handful of what is on screen and
         // leaves the rest in an arbitrary tail, which reads as a fault rather than a rule. So a
-        // view that is not the favourites falls back to the game's own numbering unless a sort
-        // was chosen.
+        // view that is not the favourites needs some other order, and it is the standard one
+        // rather than the game's own numbering.
+        //
+        // The game's numbering is the order the sets happened to be created in, which is exactly
+        // the disorder somebody switches to a tag or a role to escape. Falling back to it meant
+        // that choosing "manual arrangement" quietly turned every view except the favourites into
+        // an unsorted list, and there is no arrangement to protect there anyway.
         if (bar.Sort is not { } sort)
         {
             return BarView.UsesArrangement(bar.ViewKind)
                 ? chosen
-                : FilterEngine.Sort(chosen, GearsetSortOrder.Slot, state.Jobs, character.RoleOrder);
+                : FilterEngine.Sort(chosen, GearsetSortOrder.Role, state.Jobs, character.RoleOrder);
         }
 
         // The role order is the one from the settings, so the bar and the library group things
