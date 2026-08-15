@@ -389,14 +389,19 @@ internal static class UiTheme
         {
             var vivid = RoleColours.Vivid(hovered);
 
-            drawList.AddRectFilled(min, max, ImGui.GetColorU32(RoleColours.WithAlpha(vivid, 0.45f)));
+            // The wash is the half that has to give way when this is too much. It lies over the
+            // job icon, so every point of opacity it takes is taken from the picture underneath,
+            // and the picture is what somebody is actually aiming at. The outline costs the
+            // picture nothing, so it keeps almost all of its strength and goes on carrying the
+            // colour.
+            drawList.AddRectFilled(min, max, ImGui.GetColorU32(RoleColours.WithAlpha(vivid, 0.28f)));
             drawList.AddRect(
                 min,
                 max,
-                ImGui.GetColorU32(RoleColours.WithAlpha(vivid, 1f)),
+                ImGui.GetColorU32(RoleColours.WithAlpha(vivid, 0.90f)),
                 2f,
                 ImDrawFlags.None,
-                3f);
+                2.5f);
         }
 
         if (!clickable)
