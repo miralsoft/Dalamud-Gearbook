@@ -31,6 +31,9 @@ internal sealed class BarWindow : Window
     /// </summary>
     private const string WindowId = "Gearbook bar###GearbookBar";
 
+    /// <summary>The identity of the view menu, used by both the opener and the popup itself.</summary>
+    private const string ViewMenuId = "##gearbookviewmenu";
+
     private readonly GearbookState state;
     private readonly Action openLibrary;
     private readonly Action openSettings;
@@ -251,12 +254,20 @@ internal sealed class BarWindow : Window
     private void DrawViewSwitcher(BarSettings settings)
     {
         var loc = state.Loc;
-        var size = new Vector2(settings.IconSize, settings.IconSize);
+
+        // The same footprint as a gearset tile. An image button treats its size as the picture
+        // and adds the frame padding around it, while a plain button treats it as the whole
+        // control, so passing the icon size to both makes the switcher smaller than everything
+        // beside it. The padding is added here to match.
+        var size = new Vector2(settings.IconSize, settings.IconSize)
+                   + (ImGui.GetStyle().FramePadding * 2f);
+
+        var pressed = false;
 
         using (ImRaii.PushId("##gearbookview"))
         using (GearbookState.IconFont.Push())
         {
-            ImGui.Button(ViewIcon(settings).ToIconString(), size);
+            pressed = ImGui.Button(ViewIcon(settings).ToIconString(), size);
         }
 
         if (ImGui.IsItemHovered())
@@ -264,12 +275,15 @@ internal sealed class BarWindow : Window
             ImGui.SetTooltip($"{loc.Get(LocKeys.BarViewTooltip)}\n{ViewLabel(settings)}");
         }
 
-        // Opens on either button, because the tile carries no other action and somebody who
-        // presses it expects the menu whichever way they pressed.
-        using var popup = ImRaii.ContextPopupItem(
-            "##gearbookviewmenu",
-            ImGuiPopupFlags.MouseButtonLeft | ImGuiPopupFlags.MouseButtonRight);
+        // Both buttons open it. The mouse-button values in the popup flags are numbers rather
+        // than bits, so combining left and right with an or produces right alone: the left click
+        // silently did nothing. Opening the popup by hand avoids the trap entirely.
+        if (pressed || ImGui.IsItemClicked(ImGuiMouseButton.Right))
+        {
+            ImGui.OpenPopup(ViewMenuId);
+        }
 
+        using var popup = ImRaii.Popup(ViewMenuId);
         if (!popup)
         {
             return;
@@ -379,19 +393,19 @@ internal sealed class BarWindow : Window
         using var id = ImRaii.PushId(label);
 
         var origin = ImGui.GetCursorScreenPos();
+        var box = new Vector2(size, size) + (ImGui.GetStyle().FramePadding * 2f);
         bool pressed;
 
         using (GearbookState.IconFont.Push())
         {
-            pressed = ImGui.Button(icon.ToIconString(), new Vector2(size, size));
+            pressed = ImGui.Button(icon.ToIconString(), box);
         }
 
         if (active)
         {
-            var padding = ImGui.GetStyle().FramePadding * 2f;
             ImGui.GetWindowDrawList().AddRect(
                 origin,
-                origin + new Vector2(size, size) + padding,
+                origin + box,
                 ImGui.GetColorU32(UiTheme.UnreadColour),
                 2f,
                 ImDrawFlags.None,

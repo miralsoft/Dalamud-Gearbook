@@ -46,8 +46,7 @@ public sealed class CharacterSettings
     /// what a player already knows before they touch it. A role missing from this list, which is
     /// what an older stored order looks like after a new role is added, sorts to the end rather
     /// than to the front.
-    /// </remarks>
-    /// <remarks>
+    ///
     /// Deliberately empty rather than pre-filled with the default. A serialiser reading a list
     /// into a property that already holds items appends to it rather than replacing it, so a
     /// pre-filled default grew by eight entries on every single load. It reached eight copies of
@@ -82,6 +81,20 @@ public sealed class CharacterSettings
 
     /// <summary>The newest release notes version this character has seen, or empty.</summary>
     public string LastSeenNewsVersion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Show the small entry beside the clock in the game's server info bar.
+    /// </summary>
+    /// <remarks>
+    /// On by default, and that default is not a preference. The framework profile requires a way
+    /// into the plugin that needs no command, because somebody who does not know the command and
+    /// has closed every window otherwise never finds it again. The quick-switch bar does not
+    /// satisfy it: it can be closed, hidden in combat, and switched off at start.
+    ///
+    /// Turning it off is the player's choice and a deliberate one. What is displayed is two
+    /// characters, so the cost of leaving it on is close to nothing.
+    /// </remarks>
+    public bool ShowServerBarEntry { get; set; } = true;
 
     /// <summary>Open the release notes once after an update.</summary>
     public bool OpenNewsAfterUpdate { get; set; } = true;

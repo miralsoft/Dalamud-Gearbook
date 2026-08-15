@@ -139,6 +139,17 @@ internal sealed class SettingsWindow : Window
 
         ImGui.Spacing();
 
+        var showServerBar = character.ShowServerBarEntry;
+        if (UiTheme.WrappedCheckbox("serverbar", loc.Get(LocKeys.SettingsShowServerBar), ref showServerBar))
+        {
+            character.ShowServerBarEntry = showServerBar;
+            state.Save();
+        }
+
+        UiTheme.HelpMarker(loc.Get(LocKeys.SettingsShowServerBarHelp));
+
+        ImGui.Spacing();
+
         var openNews = character.OpenNewsAfterUpdate;
         if (UiTheme.WrappedCheckbox("newsauto", loc.Get(LocKeys.SettingsNewsAutoOpen), ref openNews))
         {

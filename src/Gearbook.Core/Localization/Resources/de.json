@@ -136,6 +136,8 @@
   "settings.roleOrder": "Reihenfolge der Rollen",
   "settings.roleOrder.help": "Gilt, wenn die Liste nach Rolle sortiert wird. Das Sortieren nach Rolle ist ein Eintrag in der Sortierauswahl, ein Klick zurück auf die Spielnummer ändert hier also nichts.",
   "settings.roleOrder.dragHint": "Zeile ziehen oder die Pfeile benutzen.",
+  "settings.showServerBar": "Den kleinen Eintrag neben der Uhr zeigen",
+  "settings.showServerBar.help": "Zwei Zeichen in der Info-Leiste des Spiels. Es ist der Weg zurück in Gearbook für jemanden, der alle Fenster geschlossen hat und den Befehl nicht kennt, also lohnt es sich, das Abschalten bewusst zu tun statt versehentlich.",
   "settings.news.autoOpen": "Nach einer Aktualisierung die Neuerungen einmal öffnen",
   "settings.perCharacterNote": "Jede Einstellung hier gehört allein zu diesem Charakter.",
   "settings.about.version": "Fassung {0}",

@@ -124,6 +124,11 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         state.OnTick();
+
+        // Read from the tick rather than when the setting changes, because the setting belongs
+        // to a character and the character changes on login. One boolean per frame cannot fall
+        // out of step with it.
+        serverBar.Update(state);
     }
 
     private void OnLogin()
