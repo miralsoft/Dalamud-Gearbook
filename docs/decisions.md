@@ -300,3 +300,42 @@ Each entry: date, decision, rationale, and what was rejected.
   number and needs no platform assembly, which keeps it under test. The tests cannot tell whether
   a number draws the right picture, only the client can; what they hold is that no two roles share
   a symbol and that the combat category borrows none, which is the failure a copied line produces.
+
+- **(2026-08-15) Gearbook can sort the game's own gearset list, on request and never on its own.**
+  Rationale: a player who has built up thirty gearsets over years has a list whose order is
+  whatever history left behind, and the game offers no way to sort it except dragging entries one
+  at a time. The function behind that dragging, `RaptureGearsetModule.ReassignGearsetId`, is
+  callable, and using it puts the list into the order Gearbook already shows.
+
+  It sits on the allowed side of Dalamud's automation boundary, and the boundary was read before
+  the design rather than after it. What is forbidden is interacting with the game **automatically**;
+  this runs only when a player presses a button, performs the same operation that player could
+  perform by hand, and asks the server for nothing it would not accept from normal play. There is
+  no sort on login, none after a gearset is created, and no setting to add one. That absence is
+  the feature, not an omission: a list that rearranges itself is exactly what the boundary is
+  about.
+
+  It gets its own gate, beside the one that equips, for the reason the rule gives: the line has to
+  be reviewable by reading one file per kind of thing this plugin does to the game. This is the
+  more valuable of the two. An equip is undone by equipping something else; an order built over
+  years cannot be typed back in.
+
+  The part worth recording is what is **not** known. The game's reordering call is used without a
+  written guarantee of what it does to the entries between the two ends of a move: it might swap
+  them, or lift one out and let the rest close up. Rather than guess, the arrangement fills the
+  list from the front, which leaves every settled position untouched under **both** meanings, and
+  the tests apply the moves under both to prove it. Every move is then read back out of the game
+  before the next is decided, and the first surprise ends the run. A wrong assumption applied once
+  and caught is a move the player can drag back; applied thirty times it is a list nobody
+  recognises.
+
+  The order as it stood is kept before every run, so the previous arrangement can be put back. It
+  is stored as job and name rather than as slot numbers, because slots are precisely what the
+  sorting changes and a backup written in slots would describe only the list it was taken from.
+
+  Rejected: sorting from the library window with a single button and no preview, which is what was
+  asked for and is one keystroke away from an accident on data with no undo. The window shows what
+  will move before anything moves, and the same button is still one press.
+
+  Rejected: offering the game's own order as one of the choices. Sorting a list into the order it
+  is already in is not an option, it is the absence of one.

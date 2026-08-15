@@ -19,6 +19,21 @@ public static class LocKeys
     public const string WindowLibraryTitle = "window.library.title";
     public const string WindowSettingsTitle = "window.settings.title";
     public const string WindowNewsTitle = "window.news.title";
+    public const string WindowArrangeTitle = "window.arrange.title";
+
+    public const string ArrangeIntro = "arrange.intro";
+    public const string ArrangeOrderHelp = "arrange.order.help";
+    public const string ArrangeMoves = "arrange.moves";
+    public const string ArrangeApply = "arrange.apply";
+    public const string ArrangeApplyHelp = "arrange.apply.help";
+    public const string ArrangeRestore = "arrange.restore";
+    public const string ArrangeRestoreHelp = "arrange.restore.help";
+    public const string ArrangeRestoreNone = "arrange.restore.none";
+    public const string ArrangeResultDone = "arrange.result.done";
+    public const string ArrangeResultNothing = "arrange.result.nothing";
+    public const string ArrangeResultNotLoggedIn = "arrange.result.notLoggedIn";
+    public const string ArrangeResultUnavailable = "arrange.result.unavailable";
+    public const string ArrangeResultStopped = "arrange.result.stopped";
 
     public const string CommonSearch = "common.search";
     public const string CommonClear = "common.clear";

@@ -32,6 +32,12 @@ still open.
   the slot before displaying it, on the assumption that the field is zero-based; comparing the
   two lists side by side answers it in a second.
 
+- **(open since 2026-08-15) What `RaptureGearsetModule.ReassignGearsetId` does to the entries in
+  between.** The sorter deliberately does not need the answer: it fills the list from the front,
+  which is correct whether the call swaps two entries or lifts one out and closes the gap, and the
+  tests apply the moves under both readings. Establishing it anyway would let the run predict its
+  own number of moves exactly rather than treating one entry per pass as a ceiling. Watch the first
+  run in a client with the gearset window open beside it; the answer is visible in one move.
 Both `JobClassifier` questions that sat here were closed on 2026-08-15 by reading the real job
 table out of the installed client. One of the two constants was wrong and had already reached a
 player. See the entries of that date in `decisions.md`.

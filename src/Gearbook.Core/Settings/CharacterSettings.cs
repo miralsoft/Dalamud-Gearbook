@@ -79,6 +79,23 @@ public sealed class CharacterSettings
 
     public LibrarySettings Library { get; set; } = new();
 
+    /// <summary>Which order the game's own list is sorted into when the player asks for it.</summary>
+    public GearsetSortOrder ArrangeOrder { get; set; } = GearsetSortOrder.Role;
+
+    /// <summary>
+    /// The game's list as it read before the last time this plugin sorted it.
+    /// </summary>
+    /// <remarks>
+    /// Kept so the player can have their old order back, which matters here more than anywhere
+    /// else in this plugin: an order somebody built over years is the one thing it changes that
+    /// cannot be typed in again.
+    ///
+    /// Stored as the same keys the sorting works in, job and name, rather than as slot numbers.
+    /// Slots are what the sorting changes, so a backup written in slots would describe the list
+    /// it was taken from and nothing else.
+    /// </remarks>
+    public List<string> ListBackup { get; set; } = [];
+
     /// <summary>The newest release notes version this character has seen, or empty.</summary>
     public string LastSeenNewsVersion { get; set; } = string.Empty;
 

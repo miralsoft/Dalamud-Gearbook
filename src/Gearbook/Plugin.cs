@@ -24,6 +24,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly GearsetReader reader;
     private readonly GameStateProbe gameState;
     private readonly GearsetEquipper equipper;
+    private readonly GearsetArranger arranger;
     private readonly JobDataSource jobData;
     private readonly ArsenalBisProvider bis;
     private readonly GearbookState state;
@@ -52,10 +53,11 @@ public sealed class Plugin : IDalamudPlugin
         reader = new GearsetReader();
         gameState = new GameStateProbe(reader);
         equipper = new GearsetEquipper(gameState);
+        arranger = new GearsetArranger(reader, gameState);
         jobData = new JobDataSource();
         bis = new ArsenalBisProvider();
 
-        state = new GearbookState(reader, equipper, gameState, jobData, bis, configuration, localizer);
+        state = new GearbookState(reader, equipper, arranger, gameState, jobData, bis, configuration, localizer);
         state.ApplyLanguage();
 
         windows = new WindowManager(state);

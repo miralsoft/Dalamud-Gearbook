@@ -37,6 +37,7 @@ internal sealed class GearbookState : IDisposable
 
     private readonly IGearsetReader reader;
     private readonly IGearsetEquipper equipper;
+    private readonly IGearsetArranger arranger;
     private readonly IGameStateProbe gameState;
     private readonly IJobDataSource jobData;
     private readonly IBisProvider bis;
@@ -46,6 +47,7 @@ internal sealed class GearbookState : IDisposable
     private readonly Queue<EquipRequest> pending = new();
     private readonly object gate = new();
 
+    private IReadOnlyList<string>? pendingArrange;
     private DateTime lastRefresh = DateTime.MinValue;
     private bool refreshRequested = true;
     private bool tearingDown;
@@ -54,6 +56,7 @@ internal sealed class GearbookState : IDisposable
     public GearbookState(
         IGearsetReader reader,
         IGearsetEquipper equipper,
+        IGearsetArranger arranger,
         IGameStateProbe gameState,
         IJobDataSource jobData,
         IBisProvider bis,
@@ -62,6 +65,7 @@ internal sealed class GearbookState : IDisposable
     {
         this.reader = reader;
         this.equipper = equipper;
+        this.arranger = arranger;
         this.gameState = gameState;
         this.jobData = jobData;
         this.bis = bis;
@@ -183,6 +187,7 @@ internal sealed class GearbookState : IDisposable
         try
         {
             ProcessPendingRequests();
+            ProcessPendingArrange();
 
             if (!gameState.IsLoggedIn)
             {
@@ -230,6 +235,47 @@ internal sealed class GearbookState : IDisposable
 
         Gearsets = [];
         Orphans = [];
+    }
+
+    /// <summary>
+    /// Asks for the game's own gearset list to be sorted into this order.
+    /// </summary>
+    /// <remarks>
+    /// Recorded rather than done, like every other thing this plugin asks of the game, because
+    /// the caller is a draw callback and a draw callback does not touch game memory (GB-03).
+    /// It matters more here than for a gearset change: this one runs a loop of reads and writes,
+    /// and a hot reload landing in the middle of it would leave the list half sorted.
+    /// </remarks>
+    public void RequestArrange(IReadOnlyList<string> wantedOrder)
+    {
+        ArgumentNullException.ThrowIfNull(wantedOrder);
+
+        lock (gate)
+        {
+            pendingArrange = [.. wantedOrder];
+        }
+    }
+
+    /// <summary>How the last rearrangement of the game's list ended, or null if none has run.</summary>
+    public ArrangeResult? LastArrangeResult { get; private set; }
+
+    private void ProcessPendingArrange()
+    {
+        IReadOnlyList<string>? wanted;
+
+        lock (gate)
+        {
+            wanted = pendingArrange;
+            pendingArrange = null;
+        }
+
+        if (wanted is null)
+        {
+            return;
+        }
+
+        LastArrangeResult = arranger.Arrange(wanted);
+        refreshRequested = true;
     }
 
     private void ProcessPendingRequests()

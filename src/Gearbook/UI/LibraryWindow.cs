@@ -46,7 +46,7 @@ internal sealed class LibraryWindow : Window
     private readonly TitleBarButton newsLink;
     private bool unreadNow;
 
-    public LibraryWindow(GearbookState state, Action openBar, Action openSettings, Action openNews)
+    public LibraryWindow(GearbookState state, Action openBar, Action openSettings, Action openNews, Action openArrange)
         : base(WindowId)
     {
         this.state = state;
@@ -73,6 +73,12 @@ internal sealed class LibraryWindow : Window
             priority: 2);
 
         TitleBarButtons.Add(newsLink);
+
+        TitleBarButtons.Add(UiTheme.Link(
+            FontAwesomeIcon.SortAmountDown,
+            () => state.Loc.Get(LocKeys.WindowArrangeTitle),
+            openArrange,
+            priority: 3));
 
         SizeConstraints = new WindowSizeConstraints
         {

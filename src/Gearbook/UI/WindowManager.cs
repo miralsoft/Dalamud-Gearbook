@@ -20,6 +20,7 @@ internal sealed class WindowManager : IDisposable
     private readonly LibraryWindow library;
     private readonly SettingsWindow settings;
     private readonly ReleaseNotesWindow news;
+    private readonly ArrangeWindow arrange;
 
     private bool disposed;
     private bool checkedForUpdate;
@@ -31,15 +32,17 @@ internal sealed class WindowManager : IDisposable
         // Every window can reach every other from its title bar, which is where the host puts
         // its own controls and therefore where a player already looks. The toggles are the same
         // ones the commands and the installer's buttons call, not variants of them.
-        library = new LibraryWindow(state, ToggleBar, ToggleSettings, ToggleNews);
+        library = new LibraryWindow(state, ToggleBar, ToggleSettings, ToggleNews, ToggleArrange);
         settings = new SettingsWindow(state, ToggleLibrary, ToggleNews);
         news = new ReleaseNotesWindow(state, ToggleLibrary, ToggleSettings);
         bar = new BarWindow(state, ToggleLibrary, ToggleSettings);
+        arrange = new ArrangeWindow(state, ToggleLibrary, ToggleSettings);
 
         windows.AddWindow(bar);
         windows.AddWindow(library);
         windows.AddWindow(settings);
         windows.AddWindow(news);
+        windows.AddWindow(arrange);
     }
 
     /// <summary>Shows or hides the library.</summary>
@@ -50,6 +53,9 @@ internal sealed class WindowManager : IDisposable
 
     /// <summary>Shows or hides the release notes.</summary>
     public void ToggleNews() => news.Toggle();
+
+    /// <summary>Shows or hides the window that sorts the game's own list.</summary>
+    public void ToggleArrange() => arrange.Toggle();
 
     /// <summary>Shows or hides the quick-switch bar.</summary>
     public void ToggleBar() => bar.IsOpen = !bar.IsOpen;
