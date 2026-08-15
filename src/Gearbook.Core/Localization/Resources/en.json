@@ -136,8 +136,6 @@
   "settings.roleOrder": "Order of the roles",
   "settings.roleOrder.help": "Used when the list is sorted by role. Sorting by role is one entry in the sort control, so switching back to the game numbering is one click and changes nothing here.",
   "settings.roleOrder.dragHint": "Drag a row, or use the arrows.",
-  "settings.showServerBar": "Show the small entry beside the clock",
-  "settings.showServerBar.help": "Two characters in the game's info bar. It is the way back into Gearbook for somebody who has closed every window and does not know the command, so turning it off is worth doing deliberately rather than by accident.",
   "settings.news.autoOpen": "Open the notes once after an update",
   "settings.perCharacterNote": "Every setting here belongs to this character alone.",
   "settings.about.version": "Version {0}",
@@ -160,7 +158,6 @@
   "command.unknownSubcommand": "Unknown subcommand: {0}",
   "command.switch.noMatch": "No gearset matches {0}.",
   "command.switch.ambiguous": "More than one gearset matches {0}. Use the number instead.",
-  "command.view.noMatch": "No view is called {0}.",
+  "command.view.noMatch": "No view is called {0}."
 
-  "dtr.tooltip": "Open Gearbook"
 }

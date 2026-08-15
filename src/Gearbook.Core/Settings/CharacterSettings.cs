@@ -82,20 +82,6 @@ public sealed class CharacterSettings
     /// <summary>The newest release notes version this character has seen, or empty.</summary>
     public string LastSeenNewsVersion { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Show the small entry beside the clock in the game's server info bar.
-    /// </summary>
-    /// <remarks>
-    /// On by default, and that default is not a preference. The framework profile requires a way
-    /// into the plugin that needs no command, because somebody who does not know the command and
-    /// has closed every window otherwise never finds it again. The quick-switch bar does not
-    /// satisfy it: it can be closed, hidden in combat, and switched off at start.
-    ///
-    /// Turning it off is the player's choice and a deliberate one. What is displayed is two
-    /// characters, so the cost of leaving it on is close to nothing.
-    /// </remarks>
-    public bool ShowServerBarEntry { get; set; } = true;
-
     /// <summary>Open the release notes once after an update.</summary>
     public bool OpenNewsAfterUpdate { get; set; } = true;
 

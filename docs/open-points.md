@@ -95,6 +95,23 @@ picks these up.
   it dangerous, and handling that is this side's job, not Arsenal's. It belongs in the contract
   anyway so that a later version does not treat the index as an identity.
 
+- **(open since 2026-08-15, `miralsoft-foundation-docs`) The server info bar rule needs an
+  exception, or this project stays out of compliance with it.** `rules/frameworks/dalamud.md`
+  requires every plugin to carry an entry in the server info bar or an icon at the minimap.
+  Gearbook now carries neither, by the owner's decision, recorded in full in `decisions.md` on the
+  same date.
+
+  The rule was written for a plugin with no permanent presence, where an entry beside the clock is
+  the only way back. It does not fit a plugin whose primary surface is a bar that is on screen all
+  the time and whose every icon opens a menu leading everywhere else. A sentence covering that
+  case would let a plugin of this shape comply honestly instead of deviating.
+
+  Whoever writes it should also decide what the exception depends on, because the obvious
+  candidate is fragile: "the plugin has a permanently visible surface" stops being true the moment
+  a player switches that surface off, and a rule whose condition the player can turn off is a rule
+  that quietly stops applying. This repository cannot make that change (M-18), and until it is
+  made, the deviation stands and is named as one.
+
 - **(open since 2026-08-13, `Dalamud-Plugins`) The index entry for Gearbook.** Before the first
   release this repository must be public with a published release carrying the packaged archive
   under the asset name the index looks for. Then two things are added in the index repository: the

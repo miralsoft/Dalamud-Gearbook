@@ -162,6 +162,42 @@ Each entry: date, decision, rationale, and what was rejected.
   the mistake is visible in the filter rather than silent. Rejected: a hardcoded list of job ids,
   which would be correct today and wrong the first time a job is added.
 
+- **(2026-08-15) Gearbook ships no entry in the server info bar. This is a deliberate departure
+  from a global rule, not from a blueprint convention, and it is recorded here as one.**
+
+  The rule, in `rules/frameworks/dalamud.md` under "What every plugin ships": *"Reachability
+  without a command. An entry in the server info bar or an icon at the minimap. Somebody who does
+  not know the command otherwise never finds the plugin again."* Gearbook now has neither.
+
+  **The owner's reasoning, which is the reason this was decided the way it was.** Gearbook is not
+  shaped like the plugin the rule was written for. That plugin has no permanent presence: its
+  windows are shut, nothing of it is on screen, and without an entry beside the clock there is
+  genuinely no way back. Gearbook's whole purpose is a bar that is on screen all the time, and
+  every icon on that bar carries a right-click menu holding the library and the settings. Spending
+  a slice of a bar shared with the clock, the world name and every other plugin, in order to
+  provide a second way in for a product whose first way in is always visible, is a cost paid for
+  nothing.
+
+  **The case against, stated in full rather than summarised away.** The bar can be closed, hidden
+  in combat, and switched off at start, and each of those is one click. In any of those states
+  the owner's justification stops being literally true, and somebody who does not know `/gearbook`
+  is then down to one route: the open button in Dalamud's own plugin installer, which this plugin
+  does wire up. That route is real and always present, but it is outside the game's interface and
+  the rule exists precisely because people do not think to look there. The rule is also not a
+  suggestion: M-01 says a project may tighten a global rule and never weaken one, so unlike a
+  blueprint convention this cannot be settled by a line in this file alone.
+
+  **What follows from that.** The code change is the narrow one: the entry and its setting are
+  gone, nothing else. The rule itself needs an exception written into the foundation, for the case
+  of a plugin whose primary surface is permanently on screen, and that belongs in the foundation
+  repository which this one never writes to (M-18). It is recorded in `open-points.md` as work
+  belonging there. Until that happens this project is knowingly out of compliance with one rule,
+  which is a different and more honest state than believing itself compliant.
+
+  Rejected: keeping the entry at two characters with a switch to hide it, which was built first
+  and would have satisfied the rule by default while costing almost no room. The owner judged
+  that even that was more than the feature is worth here, and the reasoning above is why.
+
 - **(2026-08-15) Crafters and gatherers are separated by the job's category row, not by its
   position in the hand-and-land sequence.** Rationale: the first attempt split them at index
   eight, on the reasoning that the eight crafting jobs come first. They do, but the sequence

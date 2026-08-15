@@ -29,7 +29,6 @@ public sealed class Plugin : IDalamudPlugin
     private readonly GearbookState state;
     private readonly WindowManager windows;
     private readonly CommandHandler commands;
-    private readonly ServerBarEntry serverBar;
 
     private bool disposed;
 
@@ -61,7 +60,6 @@ public sealed class Plugin : IDalamudPlugin
 
         windows = new WindowManager(state);
         commands = new CommandHandler(state, windows);
-        serverBar = new ServerBarEntry(state, windows.ToggleLibrary);
 
         GearbookServices.Framework.Update += OnFrameworkUpdate;
         GearbookServices.ClientState.Login += OnLogin;
@@ -103,7 +101,6 @@ public sealed class Plugin : IDalamudPlugin
         GearbookServices.ClientState.Login -= OnLogin;
         GearbookServices.Framework.Update -= OnFrameworkUpdate;
 
-        serverBar.Dispose();
         commands.Dispose();
         windows.Dispose();
         state.Dispose();
@@ -124,11 +121,6 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         state.OnTick();
-
-        // Read from the tick rather than when the setting changes, because the setting belongs
-        // to a character and the character changes on login. One boolean per frame cannot fall
-        // out of step with it.
-        serverBar.Update(state);
     }
 
     private void OnLogin()
