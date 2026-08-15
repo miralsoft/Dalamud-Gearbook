@@ -447,7 +447,7 @@ internal sealed class BarWindow : Window
     private static bool ViewButton(
         float size,
         float width,
-        uint gameIcon,
+        RoleSymbol gameIcon,
         FontAwesomeIcon fallback,
         string label,
         bool active)
@@ -490,6 +490,10 @@ internal sealed class BarWindow : Window
         ImGui.SetCursorPos(afterRow);
         return pressed;
     }
+
+    /// <summary>One of the game's own pictures, ready to draw.</summary>
+    private static Dalamud.Interface.Textures.TextureWraps.IDalamudTextureWrap Picture(uint icon) =>
+        GearbookServices.Textures.GetFromGameIcon(new GameIconLookup(icon)).GetWrapOrEmpty();
 
     /// <summary>
     /// How wide every row in the menu is drawn.
@@ -534,8 +538,8 @@ internal sealed class BarWindow : Window
     /// One symbol as a button, from the game where the game has one and from the host's symbol
     /// font where it does not.
     /// </summary>
-    /// <param name="gameIcon">The game's icon number, or <see cref="RoleIcons.None"/>.</param>
-    /// <param name="fallback">The glyph to draw when there is no game icon.</param>
+    /// <param name="symbol">The game pictures to stack, or <see cref="RoleIcons.None"/>.</param>
+    /// <param name="fallback">The glyph to draw when the game has nothing.</param>
     /// <param name="size">The picture's edge length.</param>
     /// <param name="box">The whole control's size, picture plus frame padding.</param>
     /// <param name="asButton">True for a control that takes the click itself, false for a picture
@@ -548,28 +552,51 @@ internal sealed class BarWindow : Window
     /// from the gearset tiles beside it.
     /// </remarks>
     private static bool ViewSymbol(
-        uint gameIcon,
+        RoleSymbol symbol,
         FontAwesomeIcon fallback,
         float size,
         Vector2 box,
         bool asButton = true)
     {
-        if (gameIcon != RoleIcons.None)
+        if (!symbol.IsNone)
         {
-            var texture = GearbookServices.Textures
-                .GetFromGameIcon(new GameIconLookup(gameIcon))
-                .GetWrapOrEmpty();
+            var style = ImGui.GetStyle();
+            bool pressed;
+            Vector2 pictureAt;
 
-            if (!asButton)
+            if (asButton)
+            {
+                var origin = ImGui.GetCursorScreenPos();
+                pressed = ImGui.ImageButton(Picture(symbol.Base).Handle, new Vector2(size, size));
+                pictureAt = origin + style.FramePadding;
+            }
+            else
             {
                 // Inside the frame padding an image button would have added, so the picture sits
                 // where it would have sat and the two forms cannot drift apart.
-                ImGui.SetCursorPos(ImGui.GetCursorPos() + ImGui.GetStyle().FramePadding);
-                ImGui.Image(texture.Handle, new Vector2(size, size));
-                return false;
+                ImGui.SetCursorPos(ImGui.GetCursorPos() + style.FramePadding);
+                pictureAt = ImGui.GetCursorScreenPos();
+                ImGui.Image(Picture(symbol.Base).Handle, new Vector2(size, size));
+                pressed = false;
             }
 
-            return ImGui.ImageButton(texture.Handle, new Vector2(size, size));
+            if (symbol.IsLayered)
+            {
+                // Drawn straight onto the list rather than as another item, because a second item
+                // here would sit in the layout beside the first instead of on top of it, and
+                // would take its own share of the hovering.
+                //
+                // Inset so the tool keeps clear of the frame the ground already carries. A tool
+                // that touches the frame reads as a picture that did not fit.
+                var inset = size * 0.16f;
+
+                ImGui.GetWindowDrawList().AddImage(
+                    Picture(symbol.Overlay).Handle,
+                    pictureAt + new Vector2(inset, inset),
+                    pictureAt + new Vector2(size - inset, size - inset));
+            }
+
+            return pressed;
         }
 
         using var font = GearbookState.IconFont.Push();
@@ -608,7 +635,7 @@ internal sealed class BarWindow : Window
     }
 
     /// <summary>The game's own symbol for the current view, or <see cref="RoleIcons.None"/>.</summary>
-    private static uint ViewGameIcon(BarSettings settings) => settings.ViewKind switch
+    private static RoleSymbol ViewGameIcon(BarSettings settings) => settings.ViewKind switch
     {
         BarViewKind.Role => RoleIcons.For(settings.ViewRole),
         BarViewKind.Category => RoleIcons.For(settings.ViewCategory),

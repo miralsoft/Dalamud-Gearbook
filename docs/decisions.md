@@ -432,3 +432,28 @@ Each entry: date, decision, rationale, and what was rejected.
   Recorded because the tempting summary of this session is "we could not find it", and that is
   not what happened. It was found not to be there, which is a different and stronger statement,
   and it means nobody needs to look again.
+
+- **(2026-08-16) The crafting and gathering symbols are assembled at drawing time from two of the
+  game's own pictures.** Rationale: the game keeps its role tiles in two halves, an empty framed
+  colour from the `ROLE BASE` group and a silver tool drawn on nothing from the `CLASS JOB` group,
+  and ships the pairs it wanted. It never made a pair for these two categories. So this one is
+  made at drawing time out of the same halves: the dark ground with an anvil over it, and the
+  earth-coloured ground with a pickaxe.
+
+  That answers the objection the owner actually raised, which was not that the anvil was ugly but
+  that it was a **job's** symbol standing where a **category's** belonged. On its own the anvil is
+  the blacksmith. On a ground no single job carries, it is the level above one, and it stops
+  looking like a gearset tile that wandered into the menu.
+
+  The grounds deliberately avoid blue, green and red. Those belong to the tank, the healer and
+  damage, and on any of them these two would read as a fourth and fifth role; the tricolour is
+  already combat. That leaves exactly two grounds for exactly two categories, which is luck rather
+  than design, and is worth writing down before somebody adds a third category and finds the
+  cupboard bare.
+
+  Rejected: embedding the two pictures the owner found as files in the plugin. Technically it is
+  half an hour of work. But this repository is public and the plugin ships through an index, so a
+  bundled picture is redistributed with every release, and neither of those two is ours. That is
+  the reason the whole ecosystem addresses game art by number and loads it from the player's own
+  installation, and it is not a rule worth breaking for a menu icon. The owner chose the assembled
+  route once the trade was on the table.

@@ -60,6 +60,34 @@ public sealed class RoleIconsTests
         Assert.Equal(RoleIcons.For(role), RoleIcons.For(category));
 
     /// <summary>
+    /// The two the game never made are built from a ground and a tool, and the ground has to be
+    /// one no role uses. On blue, green or red they would read as a fourth and fifth role rather
+    /// than as the level above one.
+    /// </summary>
+    [Theory]
+    [InlineData(JobCategory.Crafting)]
+    [InlineData(JobCategory.Gathering)]
+    public void ABuiltCategorySymbolStandsOnAGroundNoRoleUses(JobCategory category)
+    {
+        var built = RoleIcons.For(category);
+
+        Assert.True(built.IsLayered);
+        Assert.DoesNotContain(
+            built.Base,
+            Enum.GetValues<JobRole>().Select(r => RoleIcons.For(r).Base).Where(b => b != built.Base));
+    }
+
+    [Fact]
+    public void TheTwoBuiltSymbolsAreToldApartByBothHalves()
+    {
+        var crafting = RoleIcons.For(JobCategory.Crafting);
+        var gathering = RoleIcons.For(JobCategory.Gathering);
+
+        Assert.NotEqual(crafting.Base, gathering.Base);
+        Assert.NotEqual(crafting.Overlay, gathering.Overlay);
+    }
+
+    /// <summary>
     /// Combat is not one of the roles. It covers tanks, healers and damage alike, so it must not
     /// borrow any single role's picture.
     /// </summary>
