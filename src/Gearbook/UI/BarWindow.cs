@@ -275,10 +275,14 @@ internal sealed class BarWindow : Window
             ImGui.SetTooltip($"{loc.Get(LocKeys.BarViewTooltip)}\n{ViewLabel(settings)}");
         }
 
-        // Both buttons open it. The mouse-button values in the popup flags are numbers rather
-        // than bits, so combining left and right with an or produces right alone: the left click
-        // silently did nothing. Opening the popup by hand avoids the trap entirely.
-        if (pressed || ImGui.IsItemClicked(ImGuiMouseButton.Right))
+        // The left button only, and that is a fix rather than a preference. A right click opens
+        // this popup on the press and the bar's own context menu on the release, so the symbols
+        // appeared for a frame and were then replaced, which reads as a glitch rather than as
+        // two menus disagreeing.
+        //
+        // Nothing is lost by giving it up: the tile has one job, and one button is enough for a
+        // control with one job.
+        if (pressed)
         {
             ImGui.OpenPopup(ViewMenuId);
         }
