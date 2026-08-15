@@ -41,6 +41,36 @@ public enum BarViewKind
 public static class BarView
 {
     /// <summary>
+    /// The roles the switcher offers, which is not every role there is.
+    /// </summary>
+    /// <remarks>
+    /// Crafter and gatherer are missing on purpose. Every crafter is a disciple of the hand and
+    /// every disciple of the hand is a crafter, so offering both the role and the category put
+    /// the same entry in the menu twice under two names, which asks the player to work out a
+    /// difference that does not exist. The category keeps it, because that is the level the other
+    /// two entries beside it are on.
+    ///
+    /// The pairing is only exact for those two. A combat role is a genuine subdivision of the
+    /// combat category, so a tank and "combat" are not the same list and both belong.
+    /// </remarks>
+    public static IReadOnlyList<JobRole> SelectableRoles { get; } =
+    [
+        JobRole.Tank,
+        JobRole.Healer,
+        JobRole.MeleeDps,
+        JobRole.PhysicalRangedDps,
+        JobRole.MagicalRangedDps,
+    ];
+
+    /// <summary>The categories the switcher offers.</summary>
+    public static IReadOnlyList<JobCategory> SelectableCategories { get; } =
+    [
+        JobCategory.Combat,
+        JobCategory.Crafting,
+        JobCategory.Gathering,
+    ];
+
+    /// <summary>
     /// The gearsets a view holds, before ordering.
     /// </summary>
     /// <param name="gearsets">Everything the character has.</param>

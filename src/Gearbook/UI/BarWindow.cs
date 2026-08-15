@@ -299,13 +299,8 @@ internal sealed class BarWindow : Window
         // words about pictures.
         var iconSize = settings.IconSize;
 
-        foreach (var role in Enum.GetValues<JobRole>())
+        foreach (var role in BarView.SelectableRoles)
         {
-            if (role == JobRole.Unknown)
-            {
-                continue;
-            }
-
             if (ViewButton(
                     iconSize,
                     RoleIcons.For(role),
@@ -320,13 +315,8 @@ internal sealed class BarWindow : Window
 
         ImGui.Separator();
 
-        foreach (var category in Enum.GetValues<JobCategory>())
+        foreach (var category in BarView.SelectableCategories)
         {
-            if (category == JobCategory.Unknown)
-            {
-                continue;
-            }
-
             if (ViewButton(
                     iconSize,
                     RoleIcons.For(category),

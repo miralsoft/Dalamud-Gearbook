@@ -1,4 +1,5 @@
 using System.Globalization;
+using Gearbook.Core.Model;
 using Gearbook.Core.Sorting;
 
 namespace Gearbook.Core.Settings;
@@ -22,7 +23,7 @@ namespace Gearbook.Core.Settings;
 public static class SettingsMigrator
 {
     /// <summary>The layout version this build writes.</summary>
-    public const int CurrentVersion = 4;
+    public const int CurrentVersion = 5;
 
     /// <summary>
     /// Migrates in place and reports what it did.
@@ -140,6 +141,42 @@ public static class SettingsMigrator
                     }
 
                     settings.LayoutVersion = 4;
+                    break;
+
+                case 4:
+                    // The switcher stopped offering crafter and gatherer as roles, because the
+                    // crafting and gathering categories select exactly the same gearsets and the
+                    // menu was listing each of them twice under two names.
+                    //
+                    // A bar left standing on one of those two roles is moved to the matching
+                    // category rather than reset. It holds the same gearsets either way, so the
+                    // player sees no change at all, which is the point: the entry they chose is
+                    // gone from the menu and the bar must not quietly become something else.
+                    foreach (var character in settings.Characters.Values)
+                    {
+                        if (character?.Bar is null || character.Bar.ViewKind != BarViewKind.Role)
+                        {
+                            continue;
+                        }
+
+                        switch (character.Bar.ViewRole)
+                        {
+                            case JobRole.Crafter:
+                                character.Bar.ViewKind = BarViewKind.Category;
+                                character.Bar.ViewCategory = JobCategory.Crafting;
+                                break;
+
+                            case JobRole.Gatherer:
+                                character.Bar.ViewKind = BarViewKind.Category;
+                                character.Bar.ViewCategory = JobCategory.Gathering;
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+
+                    settings.LayoutVersion = 5;
                     break;
 
                 default:

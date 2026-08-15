@@ -1,5 +1,6 @@
 using Gearbook.Core.Model;
 using Gearbook.Core.Settings;
+using Gearbook.Core.Sorting;
 using Xunit;
 
 namespace Gearbook.Core.Tests.Settings;
@@ -78,6 +79,39 @@ public class SettingsMigratorTests
         Assert.Equal(30f, settings.For(1).Bar.IconSize);
         Assert.Equal(30f, settings.For(2).Bar.IconSize);
         Assert.Equal(48f, settings.For(3).Bar.IconSize);
+    }
+
+    [Theory]
+    [InlineData(JobRole.Crafter, JobCategory.Crafting)]
+    [InlineData(JobRole.Gatherer, JobCategory.Gathering)]
+    public void A_bar_left_on_a_retired_role_view_moves_to_the_category_that_replaced_it(
+        JobRole role,
+        JobCategory category)
+    {
+        var settings = new GearbookSettings { LayoutVersion = 4 };
+        settings.For(1).Bar.ViewKind = BarViewKind.Role;
+        settings.For(1).Bar.ViewRole = role;
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+
+        Assert.Equal(BarViewKind.Category, settings.For(1).Bar.ViewKind);
+        Assert.Equal(category, settings.For(1).Bar.ViewCategory);
+    }
+
+    [Fact]
+    public void A_bar_on_a_role_that_stayed_is_left_alone_by_that_same_step()
+    {
+        // The step must reach exactly the two views that disappeared from the menu. A tank is
+        // still a role, and moving it to the combat category would quietly widen the bar from
+        // one role to three.
+        var settings = new GearbookSettings { LayoutVersion = 4 };
+        settings.For(1).Bar.ViewKind = BarViewKind.Role;
+        settings.For(1).Bar.ViewRole = JobRole.Tank;
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+
+        Assert.Equal(BarViewKind.Role, settings.For(1).Bar.ViewKind);
+        Assert.Equal(JobRole.Tank, settings.For(1).Bar.ViewRole);
     }
 
     [Fact]
