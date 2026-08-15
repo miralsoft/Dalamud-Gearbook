@@ -90,6 +90,7 @@
   "bar.lock": "Lock the bar",
   "bar.unlock": "Unlock the bar",
   "bar.empty": "Nothing on the bar yet.",
+  "bar.view.tooltip": "What the bar is showing. Click to change it.",
   "bar.addHint": "Mark gearsets as favourites, or add them to the bar from the library.",
 
   "switch.blocked.inCombat": "Not while you are in combat.",
@@ -127,6 +128,7 @@
   "settings.bar.hideInCutscene": "Hide during cutscenes",
   "settings.bar.locked": "Lock the bar in place",
   "settings.bar.locked.help": "A locked bar has no title bar and cannot be dragged, so it stays where you put it.",
+  "settings.bar.showViewSwitcher": "Show the view switcher as the first icon",
   "settings.bar.showOnStart": "Show the bar when the plugin loads",
   "settings.library.showGameNumber": "Show the game's own gearset number",
   "settings.library.showOrphans": "Show notes whose gearset is missing",

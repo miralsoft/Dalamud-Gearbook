@@ -90,6 +90,7 @@
   "bar.lock": "Leiste feststellen",
   "bar.unlock": "Leiste lösen",
   "bar.empty": "Noch nichts auf der Leiste.",
+  "bar.view.tooltip": "Was die Leiste zeigt. Klicken zum Wechseln.",
   "bar.addHint": "Markiere Sets als Favoriten oder lege sie aus der Übersicht heraus auf die Leiste.",
 
   "switch.blocked.inCombat": "Nicht im Kampf.",
@@ -127,6 +128,7 @@
   "settings.bar.hideInCutscene": "In Zwischensequenzen ausblenden",
   "settings.bar.locked": "Leiste feststellen",
   "settings.bar.locked.help": "Eine festgestellte Leiste hat keine Titelzeile und lässt sich nicht verschieben, sie bleibt also, wo du sie hingelegt hast.",
+  "settings.bar.showViewSwitcher": "Den Ansichtswechsler als erstes Symbol zeigen",
   "settings.bar.showOnStart": "Leiste beim Laden des Plugins zeigen",
   "settings.library.showGameNumber": "Die Nummer aus dem Spiel anzeigen",
   "settings.library.showOrphans": "Notizen zu fehlenden Sets anzeigen",

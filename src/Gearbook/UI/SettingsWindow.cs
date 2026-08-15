@@ -175,22 +175,17 @@ internal sealed class SettingsWindow : Window
         ImGui.Separator();
         ImGui.Spacing();
 
-        var contentsValues = new[] { BarContents.Favourites, BarContents.All };
-        var contentsLabels = new List<string>
+        // What the bar shows is chosen on the bar itself, where the effect is visible and where
+        // the choice is actually made, in the middle of doing something else. What belongs here
+        // is only whether that control is drawn at all.
+        var showSwitcher = bar.ShowViewSwitcher;
+        if (UiTheme.WrappedCheckbox("showswitcher", loc.Get(LocKeys.SettingsBarShowViewSwitcher), ref showSwitcher))
         {
-            loc.Get(LocKeys.SettingsBarContentsFavourites),
-            loc.Get(LocKeys.SettingsBarContentsAll),
-        };
-
-        var contentsIndex = Math.Max(0, Array.IndexOf(contentsValues, bar.Contents));
-
-        UiTheme.Caption(loc.Get(LocKeys.SettingsBarContents), loc.Get(LocKeys.SettingsBarContentsHelp));
-        ImGui.SetNextItemWidth(-1f);
-        if (ImGui.Combo("##barcontents", ref contentsIndex, contentsLabels, contentsLabels.Count))
-        {
-            bar.Contents = contentsValues[contentsIndex];
+            bar.ShowViewSwitcher = showSwitcher;
             changed = true;
         }
+
+        UiTheme.HelpMarker(loc.Get(LocKeys.SettingsBarContentsHelp));
 
         ImGui.Spacing();
 

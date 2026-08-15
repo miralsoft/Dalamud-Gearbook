@@ -105,6 +105,7 @@ public static class LocKeys
     public const string BarUnlock = "bar.unlock";
     public const string BarEmpty = "bar.empty";
     public const string BarAddHint = "bar.addHint";
+    public const string BarViewTooltip = "bar.view.tooltip";
 
     public const string SwitchBlockedInCombat = "switch.blocked.inCombat";
     public const string SwitchBlockedInCutscene = "switch.blocked.inCutscene";
@@ -153,6 +154,7 @@ public static class LocKeys
     public const string SettingsBarHideInCutscene = "settings.bar.hideInCutscene";
     public const string SettingsBarLocked = "settings.bar.locked";
     public const string SettingsBarLockedHelp = "settings.bar.locked.help";
+    public const string SettingsBarShowViewSwitcher = "settings.bar.showViewSwitcher";
     public const string SettingsBarShowOnStart = "settings.bar.showOnStart";
     public const string SettingsLibraryShowGameNumber = "settings.library.showGameNumber";
     public const string SettingsLibraryShowOrphans = "settings.library.showOrphans";

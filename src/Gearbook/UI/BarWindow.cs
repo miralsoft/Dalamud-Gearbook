@@ -7,6 +7,7 @@ using Gearbook.Adapters;
 using Gearbook.Core.Filtering;
 using Gearbook.Core.Identity;
 using Gearbook.Core.Localization;
+using Gearbook.Core.Model;
 using Gearbook.Core.Settings;
 using Gearbook.Core.Sorting;
 
@@ -171,8 +172,22 @@ internal sealed class BarWindow : Window
             openLibrary,
             openSettings);
 
+        var columns = Math.Max(1, settings.Columns);
+        var drawn = 0;
+
+        if (settings.ShowViewSwitcher)
+        {
+            DrawViewSwitcher(settings);
+            drawn = 1;
+        }
+
         if (shown.Count == 0)
         {
+            if (drawn > 0)
+            {
+                ImGui.SameLine();
+            }
+
             UiTheme.Muted(loc.Get(LocKeys.BarEmpty));
             UiTheme.HelpMarker(loc.Get(LocKeys.BarAddHint));
 
@@ -183,11 +198,9 @@ internal sealed class BarWindow : Window
         }
         else
         {
-            var columns = Math.Max(1, settings.Columns);
-
             for (var i = 0; i < shown.Count; i++)
             {
-                if (i % columns != 0)
+                if ((i + drawn) % columns != 0)
                 {
                     ImGui.SameLine();
                 }
@@ -224,6 +237,162 @@ internal sealed class BarWindow : Window
     }
 
     /// <summary>
+    /// The first tile: what the bar is showing, and a menu to change it.
+    /// </summary>
+    /// <remarks>
+    /// On the bar rather than in the settings, because this is a choice made in the middle of
+    /// doing something else. Walking to a settings window to say "show me the tanks" costs more
+    /// than reading the whole list would have.
+    ///
+    /// It is a separate idea from the library's filter and deliberately does not touch it.
+    /// Switching the bar to the tanks must not silently rewrite a filter somebody spent a minute
+    /// building next door.
+    /// </remarks>
+    private void DrawViewSwitcher(BarSettings settings)
+    {
+        var loc = state.Loc;
+        var size = new Vector2(settings.IconSize, settings.IconSize);
+
+        using (ImRaii.PushId("##gearbookview"))
+        {
+            ImGui.Button(ViewShortLabel(settings), size);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip($"{loc.Get(LocKeys.BarViewTooltip)}\n{ViewLabel(settings)}");
+        }
+
+        // Opens on either button, because the tile carries no other action and somebody who
+        // presses it expects the menu whichever way they pressed.
+        using var popup = ImRaii.ContextPopupItem(
+            "##gearbookviewmenu",
+            ImGuiPopupFlags.MouseButtonLeft | ImGuiPopupFlags.MouseButtonRight);
+
+        if (!popup)
+        {
+            return;
+        }
+
+        if (ImGui.MenuItem(loc.Get(LocKeys.SettingsBarContentsFavourites), string.Empty,
+                settings.ViewKind == BarViewKind.Favourites))
+        {
+            SetView(settings, BarViewKind.Favourites);
+        }
+
+        if (ImGui.MenuItem(loc.Get(LocKeys.SettingsBarContentsAll), string.Empty,
+                settings.ViewKind == BarViewKind.All))
+        {
+            SetView(settings, BarViewKind.All);
+        }
+
+        ImGui.Separator();
+
+        foreach (var role in Enum.GetValues<JobRole>())
+        {
+            if (role == JobRole.Unknown)
+            {
+                continue;
+            }
+
+            var active = settings.ViewKind == BarViewKind.Role && settings.ViewRole == role;
+            if (ImGui.MenuItem(RoleName(role), string.Empty, active))
+            {
+                settings.ViewRole = role;
+                SetView(settings, BarViewKind.Role);
+            }
+        }
+
+        ImGui.Separator();
+
+        foreach (var category in Enum.GetValues<JobCategory>())
+        {
+            if (category == JobCategory.Unknown)
+            {
+                continue;
+            }
+
+            var active = settings.ViewKind == BarViewKind.Category && settings.ViewCategory == category;
+            if (ImGui.MenuItem(CategoryName(category), string.Empty, active))
+            {
+                settings.ViewCategory = category;
+                SetView(settings, BarViewKind.Category);
+            }
+        }
+
+        // The player's own words, so this part of the menu grows without anybody adding a
+        // feature: tag a few sets as glamour and the bar can show exactly those.
+        var tags = FilterEngine.CollectTags(state.Gearsets);
+        if (tags.Count == 0)
+        {
+            return;
+        }
+
+        ImGui.Separator();
+
+        foreach (var tag in tags)
+        {
+            var active = settings.ViewKind == BarViewKind.Tag
+                         && string.Equals(settings.ViewTag, tag, StringComparison.CurrentCultureIgnoreCase);
+
+            if (ImGui.MenuItem(tag, string.Empty, active))
+            {
+                settings.ViewTag = tag;
+                SetView(settings, BarViewKind.Tag);
+            }
+        }
+    }
+
+    private void SetView(BarSettings settings, BarViewKind kind)
+    {
+        settings.ViewKind = kind;
+        state.Save();
+    }
+
+    /// <summary>What fits on a tile: a couple of characters saying which view is active.</summary>
+    private string ViewShortLabel(BarSettings settings) => settings.ViewKind switch
+    {
+        BarViewKind.All => "***",
+        BarViewKind.Role => Shorten(RoleName(settings.ViewRole)),
+        BarViewKind.Category => Shorten(CategoryName(settings.ViewCategory)),
+        BarViewKind.Tag => Shorten(settings.ViewTag),
+        _ => "*",
+    };
+
+    /// <summary>The full name of the active view, for the tooltip.</summary>
+    private string ViewLabel(BarSettings settings) => settings.ViewKind switch
+    {
+        BarViewKind.All => state.Loc.Get(LocKeys.SettingsBarContentsAll),
+        BarViewKind.Role => RoleName(settings.ViewRole),
+        BarViewKind.Category => CategoryName(settings.ViewCategory),
+        BarViewKind.Tag => settings.ViewTag,
+        _ => state.Loc.Get(LocKeys.SettingsBarContentsFavourites),
+    };
+
+    private static string Shorten(string text) =>
+        string.IsNullOrWhiteSpace(text) ? "?" : text.Trim()[..Math.Min(3, text.Trim().Length)];
+
+    private string RoleName(JobRole role) => state.Loc.Get(role switch
+    {
+        JobRole.Tank => LocKeys.RoleTank,
+        JobRole.Healer => LocKeys.RoleHealer,
+        JobRole.MeleeDps => LocKeys.RoleMeleeDps,
+        JobRole.PhysicalRangedDps => LocKeys.RolePhysicalRangedDps,
+        JobRole.MagicalRangedDps => LocKeys.RoleMagicalRangedDps,
+        JobRole.Crafter => LocKeys.RoleCrafter,
+        JobRole.Gatherer => LocKeys.RoleGatherer,
+        _ => LocKeys.RoleUnknown,
+    });
+
+    private string CategoryName(JobCategory category) => state.Loc.Get(category switch
+    {
+        JobCategory.Combat => LocKeys.CategoryCombat,
+        JobCategory.Crafting => LocKeys.CategoryCrafting,
+        JobCategory.Gathering => LocKeys.CategoryGathering,
+        _ => LocKeys.CategoryUnknown,
+    });
+
+    /// <summary>
     /// Locks or unlocks the bar. One method, called from the window's own menu, from every
     /// icon's menu and from the settings, so the three cannot drift apart.
     /// </summary>
@@ -253,19 +422,35 @@ internal sealed class BarWindow : Window
     private IReadOnlyList<ReconciledGearset> Contents()
     {
         var character = state.Character;
-
-        var favourites = BarOrder.OnBar(
-            state.Gearsets,
-            includeEverything: character?.Bar.Contents == BarContents.All);
-
-        if (character?.Bar.Sort is not { } sort)
+        if (character is null)
         {
-            return favourites;
+            return [];
+        }
+
+        var bar = character.Bar;
+
+        var chosen = BarView.Select(
+            state.Gearsets,
+            bar.ViewKind,
+            bar.ViewRole,
+            bar.ViewCategory,
+            bar.ViewTag,
+            state.Jobs);
+
+        // Outside the favourites view the arrangement orders a handful of what is on screen and
+        // leaves the rest in an arbitrary tail, which reads as a fault rather than a rule. So a
+        // view that is not the favourites falls back to the game's own numbering unless a sort
+        // was chosen.
+        if (bar.Sort is not { } sort)
+        {
+            return BarView.UsesArrangement(bar.ViewKind)
+                ? chosen
+                : FilterEngine.Sort(chosen, GearsetSortOrder.Slot, state.Jobs, character.RoleOrder);
         }
 
         // The role order is the one from the settings, so the bar and the library group things
         // the same way. Two orders called "by role" that disagreed would be worse than not
         // offering it on the bar at all.
-        return FilterEngine.Sort(favourites, sort, state.Jobs, character.RoleOrder);
+        return FilterEngine.Sort(chosen, sort, state.Jobs, character.RoleOrder);
     }
 }

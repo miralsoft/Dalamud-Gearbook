@@ -1,4 +1,5 @@
 using System.Globalization;
+using Gearbook.Core.Sorting;
 
 namespace Gearbook.Core.Settings;
 
@@ -21,7 +22,7 @@ namespace Gearbook.Core.Settings;
 public static class SettingsMigrator
 {
     /// <summary>The layout version this build writes.</summary>
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
 
     /// <summary>
     /// Migrates in place and reports what it did.
@@ -116,6 +117,29 @@ public static class SettingsMigrator
                     }
 
                     settings.LayoutVersion = 3;
+                    break;
+
+                case 3:
+                    // The bar's two-way "favourites or everything" became a view that can also
+                    // be a role, a category or a tag. The old choice is carried across rather
+                    // than reset, because somebody who had switched the bar to everything meant
+                    // it, and a migration that drops a choice is the failure migrations exist
+                    // to prevent.
+                    foreach (var character in settings.Characters.Values)
+                    {
+                        if (character?.Bar is null)
+                        {
+                            continue;
+                        }
+
+#pragma warning disable CS0618 // Reading the retired member is the entire point of this step.
+                        character.Bar.ViewKind = character.Bar.Contents == BarContents.All
+                            ? BarViewKind.All
+                            : BarViewKind.Favourites;
+#pragma warning restore CS0618
+                    }
+
+                    settings.LayoutVersion = 4;
                     break;
 
                 default:

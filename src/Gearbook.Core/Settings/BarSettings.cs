@@ -1,3 +1,6 @@
+using Gearbook.Core.Model;
+using Gearbook.Core.Sorting;
+
 namespace Gearbook.Core.Settings;
 
 /// <summary>What the quick-switch bar holds.</summary>
@@ -27,10 +30,39 @@ public enum BarContents
 public sealed class BarSettings
 {
     /// <summary>
-    /// Whether the bar holds the favourites or everything. Favourites by default, because that
-    /// is what makes it a bar rather than a second copy of the list.
+    /// Whether the bar holds the favourites or everything.
     /// </summary>
+    /// <remarks>
+    /// Retired in favour of <see cref="ViewKind"/>, which says the same thing and more. Kept as
+    /// a member so that a configuration written by the version that had it still loads and can
+    /// be read by the migration to layout version 4, rather than failing or silently losing the
+    /// choice. Nothing writes it any more.
+    /// </remarks>
+    [Obsolete("Superseded by ViewKind. Only the migration to layout version 4 reads it.")]
     public BarContents Contents { get; set; } = BarContents.Favourites;
+
+    /// <summary>
+    /// What the bar is showing: the favourites, everything, one role, one category, or one tag.
+    /// </summary>
+    /// <remarks>
+    /// Favourites by default, because that is what makes it a bar rather than a second copy of
+    /// the list. The switcher on the bar itself changes it, so the choice is made where its
+    /// effect is visible instead of two windows away.
+    /// </remarks>
+    public BarViewKind ViewKind { get; set; } = BarViewKind.Favourites;
+
+    /// <summary>The role shown when the view is a role.</summary>
+    public JobRole ViewRole { get; set; } = JobRole.Tank;
+
+    /// <summary>The category shown when the view is a category.</summary>
+    public JobCategory ViewCategory { get; set; } = JobCategory.Combat;
+
+    /// <summary>
+    /// The tag shown when the view is a tag. A tag that no gearset carries any more shows an
+    /// empty bar rather than falling back to something else, because a bar that quietly shows
+    /// something other than what its own switcher says is worse than an empty one.
+    /// </summary>
+    public string ViewTag { get; set; } = string.Empty;
 
     /// <summary>
     /// How the bar is ordered, or null for the arrangement the player made by hand.
@@ -99,6 +131,13 @@ public sealed class BarSettings
     /// wherever it happened to open with no way to move it.
     /// </summary>
     public bool Locked { get; set; }
+
+    /// <summary>
+    /// Show the view switcher as the first tile. On by default, because a control nobody can
+    /// see is a control nobody uses, and off for anybody who has settled on one view and wants
+    /// the space back.
+    /// </summary>
+    public bool ShowViewSwitcher { get; set; } = true;
 
     /// <summary>Show the bar when the plugin loads.</summary>
     public bool ShowOnStart { get; set; } = true;
