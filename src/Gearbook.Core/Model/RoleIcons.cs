@@ -10,23 +10,22 @@ namespace Gearbook.Core.Model;
 ///
 /// The numbers were read out of the installed client rather than remembered. Icon 62570 is a
 /// label reading "ROLE BASE" and 62580 one reading "ROLE FRAMED", which is the game marking the
-/// start of the group; the framed set is 62581 to 62589 and runs from the general to the
-/// specific: tank, healer, damage, melee damage, ranged damage, physical ranged damage, magical
-/// ranged damage, hand, land.
+/// start of the group. Within it, 62581 is the tank, 62582 the healer, 62583 damage of any kind,
+/// 62584 melee damage, 62586 physical ranged damage and 62587 magical ranged damage.
 ///
-/// That reading is not an assumption about the order. 62585 is visibly the two pictures 62586
-/// and 62587 drawn on top of each other, which only makes sense if it is the general case of
-/// both, and that fixes the whole sequence around it.
+/// None of that is assumed from the order. 62585 is visibly the two pictures 62586 and 62587
+/// drawn on top of each other, which only makes sense if it is the general case of both, and the
+/// same six numbers are used the same way by DelvUI, which has shipped them for years.
 ///
-/// Four of the nine are unused. 62583, the plain sword, is the game's symbol for damage of any
-/// kind, and 62585 is ranged damage of either kind; this plugin separates physical from magical
-/// everywhere else, so neither has anything to label. The last two, which the ordering says are
-/// the hand and the land, lost to a pair of tool symbols for the reason given below.
-///
-/// The rest of the icon folder was swept for anything better before settling on tools: every
-/// picture between 0 and 79999 in a plausible size was measured by the colour just inside its
-/// frame. There is no crafting or gathering emblem in it beyond these, and no group label for
-/// one either, where the game marks its other groups with label tiles it draws itself.
+/// **There is no role symbol for crafting or gathering, and the search for one is finished.**
+/// Three separate findings say so. The game labels every one of its icon groups with a tile it
+/// draws itself, and all 132 of those labels were read: there is `CLASS JOB`, `CLASS JOB FRAMED`,
+/// `GTR TYPE`, `ROLE BASE`, `ROLE FRAMED`, `GEAR SET` and no group for job categories anywhere.
+/// The two entries at the end of the role block, 62588 and 62589, sit on exactly the healer's
+/// green ground, pixel for pixel, while the crafting and gathering jobs use the dark one, so they
+/// are not the hand and the land whatever else they are; no plugin on GitHub uses either number.
+/// And DelvUI, asked for the role icon of a crafter or a gatherer, returns that job's own icon,
+/// which is the same answer this file arrives at below.
 /// </remarks>
 public static class RoleIcons
 {
@@ -44,17 +43,15 @@ public static class RoleIcons
 
     /// <summary>An anvil, and a pickaxe, both framed the way the role symbols are.</summary>
     /// <remarks>
-    /// These are tools rather than role emblems, and that is the second attempt at these two.
-    /// The role block ends with a pair that is almost certainly the hand and the land, and they
-    /// were used first for that reason, but they draw four metal discs and three nuggets on a
-    /// green ground and nobody reading the bar could tell what either meant. A symbol that has to
-    /// be explained has already failed at the only thing it does.
+    /// A job's picture standing in for a whole category, which is the borrowing this project
+    /// refused for the favourites star. It is right here for a reason that does not apply there:
+    /// the game has no symbol for these two categories at all, so there is nothing to borrow
+    /// from and nothing being misrepresented. DelvUI reaches the same fallback from the same dead
+    /// end, by returning the job's own icon when asked for a crafter's or a gatherer's role icon.
     ///
-    /// The game gives these two to the blacksmith and the miner, so strictly a job's picture is
-    /// standing in for a whole category. That is a real objection and it loses to a plainer one:
-    /// an anvil reads as making things and a pickaxe as digging them up, to anybody, immediately.
-    /// It also stays inside the game's own art, at the same size and in the same frame as
-    /// everything beside it.
+    /// The blacksmith's anvil and the miner's pickaxe were chosen from among the jobs because
+    /// they read as making things and digging them up without being explained, which is the whole
+    /// job of a symbol, and because they are framed and shaded like everything beside them.
     /// </remarks>
     private const uint DiscipleOfTheHand = 62109;
 

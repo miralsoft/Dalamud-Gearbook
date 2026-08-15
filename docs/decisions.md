@@ -400,3 +400,35 @@ Each entry: date, decision, rationale, and what was rejected.
 
   Rejected: keeping the role-block pair and explaining it in a tooltip. A tooltip that has to say
   what a picture means is the picture admitting it does not work.
+
+- **(2026-08-16) The search for a crafting and gathering role symbol is closed: there is none, and
+  the earlier identification of 62588 and 62589 was wrong.** The owner asked twice more for the
+  originals and suggested looking at what other plugins had done, which is what settled it.
+
+  Three findings, each independent of the others:
+
+  **The game's own group labels.** Every icon group is marked with a black tile the game draws
+  itself. All 132 of them between 60000 and 79999 were found by measuring for a nearly black
+  square holding a few per cent of pale pixels, and then read: `SYSTEM MISC`, `CLASS JOB`,
+  `CLASS JOB FRAMED`, `NAME CLASS JOB`, `QUEST CLASS`, `QUEST JOB`, `GTR TYPE`, `LEVE KIND`,
+  `ROLE BASE`, `ROLE FRAMED`, `GEAR SET`, `ACHIEVEMENT` and a hundred more. There is no group for
+  job categories. That is not an absence of evidence, it is the map being complete.
+
+  **The colour of the two entries at the end of the role block.** 62588 sits on 49, 78, 39 and the
+  healer's own ground on 49, 77, 38: the same green, pixel for pixel. The crafting and gathering
+  jobs use the dark ground, 62574. Whatever 62588 and 62589 are, they are not the hand and the
+  land, and this project's earlier note claiming they were has been corrected rather than left to
+  be believed by the next reader. No plugin on GitHub uses either number.
+
+  **What DelvUI does.** Asked for the role icon of a job, it returns 62581 for a tank, 62582 for a
+  healer, 62583 for damage, and optionally 62584, 62586 and 62587 for melee, physical ranged and
+  magical ranged. That is this project's mapping exactly, arrived at separately, which is a
+  cross-check worth more than either derivation alone. Asked for a crafter or a gatherer, it
+  returns that job's own icon. The mature plugin hit the same dead end and took the same way out.
+
+  So the anvil and the pickaxe stay, and they are no longer a compromise made in ignorance. They
+  are what is left when the thing being looked for has been shown not to exist.
+
+  Recorded because the tempting summary of this session is "we could not find it", and that is
+  not what happened. It was found not to be there, which is a different and stronger statement,
+  and it means nobody needs to look again.
