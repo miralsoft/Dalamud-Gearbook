@@ -5,6 +5,8 @@ namespace Gearbook.Core.Model;
 /// </summary>
 /// <param name="Base">The picture underneath, or zero for none at all.</param>
 /// <param name="Overlay">A picture drawn over it, or zero when the base says everything.</param>
+/// <param name="Ground">A colour painted inside the base's frame before the overlay goes on, or
+/// null to leave the base as the game drew it.</param>
 /// <remarks>
 /// Two layers because the game keeps its role tiles in two halves and this project needs a
 /// combination the game never assembled. `ROLE BASE` is a group of empty framed colours and the
@@ -16,7 +18,7 @@ namespace Gearbook.Core.Model;
 /// the player's own installation, which is why plugins address game art by number instead of
 /// bundling it.
 /// </remarks>
-public readonly record struct RoleSymbol(uint Base, uint Overlay)
+public readonly record struct RoleSymbol(uint Base, uint Overlay, System.Numerics.Vector4? Ground = null)
 {
     /// <summary>No game symbol fits, and the caller should fall back to its own.</summary>
     public static RoleSymbol None => default;
@@ -29,6 +31,14 @@ public readonly record struct RoleSymbol(uint Base, uint Overlay)
 
     /// <summary>True when a second picture goes over the first.</summary>
     public bool IsLayered => Overlay != 0;
+
+    /// <summary>True when the base tile's inside is repainted before the overlay goes on.</summary>
+    /// <remarks>
+    /// Only the inside, never the frame. The frame is the part that makes a tile look like the
+    /// game drew it, and a colour laid over the whole square would take that away in exchange for
+    /// the very thing the colour was meant to add.
+    /// </remarks>
+    public bool HasGround => Ground is not null;
 }
 
 /// <summary>
@@ -107,11 +117,16 @@ public static class RoleIcons
     /// The two built ones deliberately avoid the colours the roles use. On a blue, green or red
     /// ground they would read as a fourth and fifth role rather than as the level above one, and
     /// the tricolour is already spoken for by combat.
+    ///
+    /// Crafting takes its violet from <see cref="RoleColours"/> rather than from a tile, because
+    /// the game has no violet tile and its own answer for a crafter is the colourless dark one.
+    /// Painting the inside is what makes the symbol and the highlight under the pointer say the
+    /// same thing, which is the whole point of a colour that means something.
     /// </remarks>
     public static RoleSymbol For(JobCategory category) => category switch
     {
         JobCategory.Combat => RoleSymbol.Plain(AllCombatRoles),
-        JobCategory.Crafting => new RoleSymbol(DarkGround, AnvilGlyph),
+        JobCategory.Crafting => new RoleSymbol(DarkGround, AnvilGlyph, RoleColours.For(JobRole.Crafter)),
         JobCategory.Gathering => new RoleSymbol(EarthGround, PickaxeGlyph),
         _ => None,
     };

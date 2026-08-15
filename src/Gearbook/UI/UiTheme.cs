@@ -76,7 +76,11 @@ internal static class UiTheme
     /// a very large tile from carrying a number bigger than the window's own text.
     /// </remarks>
     public static float TileMarkFontSize(float tileSize) =>
-        Math.Clamp(tileSize * 0.38f, 9f, ImGui.GetFontSize() * 1.5f);
+        Math.Clamp(tileSize * 0.52f, 12f, ImGui.GetFontSize() * 1.6f);
+
+    /// <summary>The same colour at a different opacity.</summary>
+    private static Vector4 WithAlpha(Vector4 colour, float alpha) =>
+        new(colour.X, colour.Y, colour.Z, alpha);
 
     /// <summary>
     /// A question mark that explains a setting on hover.
@@ -376,6 +380,25 @@ internal static class UiTheme
 
         var min = origin;
         var max = origin + new Vector2(size, size) + (ImGui.GetStyle().FramePadding * 2f);
+
+        // The role's colour laid over the tile while the pointer is on it, not merely behind it.
+        // A picture button draws its background under the picture, and a job icon is opaque, so
+        // the pushed hover colour only ever showed as a hairline in the frame padding. It was
+        // there and it could not be seen, which is the same as not being there.
+        //
+        // The wash tints the icon and the outline states the colour at full strength, because a
+        // wash alone has to stay pale enough to leave the picture readable.
+        if (roleColour is { } hovered && ImGui.IsItemHovered())
+        {
+            drawList.AddRectFilled(min, max, ImGui.GetColorU32(WithAlpha(RoleColours.Lit(hovered, 0.35f), 0.42f)));
+            drawList.AddRect(
+                min,
+                max,
+                ImGui.GetColorU32(WithAlpha(RoleColours.Lit(hovered, 0.55f), 1f)),
+                2f,
+                ImDrawFlags.None,
+                2.5f);
+        }
 
         if (!clickable)
         {

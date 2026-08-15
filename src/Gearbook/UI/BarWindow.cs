@@ -580,6 +580,20 @@ internal sealed class BarWindow : Window
                 pressed = false;
             }
 
+            if (symbol.Ground is { } ground)
+            {
+                // Inside the frame only. The frame is what makes this look like a tile the game
+                // drew, and covering the whole square would trade that away for the colour it was
+                // meant to add. Rounded to follow the corners the frame already has.
+                var edge = size * 0.10f;
+
+                ImGui.GetWindowDrawList().AddRectFilled(
+                    pictureAt + new Vector2(edge, edge),
+                    pictureAt + new Vector2(size - edge, size - edge),
+                    ImGui.GetColorU32(ground),
+                    size * 0.14f);
+            }
+
             if (symbol.IsLayered)
             {
                 // Drawn straight onto the list rather than as another item, because a second item
