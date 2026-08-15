@@ -30,12 +30,14 @@ internal sealed class BarWindow : Window
 
     private readonly GearbookState state;
     private readonly Action openLibrary;
+    private readonly Action openSettings;
 
     public BarWindow(GearbookState state, Action openLibrary, Action openSettings)
         : base(WindowId, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize)
     {
         this.state = state;
         this.openLibrary = openLibrary;
+        this.openSettings = openSettings;
 
         RespectCloseHotkey = false;
 
@@ -173,6 +175,15 @@ internal sealed class BarWindow : Window
 
         var columns = Math.Max(1, settings.Columns);
 
+        // Every icon carries the bar's own controls, because a locked bar has no title bar and
+        // its window menu only opens where no icon is. On a full bar that leaves almost nowhere
+        // to click, and the control that unlocks it has to be reachable from the bar itself.
+        var barControls = new UiTheme.BarContextActions(
+            settings.Locked,
+            ToggleLock,
+            openLibrary,
+            openSettings);
+
         for (var i = 0; i < shown.Count; i++)
         {
             if (i % columns != 0)
@@ -186,7 +197,8 @@ internal sealed class BarWindow : Window
                     settings.IconSize,
                     settings.ShowItemLevel,
                     settings.ShowFavourite,
-                    settings.HighlightActive))
+                    settings.HighlightActive,
+                    barControls))
             {
                 state.RequestEquip(shown[i].Gearset.Slot, EquipTrigger.Bar);
             }
@@ -210,10 +222,25 @@ internal sealed class BarWindow : Window
             if (ImGui.MenuItem(
                     settings.Locked ? loc.Get(LocKeys.BarUnlock) : loc.Get(LocKeys.BarLock)))
             {
-                settings.Locked = !settings.Locked;
-                state.Save();
+                ToggleLock();
             }
         }
+    }
+
+    /// <summary>
+    /// Locks or unlocks the bar. One method, called from the window's own menu, from every
+    /// icon's menu and from the settings, so the three cannot drift apart.
+    /// </summary>
+    private void ToggleLock()
+    {
+        var character = state.Character;
+        if (character is null)
+        {
+            return;
+        }
+
+        character.Bar.Locked = !character.Bar.Locked;
+        state.Save();
     }
 
     /// <summary>

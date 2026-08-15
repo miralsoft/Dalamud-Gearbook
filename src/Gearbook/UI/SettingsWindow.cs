@@ -157,6 +157,21 @@ internal sealed class SettingsWindow : Window
         var bar = character.Bar;
         var changed = false;
 
+        // First, and separated from the rest, because this is the setting somebody comes here
+        // looking for. A locked bar has no title bar, so once it is locked this tab is one of
+        // the few places that can undo it, and it used to sit last under seven other boxes.
+        var locked = bar.Locked;
+        if (UiTheme.WrappedCheckbox("locked", loc.Get(LocKeys.SettingsBarLocked), ref locked))
+        {
+            bar.Locked = locked;
+            changed = true;
+        }
+
+        UiTheme.HelpMarker(loc.Get(LocKeys.SettingsBarLockedHelp));
+
+        ImGui.Separator();
+        ImGui.Spacing();
+
         // The ceiling is the gearset limit rather than a round number somebody liked. One column
         // gives a vertical bar and the limit gives a single row whatever the character owns, so
         // between them every shape is reachable and no setting is wasted on the impossible.
@@ -218,15 +233,6 @@ internal sealed class SettingsWindow : Window
         }
 
         ImGui.Spacing();
-
-        var locked = bar.Locked;
-        if (UiTheme.WrappedCheckbox("locked", loc.Get(LocKeys.SettingsBarLocked), ref locked))
-        {
-            bar.Locked = locked;
-            changed = true;
-        }
-
-        UiTheme.HelpMarker(loc.Get(LocKeys.SettingsBarLockedHelp));
 
         var showOnStart = bar.ShowOnStart;
         if (UiTheme.WrappedCheckbox("showonstart", loc.Get(LocKeys.SettingsBarShowOnStart), ref showOnStart))

@@ -175,7 +175,14 @@ internal static class UiTheme
     /// all: it is the one action that decides what the bar holds, and reaching it through a
     /// window is a detour from the thing you are already pointing at.
     /// </remarks>
-    public static void GearsetContextMenu(GearbookState state, ReconciledGearset gearset)
+    /// <param name="state">The plugin state.</param>
+    /// <param name="gearset">The gearset the menu belongs to.</param>
+    /// <param name="barControls">Where to reach the bar's own controls from this menu, or null
+    /// when the menu is not on the bar.</param>
+    public static void GearsetContextMenu(
+        GearbookState state,
+        ReconciledGearset gearset,
+        BarContextActions? barControls = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(gearset);
@@ -193,7 +200,48 @@ internal static class UiTheme
         {
             ToggleFavourite(state, gearset);
         }
+
+        if (barControls is null)
+        {
+            return;
+        }
+
+        // A locked bar has no title bar, so its cross-links are gone, and its own menu only
+        // opens where no icon is. On a full bar that is almost nowhere, which means the control
+        // that unlocks it can be practically unreachable from the bar itself. Every icon
+        // therefore carries the way out.
+        ImGui.Separator();
+
+        if (ImGui.MenuItem(barControls.Locked
+                ? loc.Get(LocKeys.BarUnlock)
+                : loc.Get(LocKeys.BarLock)))
+        {
+            barControls.ToggleLock();
+        }
+
+        if (ImGui.MenuItem(loc.Get(LocKeys.WindowLibraryTitle)))
+        {
+            barControls.OpenLibrary();
+        }
+
+        if (ImGui.MenuItem(loc.Get(LocKeys.WindowSettingsTitle)))
+        {
+            barControls.OpenSettings();
+        }
     }
+
+    /// <summary>
+    /// The bar's own controls, as the tile menu needs them.
+    /// </summary>
+    /// <param name="Locked">Whether the bar is currently locked.</param>
+    /// <param name="ToggleLock">Locks or unlocks it.</param>
+    /// <param name="OpenLibrary">Opens the library.</param>
+    /// <param name="OpenSettings">Opens the settings.</param>
+    public sealed record BarContextActions(
+        bool Locked,
+        Action ToggleLock,
+        Action OpenLibrary,
+        Action OpenSettings);
 
     /// <summary>
     /// One gearset as a clickable icon.
@@ -205,7 +253,8 @@ internal static class UiTheme
         float size,
         bool showItemLevel,
         bool showFavourite,
-        bool highlightActive)
+        bool highlightActive,
+        BarContextActions? barControls = null)
     {
         var blocked = state.CheckCanEquip(gearset);
         var clickable = blocked is Adapters.EquipOutcome.Sent;
@@ -239,8 +288,8 @@ internal static class UiTheme
         }
 
         // Bound to the icon that was just drawn, so right-clicking a tile reaches the same menu
-        // right-clicking a row in the library does.
-        GearsetContextMenu(state, gearset);
+        // right-clicking a row in the library does, plus the bar's own controls.
+        GearsetContextMenu(state, gearset, barControls);
 
         var min = origin;
         var max = origin + new Vector2(size, size) + (ImGui.GetStyle().FramePadding * 2f);
