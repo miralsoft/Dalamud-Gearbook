@@ -426,6 +426,7 @@ internal sealed class BarWindow : Window
         using var id = ImRaii.PushId(label);
 
         var origin = ImGui.GetCursorScreenPos();
+        var top = ImGui.GetCursorPosY();
         var box = new Vector2(size, size) + (ImGui.GetStyle().FramePadding * 2f);
         var pressed = ViewSymbol(gameIcon, fallback, size, box);
 
@@ -441,7 +442,11 @@ internal sealed class BarWindow : Window
         }
 
         ImGui.SameLine();
-        ImGui.AlignTextToFramePadding();
+
+        // Centred against the tile rather than against a text frame. The usual alignment call
+        // assumes the thing beside the text is one line tall, and these tiles are as tall as the
+        // player's icon size, so it left every name sitting near the top of its own row.
+        ImGui.SetCursorPosY(top + ((box.Y - ImGui.GetTextLineHeight()) * 0.5f));
         ImGui.TextUnformatted(label);
 
         return pressed;
