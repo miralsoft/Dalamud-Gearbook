@@ -78,9 +78,6 @@ internal static class UiTheme
     public static float TileMarkFontSize(float tileSize) =>
         Math.Clamp(tileSize * 0.52f, 12f, ImGui.GetFontSize() * 1.6f);
 
-    /// <summary>The same colour at a different opacity.</summary>
-    private static Vector4 WithAlpha(Vector4 colour, float alpha) =>
-        new(colour.X, colour.Y, colour.Z, alpha);
 
     /// <summary>
     /// A question mark that explains a setting on hover.
@@ -350,8 +347,8 @@ internal static class UiTheme
         // colour rather than being painted a deliberate-looking grey.
         var roleColour = RoleColours.For(RoleOf(state, gearset));
 
-        using (ImRaii.PushColor(ImGuiCol.ButtonHovered, RoleColours.Lit(roleColour ?? default, 0.30f), roleColour is not null))
-        using (ImRaii.PushColor(ImGuiCol.ButtonActive, RoleColours.Lit(roleColour ?? default, 0.50f), roleColour is not null))
+        using (ImRaii.PushColor(ImGuiCol.ButtonHovered, RoleColours.Vivid(roleColour ?? default), roleColour is not null))
+        using (ImRaii.PushColor(ImGuiCol.ButtonActive, RoleColours.Vivid(roleColour ?? default), roleColour is not null))
         using (ImRaii.PushId(gearset.Record.Id))
         {
             // Deliberately not disabled while a switch is blocked. A disabled item takes no
@@ -390,14 +387,16 @@ internal static class UiTheme
         // wash alone has to stay pale enough to leave the picture readable.
         if (roleColour is { } hovered && ImGui.IsItemHovered())
         {
-            drawList.AddRectFilled(min, max, ImGui.GetColorU32(WithAlpha(RoleColours.Lit(hovered, 0.35f), 0.42f)));
+            var vivid = RoleColours.Vivid(hovered);
+
+            drawList.AddRectFilled(min, max, ImGui.GetColorU32(RoleColours.WithAlpha(vivid, 0.45f)));
             drawList.AddRect(
                 min,
                 max,
-                ImGui.GetColorU32(WithAlpha(RoleColours.Lit(hovered, 0.55f), 1f)),
+                ImGui.GetColorU32(RoleColours.WithAlpha(vivid, 1f)),
                 2f,
                 ImDrawFlags.None,
-                2.5f);
+                3f);
         }
 
         if (!clickable)

@@ -53,23 +53,43 @@ public static class RoleColours
     };
 
     /// <summary>
-    /// The same colour as something to draw behind a tile the pointer is over.
+    /// The same hue, turned up until it can carry a signal.
     /// </summary>
     /// <param name="colour">A role's colour.</param>
-    /// <param name="strength">How far towards a lit version of it to go, from nothing to one.</param>
     /// <remarks>
-    /// The tiles the game draws are meant to be read as pictures, so their grounds are dark
-    /// enough to sit under a silver tool. Used unchanged behind an icon on a dark bar, they would
-    /// be a highlight nobody can see. This lifts the colour towards white far enough to register
-    /// as a highlight while keeping the hue that carries the meaning, which is the only part of
-    /// it doing any work.
+    /// <para>
+    /// The game's tiles are grounds for a silver tool to sit on, so they are dark and muted by
+    /// design. Used as they are over a job icon they read as a smudge, and the meaning goes with
+    /// the saturation.
+    /// </para>
+    /// <para>
+    /// Mixing them towards white was the first attempt and it was the wrong operation: it does
+    /// brighten, but it also drains the colour, so a blue arrives as a pale grey-blue and the
+    /// brighter it gets the less it says. This scales instead, so the brightest channel reaches
+    /// full, and then squares each one, which widens the gap between them. Brightness and
+    /// saturation both go up and the hue is untouched, which is the only part doing any work.
+    /// </para>
     /// </remarks>
-    public static Vector4 Lit(Vector4 colour, float strength) =>
-        new(
-            colour.X + ((1f - colour.X) * strength),
-            colour.Y + ((1f - colour.Y) * strength),
-            colour.Z + ((1f - colour.Z) * strength),
+    public static Vector4 Vivid(Vector4 colour)
+    {
+        var peak = Math.Max(colour.X, Math.Max(colour.Y, colour.Z));
+        if (peak <= 0f)
+        {
+            return colour;
+        }
+
+        var scale = 1f / peak;
+
+        return new Vector4(
+            colour.X * scale * colour.X * scale,
+            colour.Y * scale * colour.Y * scale,
+            colour.Z * scale * colour.Z * scale,
             colour.W);
+    }
+
+    /// <summary>The same colour at a different opacity.</summary>
+    public static Vector4 WithAlpha(Vector4 colour, float alpha) =>
+        new(colour.X, colour.Y, colour.Z, alpha);
 
     private static Vector4 From(byte r, byte g, byte b) =>
         new(r / 255f, g / 255f, b / 255f, 1f);
