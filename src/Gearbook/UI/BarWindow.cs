@@ -426,10 +426,21 @@ internal sealed class BarWindow : Window
     private static FontAwesomeIcon ViewIconFor(BarViewKind kind, JobRole role, JobCategory category) =>
         ViewIcon(new BarSettings { ViewKind = kind, ViewRole = role, ViewCategory = category });
 
+    /// <summary>
+    /// Switches the bar to a view and puts the fold-out strip away.
+    /// </summary>
+    /// <remarks>
+    /// Closing belongs here rather than at each of the five places that choose a view, because
+    /// every one of them is a finished decision and none of them wants the strip left standing.
+    /// It has to be said at all: the strip is drawn from buttons, and a button inside a popup
+    /// does not dismiss it the way a menu entry does, so the strip stayed open over the bar it
+    /// had just rearranged and needed a second click somewhere else to go away.
+    /// </remarks>
     private void SetView(BarSettings settings, BarViewKind kind)
     {
         settings.ViewKind = kind;
         state.Save();
+        ImGui.CloseCurrentPopup();
     }
 
     /// <summary>
