@@ -47,7 +47,14 @@ public sealed class CharacterSettings
     /// what an older stored order looks like after a new role is added, sorts to the end rather
     /// than to the front.
     /// </remarks>
-    public List<JobRole> RoleOrder { get; set; } = [.. DefaultRoleOrder];
+    /// <remarks>
+    /// Deliberately empty rather than pre-filled with the default. A serialiser reading a list
+    /// into a property that already holds items appends to it rather than replacing it, so a
+    /// pre-filled default grew by eight entries on every single load. It reached eight copies of
+    /// every role before anybody saw the settings window. <see cref="NormaliseRoleOrder"/> is
+    /// what puts the default in, and it is also what repairs a file this already happened to.
+    /// </remarks>
+    public List<JobRole> RoleOrder { get; set; } = [];
 
     /// <summary>The order the roles ship in.</summary>
     public static IReadOnlyList<JobRole> DefaultRoleOrder { get; } =
@@ -78,6 +85,39 @@ public sealed class CharacterSettings
 
     /// <summary>Open the release notes once after an update.</summary>
     public bool OpenNewsAfterUpdate { get; set; } = true;
+
+    /// <summary>
+    /// Makes the role order hold every role exactly once, keeping the order it already
+    /// describes.
+    /// </summary>
+    /// <remarks>
+    /// Three jobs at once, and all three are needed. It fills an empty list with the default,
+    /// which is how a new character gets a sensible order. It removes duplicates, which repairs
+    /// a file that grew every time it was loaded. And it appends any role the list does not
+    /// mention, which is what an order saved before a new role existed looks like.
+    /// </remarks>
+    public void NormaliseRoleOrder()
+    {
+        var normalised = new List<JobRole>(DefaultRoleOrder.Count);
+
+        foreach (var role in RoleOrder)
+        {
+            if (!normalised.Contains(role))
+            {
+                normalised.Add(role);
+            }
+        }
+
+        foreach (var role in DefaultRoleOrder)
+        {
+            if (!normalised.Contains(role))
+            {
+                normalised.Add(role);
+            }
+        }
+
+        RoleOrder = normalised;
+    }
 
     /// <summary>The saved records as model objects.</summary>
     public IReadOnlyList<GearsetRecord> ToRecords() =>

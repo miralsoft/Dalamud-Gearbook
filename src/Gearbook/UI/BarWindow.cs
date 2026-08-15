@@ -160,6 +160,15 @@ internal sealed class BarWindow : Window
 
         var shown = Contents();
 
+        // Built before anything is drawn, because the empty bar needs it too. An empty bar is a
+        // normal state now that the fallbacks are gone, and it would otherwise be the one place
+        // with no menu at all, which is exactly where somebody arrives wondering what to do.
+        var barControls = new UiTheme.BarContextActions(
+            settings.Locked,
+            ToggleLock,
+            openLibrary,
+            openSettings);
+
         if (shown.Count == 0)
         {
             UiTheme.Muted(loc.Get(LocKeys.BarEmpty));
@@ -169,61 +178,46 @@ internal sealed class BarWindow : Window
             {
                 openLibrary();
             }
-
-            return;
         }
-
-        var columns = Math.Max(1, settings.Columns);
-
-        // Every icon carries the bar's own controls, because a locked bar has no title bar and
-        // its window menu only opens where no icon is. On a full bar that leaves almost nowhere
-        // to click, and the control that unlocks it has to be reachable from the bar itself.
-        var barControls = new UiTheme.BarContextActions(
-            settings.Locked,
-            ToggleLock,
-            openLibrary,
-            openSettings);
-
-        for (var i = 0; i < shown.Count; i++)
+        else
         {
-            if (i % columns != 0)
-            {
-                ImGui.SameLine();
-            }
+            var columns = Math.Max(1, settings.Columns);
 
-            if (UiTheme.GearsetTile(
-                    state,
-                    shown[i],
-                    settings.IconSize,
-                    settings.ShowItemLevel,
-                    settings.ShowFavourite,
-                    settings.HighlightActive,
-                    barControls))
+            for (var i = 0; i < shown.Count; i++)
             {
-                state.RequestEquip(shown[i].Gearset.Slot, EquipTrigger.Bar);
+                if (i % columns != 0)
+                {
+                    ImGui.SameLine();
+                }
+
+                // Every icon carries the bar's own controls as well as its own, because a locked
+                // bar has no title bar and the window menu below declines to open over an icon.
+                if (UiTheme.GearsetTile(
+                        state,
+                        shown[i],
+                        settings.IconSize,
+                        settings.ShowItemLevel,
+                        settings.ShowFavourite,
+                        settings.HighlightActive,
+                        barControls))
+                {
+                    state.RequestEquip(shown[i].Gearset.Slot, EquipTrigger.Bar);
+                }
             }
         }
 
         // The bar's own menu, and only where no tile is under the pointer. Without that flag it
         // opens over the icons too and swallows the right-click that was meant for the gearset,
         // so the per-tile menu would look as though it did not exist.
+        //
+        // The same entries the icons carry, minus the favourite mark, which has no meaning on
+        // empty space. Drawn from one method so the two menus cannot offer different things.
         using var context = ImRaii.ContextPopup(
             "##GearbookBarContext",
             ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.NoOpenOverItems);
         if (context)
         {
-            if (ImGui.MenuItem(loc.Get(LocKeys.WindowLibraryTitle)))
-            {
-                openLibrary();
-            }
-
-            ImGui.Separator();
-
-            if (ImGui.MenuItem(
-                    settings.Locked ? loc.Get(LocKeys.BarUnlock) : loc.Get(LocKeys.BarLock)))
-            {
-                ToggleLock();
-            }
+            UiTheme.BarContextEntries(state, barControls);
         }
     }
 

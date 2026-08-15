@@ -206,27 +206,45 @@ internal static class UiTheme
             return;
         }
 
-        // A locked bar has no title bar, so its cross-links are gone, and its own menu only
-        // opens where no icon is. On a full bar that is almost nowhere, which means the control
-        // that unlocks it can be practically unreachable from the bar itself. Every icon
-        // therefore carries the way out.
         ImGui.Separator();
+        BarContextEntries(state, barControls);
+    }
 
-        if (ImGui.MenuItem(barControls.Locked
+    /// <summary>
+    /// The bar's own entries: lock, library, settings.
+    /// </summary>
+    /// <remarks>
+    /// One method, drawn both on an icon and on the empty space beside the icons, so the two
+    /// menus cannot offer different things. They already had: the empty-space menu was missing
+    /// the settings, which nobody would notice until they went looking for it in the wrong half
+    /// of the same window.
+    ///
+    /// It exists at all because a locked bar has no title bar and its window menu declines to
+    /// open over an icon. On a full bar that leaves almost nowhere to click, so the control that
+    /// unlocks it has to be on the icons as well as beside them.
+    /// </remarks>
+    public static void BarContextEntries(GearbookState state, BarContextActions actions)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(actions);
+
+        var loc = state.Loc;
+
+        if (ImGui.MenuItem(actions.Locked
                 ? loc.Get(LocKeys.BarUnlock)
                 : loc.Get(LocKeys.BarLock)))
         {
-            barControls.ToggleLock();
+            actions.ToggleLock();
         }
 
         if (ImGui.MenuItem(loc.Get(LocKeys.WindowLibraryTitle)))
         {
-            barControls.OpenLibrary();
+            actions.OpenLibrary();
         }
 
         if (ImGui.MenuItem(loc.Get(LocKeys.WindowSettingsTitle)))
         {
-            barControls.OpenSettings();
+            actions.OpenSettings();
         }
     }
 

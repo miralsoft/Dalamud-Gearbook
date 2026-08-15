@@ -115,6 +115,7 @@
   "settings.library.warnDuplicates": "Warn about gearsets sharing a job and a name",
   "settings.roleOrder": "Order of the roles",
   "settings.roleOrder.help": "Used when the list is sorted by role. Sorting by role is one entry in the sort control, so switching back to the game numbering is one click and changes nothing here.",
+  "settings.roleOrder.dragHint": "Drag a row, or use the arrows.",
   "settings.news.autoOpen": "Open the notes once after an update",
   "settings.perCharacterNote": "Every setting here belongs to this character alone.",
   "settings.about.version": "Version {0}",

@@ -24,6 +24,9 @@ internal sealed class SettingsWindow : Window
 
     private readonly GearbookState state;
 
+    /// <summary>Which row is being dragged, or -1. One window, one drag at a time.</summary>
+    private int draggedRole = -1;
+
     public SettingsWindow(GearbookState state, Action openLibrary, Action openNews)
         : base(WindowId)
     {
@@ -291,17 +294,58 @@ internal sealed class SettingsWindow : Window
         ImGui.Separator();
 
         UiTheme.Caption(loc.Get(LocKeys.SettingsRoleOrder), loc.Get(LocKeys.SettingsRoleOrderHelp));
+        UiTheme.Muted(loc.Get(LocKeys.SettingsRoleOrderDragHint));
 
-        // Up and down rather than dragging. Eight entries do not need a drag, and a drag that is
-        // only worth having for a long list is a control that goes wrong on a short one.
         var order = character.RoleOrder;
+        var rowHeight = ImGui.GetFrameHeight();
+
         for (var i = 0; i < order.Count; i++)
         {
             using var id = ImRaii.PushId(i);
 
+            // Full-width rows rather than a label trailing two tiny buttons. The row is the
+            // thing being moved, so the row is what you take hold of.
+            ImGui.Selectable(RoleName(order[i]), false, ImGuiSelectableFlags.None,
+                new Vector2(ImGui.GetContentRegionAvail().X - (rowHeight * 2.4f), rowHeight));
+
+            // Dragging is the obvious gesture for a list you rearrange, and the arrows stay
+            // because a drag is invisible until somebody tries it, and impossible for anyone
+            // who cannot hold a button down while moving a mouse.
+            using (var source = ImRaii.DragDropSource())
+            {
+                if (source)
+                {
+                    // The payload is only a type tag. The index travels in a field instead,
+                    // because marshalling four bytes through the payload buys nothing here and
+                    // costs an unsafe block: one window, one drag at a time.
+                    ImGui.SetDragDropPayload("GearbookRoleOrder", ReadOnlySpan<byte>.Empty);
+                    draggedRole = i;
+                    ImGui.TextUnformatted(RoleName(order[i]));
+                }
+            }
+
+            using (var target = ImRaii.DragDropTarget())
+            {
+                if (target)
+                {
+                    var dropped = !ImGui.AcceptDragDropPayload("GearbookRoleOrder").IsNull;
+
+                    if (dropped && draggedRole >= 0 && draggedRole < order.Count && draggedRole != i)
+                    {
+                        var moving = order[draggedRole];
+                        order.RemoveAt(draggedRole);
+                        order.Insert(i, moving);
+                        draggedRole = -1;
+                        changed = true;
+                    }
+                }
+            }
+
+            ImGui.SameLine();
+
             using (ImRaii.Disabled(i == 0))
             {
-                if (ImGui.SmallButton("^"))
+                if (ImGui.ArrowButton("##up", ImGuiDir.Up))
                 {
                     (order[i - 1], order[i]) = (order[i], order[i - 1]);
                     changed = true;
@@ -312,15 +356,12 @@ internal sealed class SettingsWindow : Window
 
             using (ImRaii.Disabled(i == order.Count - 1))
             {
-                if (ImGui.SmallButton("v"))
+                if (ImGui.ArrowButton("##down", ImGuiDir.Down))
                 {
                     (order[i + 1], order[i]) = (order[i], order[i + 1]);
                     changed = true;
                 }
             }
-
-            ImGui.SameLine();
-            UiTheme.Wrapped(RoleName(order[i]));
         }
 
         if (changed)

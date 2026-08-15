@@ -34,6 +34,7 @@ public sealed class GearbookSettings
         if (!Characters.TryGetValue(key, out var settings))
         {
             settings = new CharacterSettings();
+            settings.NormaliseRoleOrder();
             Characters[key] = settings;
         }
 

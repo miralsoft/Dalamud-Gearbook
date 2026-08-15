@@ -1,3 +1,4 @@
+using Gearbook.Core.Model;
 using Gearbook.Core.Settings;
 using Xunit;
 
@@ -91,6 +92,59 @@ public class SettingsMigratorTests
 
         Assert.Equal(SettingsMigrator.CurrentVersion, settings.LayoutVersion);
         Assert.Equal(30f, settings.For(1).Bar.IconSize);
+    }
+
+    [Fact]
+    public void A_role_order_that_grew_on_every_load_is_repaired_to_one_of_each()
+    {
+        // The defect this exists for: a serialiser reading a list into a property that already
+        // holds items appends rather than replaces, so the shipped default grew by eight entries
+        // every single load. It reached eight copies of every role before anybody opened the
+        // settings window.
+        var character = new CharacterSettings
+        {
+            RoleOrder =
+            [
+                JobRole.Healer, JobRole.Tank,
+                JobRole.Healer, JobRole.Tank,
+                JobRole.Healer, JobRole.Tank,
+            ],
+        };
+
+        character.NormaliseRoleOrder();
+
+        Assert.Equal(CharacterSettings.DefaultRoleOrder.Count, character.RoleOrder.Count);
+        Assert.Equal(character.RoleOrder.Count, character.RoleOrder.Distinct().Count());
+
+        // The arrangement that was there survives: healer had been moved above tank.
+        Assert.Equal(JobRole.Healer, character.RoleOrder[0]);
+        Assert.Equal(JobRole.Tank, character.RoleOrder[1]);
+    }
+
+    [Fact]
+    public void An_empty_role_order_is_filled_with_the_shipped_order()
+    {
+        var character = new CharacterSettings { RoleOrder = [] };
+
+        character.NormaliseRoleOrder();
+
+        Assert.Equal(CharacterSettings.DefaultRoleOrder, character.RoleOrder);
+    }
+
+    [Fact]
+    public void A_role_the_saved_order_predates_is_appended_rather_than_dropped()
+    {
+        // What an order saved before a new role existed looks like. Appending changes least
+        // about what the player arranged, and dropping the role would hide every gearset of it
+        // from a sort that claims to cover everything.
+        var character = new CharacterSettings { RoleOrder = [JobRole.Tank, JobRole.Healer] };
+
+        character.NormaliseRoleOrder();
+
+        Assert.Equal(JobRole.Tank, character.RoleOrder[0]);
+        Assert.Equal(JobRole.Healer, character.RoleOrder[1]);
+        Assert.Equal(CharacterSettings.DefaultRoleOrder.Count, character.RoleOrder.Count);
+        Assert.Contains(JobRole.Gatherer, character.RoleOrder);
     }
 
     [Fact]

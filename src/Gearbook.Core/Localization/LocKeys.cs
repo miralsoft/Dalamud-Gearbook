@@ -141,6 +141,7 @@ public static class LocKeys
     public const string SettingsLibraryWarnDuplicates = "settings.library.warnDuplicates";
     public const string SettingsRoleOrder = "settings.roleOrder";
     public const string SettingsRoleOrderHelp = "settings.roleOrder.help";
+    public const string SettingsRoleOrderDragHint = "settings.roleOrder.dragHint";
     public const string SettingsNewsAutoOpen = "settings.news.autoOpen";
     public const string SettingsPerCharacterNote = "settings.perCharacterNote";
     public const string SettingsAboutVersion = "settings.about.version";

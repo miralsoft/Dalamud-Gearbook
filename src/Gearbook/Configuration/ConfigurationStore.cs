@@ -53,6 +53,14 @@ internal sealed class ConfigurationStore : IPluginConfiguration
         var migrated = SettingsMigrator.Migrate(store.Settings, message =>
             GearbookServices.Log.Information("{Message}", message));
 
+        // Repairs whatever the file actually holds rather than trusting it. This is not a
+        // migration step: it has to run on every load, because the thing it repairs was caused
+        // by loading, and a file already at the current layout version can still be wrong.
+        foreach (var character in store.Settings.Characters.Values)
+        {
+            character?.NormaliseRoleOrder();
+        }
+
         if (migrated && store.Settings.LayoutVersion == SettingsMigrator.CurrentVersion)
         {
             // Saved straight after migrating so the file on disk matches what is in memory. A
