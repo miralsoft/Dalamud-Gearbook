@@ -263,3 +263,40 @@ Each entry: date, decision, rationale, and what was rejected.
   list, established by reflection. The alternative was reading fourteen equipment slots per set and
   averaging, which was expected to be the most expensive read in the plugin and would have needed a
   cache with its own invalidation. It turned out not to be necessary at all.
+
+- **(2026-08-15) The view switcher uses the game's own role symbols, read out of the client rather
+  than remembered.** Rationale: the symbol font the switcher borrowed from the host was legible but
+  foreign. A shield, a raised fist and a wizard's hat are somebody else's idea of what a tank, a
+  melee job and a caster look like, and beside the game's own job icons on the same bar they read
+  as a second product's icons pasted onto this one. The game draws these roles itself, all day, in
+  windows the player already knows.
+
+  The numbers are 62581 for tank, 62582 for healer, 62584 for melee damage, 62586 for physical
+  ranged damage, 62587 for magical ranged damage, 62588 for the hand and 62589 for the land, with
+  62576, the three role colours stacked, for the combat category. They were established by reading
+  the icon files out of the installed client with Lumina and looking at them, the same method that
+  settled the job table earlier this day, not from memory.
+
+  The ordering is the part worth recording, because that is where such a table goes wrong quietly.
+  The group is marked by the game itself: 62570 is a label reading "ROLE BASE" and 62580 one
+  reading "ROLE FRAMED". Within it, 62585 turns out to be the pictures 62586 and 62587 drawn on top
+  of one another, which is only sensible if it is the general case covering both. That fixes the
+  whole sequence as running from general to specific, and with it the two entries the plugin
+  deliberately leaves unused: 62583, damage of any kind, and 62585 itself, ranged damage of either
+  kind. This plugin separates physical from magical everywhere else, so neither has anything here
+  to label.
+
+  Rejected: guessing the numbers, which the earlier open point had already refused for the right
+  reason. A wrongly guessed picture is worse than a plain one because it looks deliberate, and
+  nobody re-examines a symbol that appears to have been chosen.
+
+  Also rejected: borrowing a game symbol for the favourites, the everything and the tag views.
+  The game has stars and grids, but each already means something else in it, and a player who
+  knows what a symbol means there reads it as that here too. Those three keep a plain glyph, which
+  says less and misleads nobody. The mixed styles inside one strip are the price, and the strip is
+  already divided into groups by separators, so the seam falls where a seam belongs.
+
+  The mapping lives in the core library rather than in the plugin, because an icon number is a
+  number and needs no platform assembly, which keeps it under test. The tests cannot tell whether
+  a number draws the right picture, only the client can; what they hold is that no two roles share
+  a symbol and that the combat category borrows none, which is the failure a copied line produces.

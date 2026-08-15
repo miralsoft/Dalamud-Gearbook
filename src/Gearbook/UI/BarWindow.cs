@@ -1,6 +1,7 @@
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Adapters;
@@ -10,6 +11,7 @@ using Gearbook.Core.Localization;
 using Gearbook.Core.Model;
 using Gearbook.Core.Settings;
 using Gearbook.Core.Sorting;
+using Gearbook.Services;
 
 namespace Gearbook.UI;
 
@@ -262,12 +264,11 @@ internal sealed class BarWindow : Window
         var size = new Vector2(settings.IconSize, settings.IconSize)
                    + (ImGui.GetStyle().FramePadding * 2f);
 
-        var pressed = false;
+        bool pressed;
 
         using (ImRaii.PushId("##gearbookview"))
-        using (GearbookState.IconFont.Push())
         {
-            pressed = ImGui.Button(ViewIcon(settings).ToIconString(), size);
+            pressed = ViewSymbol(ViewGameIcon(settings), ViewIcon(settings), settings.IconSize, size);
         }
 
         if (ImGui.IsItemHovered())
@@ -306,8 +307,8 @@ internal sealed class BarWindow : Window
             }
 
             if (ViewButton(
-                    settings,
                     iconSize,
+                    RoleIcons.For(role),
                     ViewIconFor(BarViewKind.Role, role, JobCategory.Combat),
                     RoleName(role),
                     settings.ViewKind == BarViewKind.Role && settings.ViewRole == role))
@@ -327,8 +328,8 @@ internal sealed class BarWindow : Window
             }
 
             if (ViewButton(
-                    settings,
                     iconSize,
+                    RoleIcons.For(category),
                     ViewIconFor(BarViewKind.Category, JobRole.Unknown, category),
                     CategoryName(category),
                     settings.ViewKind == BarViewKind.Category && settings.ViewCategory == category))
@@ -340,14 +341,17 @@ internal sealed class BarWindow : Window
 
         ImGui.Separator();
 
-        if (ViewButton(settings, iconSize, FontAwesomeIcon.Star,
+        // No game symbol for these two, and none is borrowed. The game has stars and grids, but
+        // each of them already means something else in it, and a player who knows what a symbol
+        // means there reads it as that here too. A plain glyph says less and misleads nobody.
+        if (ViewButton(iconSize, RoleIcons.None, FontAwesomeIcon.Star,
                 loc.Get(LocKeys.SettingsBarContentsFavourites),
                 settings.ViewKind == BarViewKind.Favourites))
         {
             SetView(settings, BarViewKind.Favourites);
         }
 
-        if (ViewButton(settings, iconSize, FontAwesomeIcon.ThLarge,
+        if (ViewButton(iconSize, RoleIcons.None, FontAwesomeIcon.ThLarge,
                 loc.Get(LocKeys.SettingsBarContentsAll),
                 settings.ViewKind == BarViewKind.All))
         {
@@ -388,9 +392,9 @@ internal sealed class BarWindow : Window
     /// menu that opens on demand.
     /// </remarks>
     private static bool ViewButton(
-        BarSettings settings,
         float size,
-        FontAwesomeIcon icon,
+        uint gameIcon,
+        FontAwesomeIcon fallback,
         string label,
         bool active)
     {
@@ -398,12 +402,7 @@ internal sealed class BarWindow : Window
 
         var origin = ImGui.GetCursorScreenPos();
         var box = new Vector2(size, size) + (ImGui.GetStyle().FramePadding * 2f);
-        bool pressed;
-
-        using (GearbookState.IconFont.Push())
-        {
-            pressed = ImGui.Button(icon.ToIconString(), box);
-        }
+        var pressed = ViewSymbol(gameIcon, fallback, size, box);
 
         if (active)
         {
@@ -421,6 +420,35 @@ internal sealed class BarWindow : Window
         ImGui.TextUnformatted(label);
 
         return pressed;
+    }
+
+    /// <summary>
+    /// One symbol as a button, from the game where the game has one and from the host's symbol
+    /// font where it does not.
+    /// </summary>
+    /// <param name="gameIcon">The game's icon number, or <see cref="RoleIcons.None"/>.</param>
+    /// <param name="fallback">The glyph to draw when there is no game icon.</param>
+    /// <param name="size">The picture's edge length.</param>
+    /// <param name="box">The whole control's size, picture plus frame padding.</param>
+    /// <remarks>
+    /// Both sizes are passed because the two controls measure differently: an image button is
+    /// given the picture and adds the padding around it, while a plain button is given the
+    /// finished control. Handing either one the other's number makes this tile a different size
+    /// from the gearset tiles beside it.
+    /// </remarks>
+    private static bool ViewSymbol(uint gameIcon, FontAwesomeIcon fallback, float size, Vector2 box)
+    {
+        if (gameIcon != RoleIcons.None)
+        {
+            var texture = GearbookServices.Textures
+                .GetFromGameIcon(new GameIconLookup(gameIcon))
+                .GetWrapOrEmpty();
+
+            return ImGui.ImageButton(texture.Handle, new Vector2(size, size));
+        }
+
+        using var font = GearbookState.IconFont.Push();
+        return ImGui.Button(fallback.ToIconString(), box);
     }
 
     private static FontAwesomeIcon ViewIconFor(BarViewKind kind, JobRole role, JobCategory category) =>
@@ -443,15 +471,21 @@ internal sealed class BarWindow : Window
         ImGui.CloseCurrentPopup();
     }
 
+    /// <summary>The game's own symbol for the current view, or <see cref="RoleIcons.None"/>.</summary>
+    private static uint ViewGameIcon(BarSettings settings) => settings.ViewKind switch
+    {
+        BarViewKind.Role => RoleIcons.For(settings.ViewRole),
+        BarViewKind.Category => RoleIcons.For(settings.ViewCategory),
+        _ => RoleIcons.None,
+    };
+
     /// <summary>
-    /// The symbol on the switcher tile.
+    /// The symbol on the switcher tile when the game has none for that view.
     /// </summary>
     /// <remarks>
-    /// From the host's own symbol font rather than from the game's role icons. The game has
-    /// those, and they would look more at home, but their numbers could not be established from
-    /// outside a running client, and a picture guessed wrong is worse than one that is merely
-    /// plainer: it looks deliberate. Recorded in the project's open points so it can be revisited
-    /// with the client in front of somebody.
+    /// Every role and every category is drawn from the game's own pictures now, so what is left
+    /// here is the handful of views the game has no picture for at all, plus the case of a role
+    /// the job table does not describe.
     /// </remarks>
     private static FontAwesomeIcon ViewIcon(BarSettings settings) => settings.ViewKind switch
     {
