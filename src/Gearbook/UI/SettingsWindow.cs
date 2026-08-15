@@ -57,8 +57,29 @@ internal sealed class SettingsWindow : Window
     }
 
     /// <inheritdoc />
-    public override void PreDraw() =>
+    public override void PreDraw()
+    {
         WindowName = $"{state.Loc.Get(LocKeys.WindowSettingsTitle)}###GearbookSettings";
+
+        // A settings window is read, not scanned, and the host's default spacing is tuned for
+        // dense game windows. Loosening it here rather than adding a blank line between every
+        // pair of controls keeps the change in one place and means a control added later is
+        // spaced like the rest without anybody remembering to do it.
+        //
+        // Pushed before anything is drawn and popped unconditionally in PostDraw. An unbalanced
+        // style stack corrupts every window drawn after this one, including other plugins'.
+        var style = ImGui.GetStyle();
+
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, style.WindowPadding * 1.6f);
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(
+            style.ItemSpacing.X * 1.4f,
+            style.ItemSpacing.Y * 2.0f));
+        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, style.FramePadding * 1.3f);
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, style.ItemInnerSpacing * 1.6f);
+    }
+
+    /// <inheritdoc />
+    public override void PostDraw() => ImGui.PopStyleVar(4);
 
     /// <inheritdoc />
     public override void Draw()
@@ -295,9 +316,19 @@ internal sealed class SettingsWindow : Window
 
         UiTheme.Caption(loc.Get(LocKeys.SettingsRoleOrder), loc.Get(LocKeys.SettingsRoleOrderHelp));
         UiTheme.Muted(loc.Get(LocKeys.SettingsRoleOrderDragHint));
+        ImGui.Spacing();
 
         var order = character.RoleOrder;
         var rowHeight = ImGui.GetFrameHeight();
+
+        // Measured rather than guessed: two square buttons, the gap between them, the gap before
+        // them, and a margin so the second one does not sit against the window edge. A factor
+        // typed here would be wrong at the next font size, which is how they ended up flush
+        // against the edge in the first place.
+        var arrows = ImGui.GetStyle();
+        var reserved = (rowHeight * 2f)
+                       + (arrows.ItemSpacing.X * 2f)
+                       + arrows.WindowPadding.X;
 
         for (var i = 0; i < order.Count; i++)
         {
@@ -305,8 +336,10 @@ internal sealed class SettingsWindow : Window
 
             // Full-width rows rather than a label trailing two tiny buttons. The row is the
             // thing being moved, so the row is what you take hold of.
+            var rowWidth = Math.Max(rowHeight * 3f, ImGui.GetContentRegionAvail().X - reserved);
+
             ImGui.Selectable(RoleName(order[i]), false, ImGuiSelectableFlags.None,
-                new Vector2(ImGui.GetContentRegionAvail().X - (rowHeight * 2.4f), rowHeight));
+                new Vector2(rowWidth, rowHeight));
 
             // Dragging is the obvious gesture for a list you rearrange, and the arrows stay
             // because a drag is invisible until somebody tries it, and impossible for anyone

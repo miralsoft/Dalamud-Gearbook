@@ -47,6 +47,15 @@ public static class LocKeys
     public const string LibraryDetailGlamourPlate = "library.detail.glamourPlate";
     public const string LibraryDetailLastUsed = "library.detail.lastUsed";
     public const string LibraryDetailNothingSelected = "library.detail.nothingSelected";
+    public const string LibrarySelectionHint = "library.selection.hint";
+    public const string LibrarySelectionCount = "library.selection.count";
+    public const string LibraryBulkHeading = "library.bulk.heading";
+    public const string LibraryBulkTag = "library.bulk.tag";
+    public const string LibraryBulkAddTag = "library.bulk.addTag";
+    public const string LibraryBulkRemoveTag = "library.bulk.removeTag";
+    public const string LibraryBulkFavouriteOn = "library.bulk.favouriteOn";
+    public const string LibraryBulkFavouriteOff = "library.bulk.favouriteOff";
+    public const string LibraryBulkNoteUntouched = "library.bulk.noteUntouched";
     public const string LibraryDuplicateWarning = "library.duplicateWarning";
     public const string LibraryOrphanHeading = "library.orphan.heading";
     public const string LibraryOrphanExplain = "library.orphan.explain";

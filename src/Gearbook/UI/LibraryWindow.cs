@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Adapters;
 using Gearbook.Core.Bis;
+using Gearbook.Core.Editing;
 using Gearbook.Core.Filtering;
 using Gearbook.Core.Identity;
 using Gearbook.Core.Localization;
@@ -28,11 +29,20 @@ internal sealed class LibraryWindow : Window
 
     private readonly GearbookState state;
 
-    private int selectedRecordId = -1;
+    /// <summary>
+    /// Everything currently selected, by this plugin's own record id rather than by position,
+    /// so a selection survives the list being re-sorted or re-filtered underneath it.
+    /// </summary>
+    private readonly HashSet<int> selection = [];
+
+    /// <summary>The row a range selection measures from.</summary>
+    private int anchorRecordId = -1;
+
     private string noteBuffer = string.Empty;
     private string tagsBuffer = string.Empty;
     private int editingRecordId = -1;
     private string newViewName = string.Empty;
+    private string bulkTagBuffer = string.Empty;
     private readonly TitleBarButton newsLink;
     private bool unreadNow;
 
@@ -504,25 +514,15 @@ internal sealed class LibraryWindow : Window
 
             ImGui.TableNextColumn();
 
-            var selected = selectedRecordId == gearset.Record.Id;
+            var selected = selection.Contains(gearset.Record.Id);
             if (ImGui.Selectable(gearset.Gearset.Name, selected, ImGuiSelectableFlags.SpanAllColumns))
             {
-                // The same gesture as on the bar. A modifier that means one thing in one window
-                // and another thing in the next is worse than not having it at all.
-                if (UiTheme.FavouriteModifierHeld)
-                {
-                    UiTheme.ToggleFavourite(state, gearset);
-                }
-                else
-                {
-                    Select(gearset);
-                }
+                HandleRowClick(gearset, shown);
             }
 
-            if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-            {
-                state.RequestEquip(gearset.Gearset.Slot, EquipTrigger.Library);
-            }
+            // No double-click to equip. It was invisible, it fought with the selection, and
+            // equipping is already a labelled button in the detail panel and an entry in the
+            // menu below. A gesture nobody can see is not a third way in, it is a surprise.
 
             // The same menu the bar's tiles carry, bound to the row that was just drawn.
             UiTheme.GearsetContextMenu(state, gearset);
@@ -564,17 +564,24 @@ internal sealed class LibraryWindow : Window
     {
         var loc = state.Loc;
 
-        var selected = state.Gearsets.FirstOrDefault(g => g.Record.Id == selectedRecordId);
+        if (selection.Count > 1)
+        {
+            DrawBulkPanel();
+            return;
+        }
+
+        var selected = state.Gearsets.FirstOrDefault(g => selection.Contains(g.Record.Id));
         if (selected is null)
         {
             UiTheme.Muted(loc.Get(LocKeys.LibraryDetailNothingSelected));
+            UiTheme.Muted(loc.Get(LocKeys.LibrarySelectionHint));
             DrawOrphans(character);
             return;
         }
 
         if (editingRecordId != selected.Record.Id)
         {
-            Select(selected);
+            LoadEditBuffers(selected);
         }
 
         ImGui.TextUnformatted(selected.Gearset.Name);
@@ -733,12 +740,146 @@ internal sealed class LibraryWindow : Window
         }
     }
 
-    private void Select(ReconciledGearset gearset)
+    /// <summary>
+    /// What a click on a row does, which depends on the modifier the way it does in every file
+    /// list anybody has ever used.
+    /// </summary>
+    /// <remarks>
+    /// Plain replaces the selection, control adds or removes one, shift takes the run between
+    /// the last click and this one. Nothing here is invented: a gesture that has one meaning
+    /// everywhere else has to keep it here, or the window is teaching something for no reason.
+    /// </remarks>
+    private void HandleRowClick(ReconciledGearset gearset, IReadOnlyList<ReconciledGearset> shown)
     {
-        selectedRecordId = gearset.Record.Id;
+        var io = ImGui.GetIO();
+        var id = gearset.Record.Id;
+
+        if (io.KeyShift && anchorRecordId >= 0)
+        {
+            var from = IndexOf(shown, anchorRecordId);
+            var to = IndexOf(shown, id);
+
+            if (from >= 0 && to >= 0)
+            {
+                selection.Clear();
+
+                for (var i = Math.Min(from, to); i <= Math.Max(from, to); i++)
+                {
+                    selection.Add(shown[i].Record.Id);
+                }
+
+                LoadEditBuffers(gearset);
+                return;
+            }
+        }
+
+        if (io.KeyCtrl)
+        {
+            if (!selection.Remove(id))
+            {
+                selection.Add(id);
+            }
+
+            anchorRecordId = id;
+            LoadEditBuffers(gearset);
+            return;
+        }
+
+        selection.Clear();
+        selection.Add(id);
+        anchorRecordId = id;
+        LoadEditBuffers(gearset);
+    }
+
+    private static int IndexOf(IReadOnlyList<ReconciledGearset> shown, int recordId)
+    {
+        for (var i = 0; i < shown.Count; i++)
+        {
+            if (shown[i].Record.Id == recordId)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private void LoadEditBuffers(ReconciledGearset gearset)
+    {
         editingRecordId = gearset.Record.Id;
         noteBuffer = gearset.Record.Note;
         tagsBuffer = string.Join(", ", gearset.Record.Tags);
+    }
+
+    /// <summary>
+    /// What can be changed across a whole selection at once.
+    /// </summary>
+    /// <remarks>
+    /// Tags and the favourite mark, and nothing that replaces free text. Setting a note across a
+    /// selection would overwrite forty things somebody wrote by hand with no way back, while a
+    /// tag is one word and removing it again is the same gesture that added it.
+    /// </remarks>
+    private void DrawBulkPanel()
+    {
+        var loc = state.Loc;
+
+        ImGui.TextUnformatted(loc.Get(LocKeys.LibrarySelectionCount, selection.Count));
+        ImGui.Separator();
+        ImGui.TextUnformatted(loc.Get(LocKeys.LibraryBulkHeading));
+        ImGui.Spacing();
+
+        UiTheme.Caption(loc.Get(LocKeys.LibraryBulkTag));
+        ImGui.SetNextItemWidth(-1f);
+        ImGui.InputTextWithHint("##bulktag", loc.Get(LocKeys.LibraryDetailTags), ref bulkTagBuffer, TagsMaxLength);
+
+        var selected = new HashSet<int>(selection);
+        var tag = bulkTagBuffer;
+
+        using (ImRaii.Disabled(string.IsNullOrWhiteSpace(tag)))
+        {
+            if (ImGui.Button(loc.Get(LocKeys.LibraryBulkAddTag)))
+            {
+                state.UpdateRecords(records => BulkEdit.AddTag(records, selected, tag));
+                bulkTagBuffer = string.Empty;
+            }
+
+            ImGui.SameLine();
+
+            if (ImGui.Button(loc.Get(LocKeys.LibraryBulkRemoveTag)))
+            {
+                state.UpdateRecords(records => BulkEdit.RemoveTag(records, selected, tag));
+                bulkTagBuffer = string.Empty;
+            }
+        }
+
+        // The tags already in the selection, so removing one is a click rather than typing it
+        // back exactly as it was spelled.
+        foreach (var existing in BulkEdit.TagsInSelection(state.Gearsets.Select(g => g.Record).ToList(), selected))
+        {
+            using var id = ImRaii.PushId($"bulktag-{existing}");
+            if (ImGui.SmallButton(existing))
+            {
+                bulkTagBuffer = existing;
+            }
+
+            ImGui.SameLine();
+        }
+
+        ImGui.NewLine();
+        ImGui.Separator();
+
+        if (ImGui.Button(loc.Get(LocKeys.LibraryBulkFavouriteOn)))
+        {
+            state.UpdateRecords(records => BulkEdit.SetFavourite(records, selected, favourite: true));
+        }
+
+        if (ImGui.Button(loc.Get(LocKeys.LibraryBulkFavouriteOff)))
+        {
+            state.UpdateRecords(records => BulkEdit.SetFavourite(records, selected, favourite: false));
+        }
+
+        ImGui.Spacing();
+        UiTheme.Muted(loc.Get(LocKeys.LibraryBulkNoteUntouched));
     }
 
     private string SortName(GearsetSortOrder order) => state.Loc.Get(order switch

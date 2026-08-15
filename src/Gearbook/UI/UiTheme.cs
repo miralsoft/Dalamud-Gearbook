@@ -187,6 +187,18 @@ internal static class UiTheme
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(gearset);
 
+        // Control and right-click marks a favourite without opening anything. The menu is not
+        // drawn at all while the modifier is held, so the two cannot both fire from one click.
+        if (FavouriteModifierHeld)
+        {
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                ToggleFavourite(state, gearset);
+            }
+
+            return;
+        }
+
         using var context = ImRaii.ContextPopupItem($"##gearset{gearset.Record.Id}");
         if (!context)
         {
@@ -319,13 +331,9 @@ internal static class UiTheme
             drawList.AddRectFilled(min, max, ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 0.45f)));
         }
 
-        if (pressed && FavouriteModifierHeld)
-        {
-            // The modifier is what makes this safe. A plain click on the bar equips, and that is
-            // the whole point of the bar, so a plain click cannot also change what the bar shows.
-            ToggleFavourite(state, gearset);
-            return false;
-        }
+        // The left button does one thing here and one thing only: it equips. Marking a favourite
+        // moved to control and right-click, which is the same gesture in the library, where
+        // control and left-click had to become multi-select the way it is in every file list.
 
         if (highlightActive && state.CurrentSlot == gearset.Gearset.Slot)
         {
