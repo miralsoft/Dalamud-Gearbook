@@ -44,8 +44,7 @@ internal sealed unsafe class GearsetArranger : IGearsetArranger
             return new ArrangeResult(ArrangeOutcome.NotLoggedIn, 0);
         }
 
-        var module = RaptureGearsetModule.Instance();
-        if (module is null)
+        if (RaptureGearsetModule.Instance() is null)
         {
             GearbookServices.Log.Warning("Sorting the game's gearset list was asked for, but the gearset module was not available.");
             return new ArrangeResult(ArrangeOutcome.Unavailable, 0);
@@ -71,6 +70,20 @@ internal sealed unsafe class GearsetArranger : IGearsetArranger
 
             var from = current[move.Value.FromPosition].Slot;
             var to = current[move.Value.ToPosition].Slot;
+
+            // Fetched again for every single move rather than once before the loop. This runs up
+            // to one pass per gearset with a read of game memory between each, and an instance
+            // accessor may answer null at any point in that: a player can reach the title screen
+            // in the middle of a sort. A pointer that was good thirty moves ago is not a pointer.
+            var module = RaptureGearsetModule.Instance();
+            if (module is null)
+            {
+                GearbookServices.Log.Warning(
+                    "Sorting the game's gearset list stopped after {Applied} moves: the gearset module went away.",
+                    applied);
+
+                return new ArrangeResult(ArrangeOutcome.Stopped, applied);
+            }
 
             GearbookServices.Log.Information(
                 "Moving gearset {From} to {To} while sorting the game's list, triggered by the player.",

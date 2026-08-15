@@ -108,3 +108,32 @@ Still to do in the game, in this order:
 - Globally bound keyboard shortcuts. They compete with the game for input focus.
 - The icon. Needed before the first release, not before the first commit.
 - Branch protection. Recorded in `open-points.md` as a rule that binds while nothing enforces it.
+
+## The crash-safety audit (2026-08-16, before `1.0.0`)
+
+A checklist pass over every place this plugin touches game memory, run as the release procedure
+requires rather than by impression. The surface is small and was enumerated with grep rather than
+from memory: four `unsafe` classes, all of them adapters, and sixteen pointer dereferences between
+them. No other file in the plugin holds a pointer, and the core library cannot: it references no
+platform assembly, which the compiler enforces.
+
+**Guarding.** Every dereference sits behind a null check on the instance accessor obtained in the
+same method, and the reader additionally checks each entry pointer and asks the game whether the
+slot is valid first. A try block would not help here and none is used for this purpose: it catches
+a managed exception, and an access violation is not one.
+
+**Two defects found, both fixed in this release.**
+
+The arranger fetched the module pointer once and dereferenced it up to thirty-three times inside a
+loop that reads game memory between moves. A player can reach the title screen in the middle of a
+sort, and a pointer that was good thirty moves ago is not a pointer. It now fetches and checks on
+every move, and treats a module that has gone away as a stop rather than a crash.
+
+The bar asked the game for a job icon **while drawing**, once per tile per frame. That is a
+violation of GB-03, which says the draw callback reads this plugin's own lists and nothing else,
+and it was also the wrong cost in the wrong place for a number that changes only when the list
+does. The icons are now collected on the framework thread with everything else and looked up while
+drawing.
+
+Both are the same mistake in two shapes: a game call written where it was convenient rather than
+where the rule puts it. Worth naming, because the next one will look convenient too.

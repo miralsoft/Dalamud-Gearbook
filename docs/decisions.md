@@ -457,3 +457,18 @@ Each entry: date, decision, rationale, and what was rejected.
   the reason the whole ecosystem addresses game art by number and loads it from the player's own
   installation, and it is not a rule worth breaking for a menu icon. The owner chose the assembled
   route once the trade was on the table.
+
+- **(2026-08-16) The version goes to 1.0.0, and the declared foundation version stays at 2.0.0.**
+
+  **The version.** Major rather than `0.2.0` for two reasons. The interface a player learns is
+  settled: the bar, the switcher, the library, one order shared between them, one gesture per
+  meaning. And the release removes something a global rule requires, which is a breaking change in
+  the only sense that matters here even though no caller breaks. A version other people install is
+  worth saying out loud, and `0.x` says the opposite.
+
+  **The foundation review (M-17).** Required whenever a release is cut, and done rather than
+  assumed: the clone was pulled, `VERSION` still reads 2.0.0, and the changelog's `Unreleased`
+  section is empty. Nothing has been added since this project declared its version, so there is
+  nothing to review, nothing to re-copy under M-19, and the declaration stays where it is. Written
+  down because "there was nothing new" and "nobody looked" are indistinguishable a year later, and
+  only one of them is a review.

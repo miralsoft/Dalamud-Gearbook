@@ -47,6 +47,7 @@ internal sealed class GearbookState : IDisposable
     private readonly Queue<EquipRequest> pending = new();
     private readonly object gate = new();
 
+    private Dictionary<int, uint> icons = [];
     private IReadOnlyList<string>? pendingArrange;
     private DateTime lastRefresh = DateTime.MinValue;
     private bool refreshRequested = true;
@@ -103,8 +104,15 @@ internal sealed class GearbookState : IDisposable
     /// <summary>The game state, for greying controls out with a reason.</summary>
     public IGameStateProbe GameState => gameState;
 
-    /// <summary>The icon the game itself uses for a gearset.</summary>
-    public uint IconFor(int slot) => jobData.IconIdFor(slot);
+    /// <summary>
+    /// The icon the game itself uses for a gearset, as collected on the last read.
+    /// </summary>
+    /// <remarks>
+    /// A lookup rather than a call into the game, because the only caller is the draw callback
+    /// and that reads this plugin's own lists and nothing else (GB-03). Zero for a slot that was
+    /// not in the last read, which the tile already handles by drawing the number instead.
+    /// </remarks>
+    public uint IconFor(int slot) => icons.TryGetValue(slot, out var icon) ? icon : 0u;
 
     /// <summary>The host's symbol font, for the controls that are not gearsets.</summary>
     public static Dalamud.Interface.ManagedFontAtlas.IFontHandle IconFont =>
@@ -196,6 +204,7 @@ internal sealed class GearbookState : IDisposable
                     Character = null;
                     CharacterId = null;
                     Gearsets = [];
+                    icons = [];
                     Orphans = [];
                     CurrentSlot = null;
                 }
@@ -352,6 +361,13 @@ internal sealed class GearbookState : IDisposable
 
         var gearsets = GearsetReader.ReadSafely(reader);
         CurrentSlot = reader.CurrentSlot();
+
+        // The icons are collected here, on the framework thread, rather than asked for while
+        // drawing. They come out of the same module as everything else, and the draw callback
+        // reads this plugin's own lists and nothing else (GB-03). Asked for during a frame it
+        // was also one game call per tile per frame, which is the wrong cost in the wrong place
+        // for a number that changes only when the list does.
+        icons = gearsets.ToDictionary(g => g.Slot, g => jobData.IconIdFor(g.Slot));
 
         var result = GearsetReconciler.Reconcile(
             character.ToRecords(),

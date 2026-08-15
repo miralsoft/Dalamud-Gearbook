@@ -1,6 +1,34 @@
 {
   "versions": [
     {
+      "version": "1.0.0",
+      "date": "2026-08-16",
+      "summary": "Die erste öffentliche Fassung. Fast alles daran kam aus dem Spielen mit dem Plugin im echten Client, also von dort, wo sich zeigt, was ein Entwurf nicht vorhersagen kann.",
+      "added": [
+        "Ein Umschalter am Anfang der Leiste. Ein Druck wechselt zwischen deinen Favoriten, allem, einer Rolle, einer Kategorie oder einem deiner eigenen Schlagwörter.",
+        "Sortieren der Ausrüstungsliste des Spiels selbst, wenn du es anstößt. Es passiert nie von allein, die vorherige Reihenfolge wird gesichert, und beim ersten Zug, der nicht dort landet, wo er hin sollte, bricht es ab.",
+        "Die Rollensymbole des Spiels, damit die Leiste aussieht wie der Rest der Oberfläche und nicht wie ein Gast.",
+        "Die Farbe der Rolle unter dem Zeiger: blau für Verteidiger, grün für Heiler, rot für Schaden.",
+        "Mehrere Sets zugleich mit Strg oder Umschalt auswählen und gemeinsam bearbeiten, oder gleich alle."
+      ],
+      "changed": [
+        "Die Leiste übernimmt die Reihenfolge aus der Übersicht. Zwei Einstellungen für dieselbe Frage konnten sich widersprechen, also musste eine davon weg.",
+        "Ein Favorit ist das, was auf der Leiste steht. Vorher waren es zwei Markierungen mit einer Regel dazwischen, die niemand erklären konnte.",
+        "Symbole beginnen bei 30 Pixeln statt bei 40, was neben den Hotbars des Spiels besser sitzt.",
+        "Die Leiste bleibt im Bild. Sie bricht auf weitere Zeilen oder Spalten um, statt über einen Rand hinauszulaufen, und lässt dabei nie ein Set weg."
+      ],
+      "fixed": [
+        "Sammler wurden als Handwerker geführt.",
+        "Die Rollenreihenfolge in den Einstellungen wuchs bei jedem Laden des Plugins.",
+        "Ein Set mit fehlendem Teil lässt sich wieder anlegen. Das Spiel bietet dir einen Ersatz an, und diese Entscheidung steht Gearbook nicht zu.",
+        "Eine festgestellte Leiste lässt sich über jedes Symbol wieder lösen.",
+        "Kurzhinweise flackern nicht mehr, bevor sie sitzen."
+      ],
+      "removed": [
+        "Der Eintrag neben der Uhr. Die Leiste von Gearbook ist immer sichtbar und jedes Symbol darauf öffnet ein Menü, also hat der Eintrag nichts gebracht."
+      ]
+    },
+    {
       "version": "0.1.0",
       "date": "2026-08-13",
       "summary": "Die erste Fassung. Eine Leiste zum Anklicken, statt Hotbars mit Ausrüstungssets zu belegen, und ein Fenster, in dem sich die Sets suchen und ordnen lassen.",

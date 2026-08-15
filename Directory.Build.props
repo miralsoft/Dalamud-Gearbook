@@ -16,7 +16,7 @@
       derived from it or checked against it. The packager writes the assembly version into the
       built manifest, and the release workflow refuses to publish when the tag disagrees.
     -->
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
 
     <Authors>Sanaka</Authors>
     <Company>Sanaka</Company>

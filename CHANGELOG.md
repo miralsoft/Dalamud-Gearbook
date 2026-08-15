@@ -12,6 +12,72 @@ A withdrawn release stays here, marked as withdrawn, rather than being deleted.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-16
+
+The first public release. Everything below came out of playing with `0.1.0` in a running client,
+which is the only way most of it could have been found: the plugin was complete on paper and
+wrong in about a dozen places that only show up under a hand.
+
+Major rather than `0.2.0` because the interface a player learns is settled now, and because one
+entry below removes something a global rule requires. A version that other people install is
+worth saying out loud.
+
+### Added
+
+- **A view switcher on the bar.** The first tile opens a strip that swaps the bar between the
+  favourites, everything, one role, one category, or one of your own tags. Choosing is a press on
+  a picture rather than a walk to a settings window.
+- **Sorting the game's own gearset list**, on request and never by itself. It uses the same
+  operation the game's window performs when you drag an entry, puts your list into the order
+  Gearbook shows, keeps the order it found so you can have it back, and reads every move back out
+  of the game before making the next.
+- **The game's own role symbols**, established by reading the icon files out of the installed
+  client and cross-checked against a mature plugin that has shipped the same numbers for years.
+  Crafting and gathering have no such symbol in the game at all, so theirs are assembled at
+  drawing time from a coloured ground and a tool.
+- **The role's colour under the pointer.** Blue for a tank, green for a healer, red for damage,
+  in the colours the game uses in its own party list.
+- **Multi-select with bulk editing** in the library, plus select-all, so tagging thirty gearsets
+  is one gesture rather than thirty.
+- **Sorting by role**, in an order you arrange yourself.
+
+### Changed
+
+- The bar and the library share one order. There used to be a setting on each, they could
+  disagree, and a bar left on "by job" while the library was grouped by role read as sorting that
+  did not work. What is left on the bar is the one question the library cannot answer: whether
+  your own arrangement of the favourites still wins.
+- The favourite mark and "on the bar" became one thing. The rule that joined them could not be
+  explained, which is usually the sign that there is only one idea present.
+- The default icon size is 30 rather than 40, which is what the bar wanted once it had been seen
+  beside the game's own hotbars.
+- The bar keeps itself inside the screen. Icons per row is a wish now: honoured where it fits,
+  cut where it is too wide, widened where it is too tall, and nothing is ever dropped.
+
+### Fixed
+
+- Gatherers were filed as crafters. The job table restarts its numbering for them, and every test
+  covering it had been written from the same wrong assumption, so the suite agreed with the
+  defect. Found by reading the real table out of the installed game.
+- The role order grew by eight entries on every load, because a serialiser appends to a collection
+  that already holds items. It had reached eight copies of every role before anybody opened the
+  settings window.
+- Incomplete gearsets are no longer refused. The game offers a substitute and lets you decide;
+  refusing took away something its own window gives you.
+- A locked bar can be unlocked again from any icon, which it could not before without editing the
+  configuration by hand.
+- Tooltips no longer flash past as a tall narrow column before settling. They wrapped at the
+  window's edge, and a tooltip has no width on its first frame.
+- Twenty-five translated texts were declared, translated and never drawn. A test now fails the
+  build on any unused key, and it was proved to fail by planting one.
+
+### Removed
+
+- The entry beside the clock in the server info bar, which `rules/frameworks/dalamud.md` requires
+  of every plugin. This is a knowing departure from a global rule, taken by the owner, recorded in
+  `decisions.md` with both sides of the weighing, and it stands until the foundation grows an
+  exception for plugins whose primary surface is permanently on screen.
+
 ## [0.1.0] - 2026-08-13
 
 The first version.
