@@ -48,6 +48,8 @@ public static class LocKeys
     public const string LibraryDetailLastUsed = "library.detail.lastUsed";
     public const string LibraryDetailNothingSelected = "library.detail.nothingSelected";
     public const string LibrarySelectionHint = "library.selection.hint";
+    public const string LibrarySelectionAll = "library.selection.all";
+    public const string LibrarySelectionNone = "library.selection.none";
     public const string LibrarySelectionCount = "library.selection.count";
     public const string LibraryBulkHeading = "library.bulk.heading";
     public const string LibraryBulkTag = "library.bulk.tag";
@@ -135,6 +137,13 @@ public static class LocKeys
     public const string SettingsFilterLevelFavourites = "settings.filterLevel.favourites";
     public const string SettingsFilterLevelSimple = "settings.filterLevel.simple";
     public const string SettingsFilterLevelFull = "settings.filterLevel.full";
+    public const string SettingsBarContents = "settings.bar.contents";
+    public const string SettingsBarContentsHelp = "settings.bar.contents.help";
+    public const string SettingsBarContentsFavourites = "settings.bar.contents.favourites";
+    public const string SettingsBarContentsAll = "settings.bar.contents.all";
+    public const string SettingsBarSort = "settings.bar.sort";
+    public const string SettingsBarSortHelp = "settings.bar.sort.help";
+    public const string SettingsBarSortManual = "settings.bar.sort.manual";
     public const string SettingsBarColumns = "settings.bar.columns";
     public const string SettingsBarIconSize = "settings.bar.iconSize";
     public const string SettingsBarShowItemLevel = "settings.bar.showItemLevel";

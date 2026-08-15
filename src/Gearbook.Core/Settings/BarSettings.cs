@@ -1,5 +1,22 @@
 namespace Gearbook.Core.Settings;
 
+/// <summary>What the quick-switch bar holds.</summary>
+public enum BarContents
+{
+    /// <summary>
+    /// The favourites, which is the default. A bar is worth having because it is short enough to
+    /// take in at a glance, and a player with thirty gearsets who puts all of them on it has
+    /// rebuilt the long list they installed this to avoid.
+    /// </summary>
+    Favourites = 0,
+
+    /// <summary>
+    /// Every gearset. For somebody who would rather not mark anything and is content to read the
+    /// icons. The favourites keep their arrangement at the front and the rest follow.
+    /// </summary>
+    All,
+}
+
 /// <summary>
 /// How the quick-switch bar looks and behaves, for one character.
 /// </summary>
@@ -9,6 +26,31 @@ namespace Gearbook.Core.Settings;
 /// </remarks>
 public sealed class BarSettings
 {
+    /// <summary>
+    /// Whether the bar holds the favourites or everything. Favourites by default, because that
+    /// is what makes it a bar rather than a second copy of the list.
+    /// </summary>
+    public BarContents Contents { get; set; } = BarContents.Favourites;
+
+    /// <summary>
+    /// How the bar is ordered, or null for the arrangement the player made by hand.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Null by default, and null is not an oversight. A bar is a click target, and the value of
+    /// a click target is that the third icon is always in the third place: the hand learns the
+    /// position and stops reading the picture. Any rule that reorders the bar when something
+    /// changes throws that away, which is why the game's own hotbars do not sort themselves
+    /// either.
+    /// </para>
+    /// <para>
+    /// A rule is offered anyway, because arranging thirty icons by hand is work somebody may not
+    /// want to do, and reading a bar grouped by role is a perfectly good way to use it. The
+    /// choice is the player's; the default is the one that protects what they have learned.
+    /// </para>
+    /// </remarks>
+    public Filtering.GearsetSortOrder? Sort { get; set; }
+
     /// <summary>Icons per row. One column gives a vertical bar, a large number a horizontal one.</summary>
     public int Columns { get; set; } = 6;
 

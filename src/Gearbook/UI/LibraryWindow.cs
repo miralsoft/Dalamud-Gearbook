@@ -109,7 +109,7 @@ internal sealed class LibraryWindow : Window
         var effective = filter.AtLevel(character.FilterLevel);
         var shown = FilterEngine.Apply(state.Gearsets, effective, state.Jobs, DateTimeOffset.UtcNow, character.RoleOrder);
 
-        DrawHeader(character, filter, shown.Count);
+        DrawHeader(character, filter, shown);
         ImGui.Separator();
 
         var showSidebar = character.FilterLevel != FilterLevel.FavouritesOnly;
@@ -145,9 +145,13 @@ internal sealed class LibraryWindow : Window
         }
     }
 
-    private void DrawHeader(Core.Settings.CharacterSettings character, FilterSpec filter, int shownCount)
+    private void DrawHeader(
+        Core.Settings.CharacterSettings character,
+        FilterSpec filter,
+        IReadOnlyList<ReconciledGearset> shown)
     {
         var loc = state.Loc;
+        var shownCount = shown.Count;
 
         ImGui.SetNextItemWidth(240f);
         var text = filter.Text;
@@ -188,9 +192,49 @@ internal sealed class LibraryWindow : Window
             ImGui.SetTooltip(loc.Get(LocKeys.SortHeading));
         }
 
+        // Selecting all means all of what is on screen, not all that exists. That is what makes
+        // it compose with the filter: narrow to the tanks, select all, mark them. Selecting
+        // things the filter is hiding would act on rows nobody can see.
+        ImGui.SameLine();
+        if (ImGui.Button(loc.Get(LocKeys.LibrarySelectionAll)))
+        {
+            SelectAll(shown);
+        }
+
+        if (selection.Count > 0)
+        {
+            ImGui.SameLine();
+            if (ImGui.Button(loc.Get(LocKeys.LibrarySelectionNone)))
+            {
+                selection.Clear();
+                anchorRecordId = -1;
+            }
+        }
+
+        // The keyboard shortcut everybody already knows, and only while this window has the
+        // focus, so it cannot swallow the same keystroke from the game or another plugin.
+        if (ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows)
+            && ImGui.GetIO().KeyCtrl
+            && ImGui.IsKeyPressed(ImGuiKey.A))
+        {
+            SelectAll(shown);
+        }
+
         // The ways to the other windows used to sit here as buttons. They live in the title bar
         // now, which is where the host puts its own controls and therefore where a player looks,
         // and having them in both places was two answers to one question.
+    }
+
+    private void SelectAll(IReadOnlyList<ReconciledGearset> shown)
+    {
+        selection.Clear();
+
+        foreach (var gearset in shown)
+        {
+            selection.Add(gearset.Record.Id);
+        }
+
+        anchorRecordId = shown.Count > 0 ? shown[0].Record.Id : -1;
     }
 
     private void DrawFilters(Core.Settings.CharacterSettings character, FilterSpec filter)
@@ -524,8 +568,9 @@ internal sealed class LibraryWindow : Window
             // equipping is already a labelled button in the detail panel and an entry in the
             // menu below. A gesture nobody can see is not a third way in, it is a surprise.
 
-            // The same menu the bar's tiles carry, bound to the row that was just drawn.
-            UiTheme.GearsetContextMenu(state, gearset);
+            // The same menu the bar's tiles carry, bound to the row that was just drawn, and
+            // given the selection so that right-clicking inside it acts on all of it.
+            UiTheme.GearsetContextMenu(state, gearset, barControls: null, selection: selection);
 
             if (duplicates.Contains(gearset.Record.Id))
             {

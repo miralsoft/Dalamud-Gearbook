@@ -139,27 +139,6 @@ internal sealed class SettingsWindow : Window
 
         ImGui.Spacing();
 
-        var levels = new[] { FilterLevel.FavouritesOnly, FilterLevel.Simple, FilterLevel.Full };
-        var levelLabels = new List<string>
-        {
-            loc.Get(LocKeys.SettingsFilterLevelFavourites),
-            loc.Get(LocKeys.SettingsFilterLevelSimple),
-            loc.Get(LocKeys.SettingsFilterLevelFull),
-        };
-
-        var levelIndex = Array.IndexOf(levels, character.FilterLevel);
-        levelIndex = levelIndex < 0 ? 1 : levelIndex;
-
-        UiTheme.Caption(loc.Get(LocKeys.SettingsFilterLevel), loc.Get(LocKeys.SettingsFilterLevelHelp));
-        ImGui.SetNextItemWidth(-1f);
-        if (ImGui.Combo("##filterlevel", ref levelIndex, levelLabels, levelLabels.Count))
-        {
-            character.FilterLevel = levels[levelIndex];
-            state.Save();
-        }
-
-        ImGui.Spacing();
-
         var openNews = character.OpenNewsAfterUpdate;
         if (UiTheme.WrappedCheckbox("newsauto", loc.Get(LocKeys.SettingsNewsAutoOpen), ref openNews))
         {
@@ -194,6 +173,46 @@ internal sealed class SettingsWindow : Window
         UiTheme.HelpMarker(loc.Get(LocKeys.SettingsBarLockedHelp));
 
         ImGui.Separator();
+        ImGui.Spacing();
+
+        var contentsValues = new[] { BarContents.Favourites, BarContents.All };
+        var contentsLabels = new List<string>
+        {
+            loc.Get(LocKeys.SettingsBarContentsFavourites),
+            loc.Get(LocKeys.SettingsBarContentsAll),
+        };
+
+        var contentsIndex = Math.Max(0, Array.IndexOf(contentsValues, bar.Contents));
+
+        UiTheme.Caption(loc.Get(LocKeys.SettingsBarContents), loc.Get(LocKeys.SettingsBarContentsHelp));
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.Combo("##barcontents", ref contentsIndex, contentsLabels, contentsLabels.Count))
+        {
+            bar.Contents = contentsValues[contentsIndex];
+            changed = true;
+        }
+
+        ImGui.Spacing();
+
+        // The arrangement first in the list, because it is the default and because it is the
+        // one that keeps an icon in the same place from one day to the next.
+        var sortValues = new List<GearsetSortOrder?> { null };
+        sortValues.AddRange(Enum.GetValues<GearsetSortOrder>().Select(v => (GearsetSortOrder?)v));
+
+        var sortLabels = sortValues
+            .Select(v => v is null ? loc.Get(LocKeys.SettingsBarSortManual) : SortName(v.Value))
+            .ToList();
+
+        var sortIndex = Math.Max(0, sortValues.IndexOf(bar.Sort));
+
+        UiTheme.Caption(loc.Get(LocKeys.SettingsBarSort), loc.Get(LocKeys.SettingsBarSortHelp));
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.Combo("##barsort", ref sortIndex, sortLabels, sortLabels.Count))
+        {
+            bar.Sort = sortValues[sortIndex];
+            changed = true;
+        }
+
         ImGui.Spacing();
 
         // The ceiling is the gearset limit rather than a round number somebody liked. One column
@@ -283,6 +302,30 @@ internal sealed class SettingsWindow : Window
 
         var library = character.Library;
         var changed = false;
+
+        // This decides how much of this window's own filter panel is drawn, so it belongs here
+        // rather than under general settings. It has nothing to do with the bar, which shows
+        // favourites and does not consult the filter at all.
+        var levels = new[] { FilterLevel.FavouritesOnly, FilterLevel.Simple, FilterLevel.Full };
+        var levelLabels = new List<string>
+        {
+            loc.Get(LocKeys.SettingsFilterLevelFavourites),
+            loc.Get(LocKeys.SettingsFilterLevelSimple),
+            loc.Get(LocKeys.SettingsFilterLevelFull),
+        };
+
+        var levelIndex = Array.IndexOf(levels, character.FilterLevel);
+        levelIndex = levelIndex < 0 ? 1 : levelIndex;
+
+        UiTheme.Caption(loc.Get(LocKeys.SettingsFilterLevel), loc.Get(LocKeys.SettingsFilterLevelHelp));
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.Combo("##filterlevel", ref levelIndex, levelLabels, levelLabels.Count))
+        {
+            character.FilterLevel = levels[levelIndex];
+            changed = true;
+        }
+
+        ImGui.Spacing();
 
         var showNumber = library.ShowGameNumber;
         if (UiTheme.WrappedCheckbox("shownumber", loc.Get(LocKeys.SettingsLibraryShowGameNumber), ref showNumber))
@@ -402,6 +445,16 @@ internal sealed class SettingsWindow : Window
             state.Save();
         }
     }
+
+    private string SortName(GearsetSortOrder order) => state.Loc.Get(order switch
+    {
+        GearsetSortOrder.Name => LocKeys.SortByName,
+        GearsetSortOrder.Job => LocKeys.SortByJob,
+        GearsetSortOrder.ItemLevel => LocKeys.SortByItemLevel,
+        GearsetSortOrder.LastUsed => LocKeys.SortByLastUsed,
+        GearsetSortOrder.Role => LocKeys.SortByRole,
+        _ => LocKeys.SortBySlot,
+    });
 
     private string RoleName(JobRole role) => state.Loc.Get(role switch
     {

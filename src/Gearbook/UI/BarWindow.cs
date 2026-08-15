@@ -4,8 +4,10 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Adapters;
+using Gearbook.Core.Filtering;
 using Gearbook.Core.Identity;
 using Gearbook.Core.Localization;
+using Gearbook.Core.Settings;
 using Gearbook.Core.Sorting;
 
 namespace Gearbook.UI;
@@ -248,5 +250,22 @@ internal sealed class BarWindow : Window
     /// empty bar that says how to fill it is easier to understand than a full one that cannot
     /// explain itself.
     /// </remarks>
-    private IReadOnlyList<ReconciledGearset> Contents() => BarOrder.OnBar(state.Gearsets);
+    private IReadOnlyList<ReconciledGearset> Contents()
+    {
+        var character = state.Character;
+
+        var favourites = BarOrder.OnBar(
+            state.Gearsets,
+            includeEverything: character?.Bar.Contents == BarContents.All);
+
+        if (character?.Bar.Sort is not { } sort)
+        {
+            return favourites;
+        }
+
+        // The role order is the one from the settings, so the bar and the library group things
+        // the same way. Two orders called "by role" that disagreed would be worse than not
+        // offering it on the bar at all.
+        return FilterEngine.Sort(favourites, sort, state.Jobs, character.RoleOrder);
+    }
 }

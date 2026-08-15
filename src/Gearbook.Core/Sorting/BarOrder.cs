@@ -24,13 +24,19 @@ public static class BarOrder
     /// and then it stopped meaning it. One mark, one meaning. The position only decides the order
     /// among them.
     /// </remarks>
-    public static IReadOnlyList<ReconciledGearset> OnBar(IEnumerable<ReconciledGearset> gearsets)
+    public static IReadOnlyList<ReconciledGearset> OnBar(
+        IEnumerable<ReconciledGearset> gearsets,
+        bool includeEverything = false)
     {
         ArgumentNullException.ThrowIfNull(gearsets);
 
+        // With everything on the bar the favourites keep their arrangement and come first, and
+        // the rest follow in the game's own order. Any other answer would either scatter the
+        // arrangement somebody made or bury it somewhere in the middle.
         return [.. gearsets
-            .Where(g => g.Record.IsFavourite)
-            .OrderBy(g => g.Record.BarPosition ?? int.MaxValue)
+            .Where(g => includeEverything || g.Record.IsFavourite)
+            .OrderBy(g => g.Record.IsFavourite ? 0 : 1)
+            .ThenBy(g => g.Record.BarPosition ?? int.MaxValue)
             .ThenBy(g => g.Gearset.Slot)];
     }
 

@@ -179,13 +179,26 @@ internal static class UiTheme
     /// <param name="gearset">The gearset the menu belongs to.</param>
     /// <param name="barControls">Where to reach the bar's own controls from this menu, or null
     /// when the menu is not on the bar.</param>
+    /// <param name="selection">Everything currently selected, or null where there is no
+    /// selection. Right-clicking inside it acts on all of it.</param>
     public static void GearsetContextMenu(
         GearbookState state,
         ReconciledGearset gearset,
-        BarContextActions? barControls = null)
+        BarContextActions? barControls = null,
+        IReadOnlySet<int>? selection = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(gearset);
+
+        // Right-clicking inside a selection acts on the selection. Acting on the one row under
+        // the pointer instead would silently ignore the other thirty, which is the failure that
+        // makes somebody stop trusting a multi-selection anywhere in the product.
+        //
+        // Right-clicking outside it means the one gearset, because that is plainly what was
+        // pointed at.
+        var targets = selection is { Count: > 1 } && selection.Contains(gearset.Record.Id)
+            ? selection
+            : null;
 
         // Control and right-click marks a favourite without opening anything. The menu is not
         // drawn at all while the modifier is held, so the two cannot both fire from one click.
@@ -193,7 +206,7 @@ internal static class UiTheme
         {
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                ToggleFavourite(state, gearset);
+                ToggleFavourite(state, gearset, targets);
             }
 
             return;
@@ -208,9 +221,13 @@ internal static class UiTheme
         var loc = state.Loc;
         var record = gearset.Record;
 
-        if (ImGui.MenuItem(loc.Get(LocKeys.LibraryDetailFavourite), string.Empty, record.IsFavourite))
+        var label = targets is null
+            ? loc.Get(LocKeys.LibraryDetailFavourite)
+            : $"{loc.Get(LocKeys.LibraryDetailFavourite)} ({targets.Count})";
+
+        if (ImGui.MenuItem(label, string.Empty, record.IsFavourite))
         {
-            ToggleFavourite(state, gearset);
+            ToggleFavourite(state, gearset, targets);
         }
 
         if (barControls is null)
@@ -375,14 +392,36 @@ internal static class UiTheme
     /// Toggles the favourite mark, which is the same thing as putting the gearset on the bar or
     /// taking it off. One mark, one meaning.
     /// </summary>
-    public static void ToggleFavourite(GearbookState state, ReconciledGearset gearset)
+    /// <param name="state">The plugin state.</param>
+    /// <param name="gearset">The gearset that was clicked, which decides which way the toggle
+    /// goes.</param>
+    /// <param name="targets">Everything the change applies to, or null for just this one.</param>
+    /// <remarks>
+    /// With several targets the one that was clicked decides the direction for all of them,
+    /// rather than each flipping its own state. Flipping each would turn a mixed selection into
+    /// its own inverse, which is a result nobody asks for and nobody can undo with one click.
+    /// </remarks>
+    public static void ToggleFavourite(
+        GearbookState state,
+        ReconciledGearset gearset,
+        IReadOnlySet<int>? targets = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(gearset);
 
         var record = gearset.Record;
-        state.UpdateRecords(records =>
-            Core.Sorting.BarOrder.SetFavourite(records, record.Id, !record.IsFavourite));
+        var wanted = !record.IsFavourite;
+
+        if (targets is null)
+        {
+            state.UpdateRecords(records =>
+                Core.Sorting.BarOrder.SetFavourite(records, record.Id, wanted));
+
+            return;
+        }
+
+        var selected = new HashSet<int>(targets);
+        state.UpdateRecords(records => Core.Editing.BulkEdit.SetFavourite(records, selected, wanted));
     }
 
     private static void DrawTooltip(
