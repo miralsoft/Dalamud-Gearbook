@@ -28,6 +28,7 @@
   "library.detail.onBar": "Show on the bar",
   "library.detail.pieces": "Equipment",
   "gearset.incomplete": "A piece of this set is missing. The game will offer a suitable replacement when you put it on.",
+  "gearset.favouriteHint": "Ctrl and click marks it as a favourite. Right-click for more.",
   "library.detail.glamourPlate": "Glamour plate {0}",
   "library.detail.lastUsed": "Last used",
   "library.detail.nothingSelected": "Select a gearset to see its details.",

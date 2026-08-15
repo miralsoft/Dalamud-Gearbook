@@ -226,24 +226,23 @@ internal static class UiTheme
 
         using (ImRaii.PushId(gearset.Record.Id))
         {
-            // Greyed out rather than hidden, and still drawn at full size, so the bar does not
-            // change shape the moment combat starts.
-            using (ImRaii.Disabled(!clickable))
+            // Deliberately not disabled while a switch is blocked. A disabled item takes no
+            // input at all, which would also swallow the right-click menu and the modifier
+            // click, and neither of those has anything to do with being in combat. The tile is
+            // dimmed below instead, so it still looks unavailable and still answers.
+            if (iconId != 0)
             {
-                if (iconId != 0)
-                {
-                    var texture = GearbookServices.Textures
-                        .GetFromGameIcon(new GameIconLookup(iconId))
-                        .GetWrapOrEmpty();
+                var texture = GearbookServices.Textures
+                    .GetFromGameIcon(new GameIconLookup(iconId))
+                    .GetWrapOrEmpty();
 
-                    pressed = ImGui.ImageButton(texture.Handle, new Vector2(size, size));
-                }
-                else
-                {
-                    // No icon, which happens for a job the game data does not describe. A button
-                    // with the job number on it still switches.
-                    pressed = ImGui.Button($"{gearset.Gearset.Slot + 1}", new Vector2(size, size));
-                }
+                pressed = ImGui.ImageButton(texture.Handle, new Vector2(size, size));
+            }
+            else
+            {
+                // No icon, which happens for a job the game data does not describe. A button
+                // with the job number on it still switches.
+                pressed = ImGui.Button($"{gearset.Gearset.Slot + 1}", new Vector2(size, size));
             }
         }
 
@@ -253,6 +252,21 @@ internal static class UiTheme
 
         var min = origin;
         var max = origin + new Vector2(size, size) + (ImGui.GetStyle().FramePadding * 2f);
+
+        if (!clickable)
+        {
+            // The dimming a disabled item would have given, drawn by hand so the tile keeps
+            // taking input. Same picture, without the side effect.
+            drawList.AddRectFilled(min, max, ImGui.GetColorU32(new Vector4(0f, 0f, 0f, 0.45f)));
+        }
+
+        if (pressed && FavouriteModifierHeld)
+        {
+            // The modifier is what makes this safe. A plain click on the bar equips, and that is
+            // the whole point of the bar, so a plain click cannot also change what the bar shows.
+            ToggleFavourite(state, gearset);
+            return false;
+        }
 
         if (highlightActive && state.CurrentSlot == gearset.Gearset.Slot)
         {
@@ -279,6 +293,26 @@ internal static class UiTheme
         }
 
         return pressed && clickable;
+    }
+
+    /// <summary>
+    /// True when the player is holding the key that turns a click into a favourite toggle.
+    /// </summary>
+    /// <remarks>
+    /// One place, so the bar and the library agree about which key it is. A gesture that means
+    /// two different things in two windows of the same plugin is worse than not having it.
+    /// </remarks>
+    public static bool FavouriteModifierHeld => ImGui.GetIO().KeyCtrl;
+
+    /// <summary>Toggles the favourite mark on one gearset.</summary>
+    public static void ToggleFavourite(GearbookState state, ReconciledGearset gearset)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(gearset);
+
+        var record = gearset.Record;
+        state.UpdateRecords(records =>
+            [.. records.Select(r => r.Id == record.Id ? r with { IsFavourite = !record.IsFavourite } : r)]);
     }
 
     private static void DrawTooltip(
@@ -328,6 +362,10 @@ internal static class UiTheme
             ImGui.Separator();
             ImGui.TextUnformatted($"{badge.Matched} / {badge.Total}   {badge.Target}");
         }
+
+        // Said in the tooltip, because a modifier nobody is told about is a modifier nobody uses.
+        ImGui.Separator();
+        Muted(loc.Get(LocKeys.GearsetFavouriteHint));
 
         var reason = BlockedReason(loc, blocked);
         if (reason is not null)

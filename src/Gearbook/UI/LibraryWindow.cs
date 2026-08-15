@@ -497,7 +497,16 @@ internal sealed class LibraryWindow : Window
             var selected = selectedRecordId == gearset.Record.Id;
             if (ImGui.Selectable(gearset.Gearset.Name, selected, ImGuiSelectableFlags.SpanAllColumns))
             {
-                Select(gearset);
+                // The same gesture as on the bar. A modifier that means one thing in one window
+                // and another thing in the next is worse than not having it at all.
+                if (UiTheme.FavouriteModifierHeld)
+                {
+                    UiTheme.ToggleFavourite(state, gearset);
+                }
+                else
+                {
+                    Select(gearset);
+                }
             }
 
             if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))

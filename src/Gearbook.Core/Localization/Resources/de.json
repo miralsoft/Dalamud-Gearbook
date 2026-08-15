@@ -28,6 +28,7 @@
   "library.detail.onBar": "Auf der Leiste zeigen",
   "library.detail.pieces": "Ausrüstung",
   "gearset.incomplete": "Diesem Set fehlt ein Teil. Das Spiel bietet beim Anlegen einen passenden Ersatz an.",
+  "gearset.favouriteHint": "Strg und Klick macht daraus einen Favoriten. Rechtsklick für mehr.",
   "library.detail.glamourPlate": "Projektionsplatte {0}",
   "library.detail.lastUsed": "Zuletzt benutzt",
   "library.detail.nothingSelected": "Wähle ein Ausrüstungsset, um die Einzelheiten zu sehen.",

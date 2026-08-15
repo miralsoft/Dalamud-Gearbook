@@ -162,9 +162,12 @@ internal sealed class BarWindow : Window
             }
         }
 
-        // Right-clicking the bar is one of the three ways to change the active view. All three
-        // call the same action rather than variants of it.
-        using var context = ImRaii.ContextPopup("##GearbookBarContext");
+        // The bar's own menu, and only where no tile is under the pointer. Without that flag it
+        // opens over the icons too and swallows the right-click that was meant for the gearset,
+        // so the per-tile menu would look as though it did not exist.
+        using var context = ImRaii.ContextPopup(
+            "##GearbookBarContext",
+            ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.NoOpenOverItems);
         if (context)
         {
             if (ImGui.MenuItem(loc.Get(LocKeys.WindowLibraryTitle)))

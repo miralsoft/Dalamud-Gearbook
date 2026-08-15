@@ -104,6 +104,12 @@ public static class LocKeys
     /// that nobody reintroduces the block by reading the name.
     /// </summary>
     public const string GearsetIncomplete = "gearset.incomplete";
+
+    /// <summary>
+    /// The modifier that turns a click into a favourite toggle. Shown in the tooltip, because a
+    /// modifier nobody is told about is a modifier nobody uses.
+    /// </summary>
+    public const string GearsetFavouriteHint = "gearset.favouriteHint";
     public const string SwitchBlockedNotLoggedIn = "switch.blocked.notLoggedIn";
     public const string SwitchAlreadyActive = "switch.alreadyActive";
     public const string SwitchFailed = "switch.failed";
