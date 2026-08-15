@@ -1,5 +1,6 @@
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Adapters;
@@ -31,13 +32,28 @@ internal sealed class BarWindow : Window
     private readonly GearbookState state;
     private readonly Action openLibrary;
 
-    public BarWindow(GearbookState state, Action openLibrary)
+    public BarWindow(GearbookState state, Action openLibrary, Action openSettings)
         : base(WindowId, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize)
     {
         this.state = state;
         this.openLibrary = openLibrary;
 
         RespectCloseHotkey = false;
+
+        // Only visible while the bar is unlocked, because a locked bar has no title bar at all.
+        // That is the point of locking it, and both places stay reachable from the right-click
+        // menu, so locking costs nothing.
+        TitleBarButtons.Add(UiTheme.Link(
+            FontAwesomeIcon.ListUl,
+            () => state.Loc.Get(LocKeys.WindowLibraryTitle),
+            openLibrary,
+            priority: 0));
+
+        TitleBarButtons.Add(UiTheme.Link(
+            FontAwesomeIcon.Cog,
+            () => state.Loc.Get(LocKeys.WindowSettingsTitle),
+            openSettings,
+            priority: 1));
     }
 
     /// <inheritdoc />

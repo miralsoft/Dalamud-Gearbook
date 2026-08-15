@@ -32,18 +32,9 @@ still open.
   the slot before displaying it, on the assumption that the field is zero-based; comparing the
   two lists side by side answers it in a second.
 
-- **(open since 2026-08-13) The two attribute constants in `JobClassifier`.** The job table gives
-  physical and magical ranged jobs the same role value, and the only thing separating them is the
-  attribute they scale from. The two numbers used for that were derived from the table's structure
-  rather than read off a running game. If either is wrong, the affected jobs classify as unknown
-  and appear under "Other" in the role filter, which is the designed failure: visible and
-  reportable rather than a black mage quietly filed under physical ranged. Check a machinist and
-  a black mage in the filter and the answer is immediate.
-
-- **(open since 2026-08-13) The hand and land boundary in `JobClassifier`.** Crafters and
-  gatherers are told apart by where they sit in the table's hand-and-land sequence, on the basis
-  that the eight crafting jobs come first. If that is wrong the two categories swap wholesale,
-  which is equally visible. Same check, one crafter and one gatherer.
+Both `JobClassifier` questions that sat here were closed on 2026-08-15 by reading the real job
+table out of the installed client. One of the two constants was wrong and had already reached a
+player. See the entries of that date in `decisions.md`.
 
 ## Waiting on the owner
 

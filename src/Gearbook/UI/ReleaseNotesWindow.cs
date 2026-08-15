@@ -1,5 +1,6 @@
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Core.Localization;
@@ -44,10 +45,22 @@ internal sealed class ReleaseNotesWindow : Window
 
     private readonly GearbookState state;
 
-    public ReleaseNotesWindow(GearbookState state)
+    public ReleaseNotesWindow(GearbookState state, Action openLibrary, Action openSettings)
         : base(WindowId)
     {
         this.state = state;
+
+        TitleBarButtons.Add(UiTheme.Link(
+            FontAwesomeIcon.ListUl,
+            () => state.Loc.Get(LocKeys.WindowLibraryTitle),
+            openLibrary,
+            priority: 0));
+
+        TitleBarButtons.Add(UiTheme.Link(
+            FontAwesomeIcon.Cog,
+            () => state.Loc.Get(LocKeys.WindowSettingsTitle),
+            openSettings,
+            priority: 1));
 
         Size = new Vector2(520, 420);
         SizeCondition = ImGuiCond.FirstUseEver;

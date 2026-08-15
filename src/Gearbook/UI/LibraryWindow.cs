@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Adapters;
@@ -24,21 +25,42 @@ internal sealed class LibraryWindow : Window
     private const int TagsMaxLength = 500;
 
     private readonly GearbookState state;
-    private readonly Action openSettings;
-    private readonly Action openNews;
 
     private int selectedRecordId = -1;
     private string noteBuffer = string.Empty;
     private string tagsBuffer = string.Empty;
     private int editingRecordId = -1;
     private string newViewName = string.Empty;
+    private readonly TitleBarButton newsLink;
+    private bool unreadNow;
 
-    public LibraryWindow(GearbookState state, Action openSettings, Action openNews)
+    public LibraryWindow(GearbookState state, Action openBar, Action openSettings, Action openNews)
         : base(WindowId)
     {
         this.state = state;
-        this.openSettings = openSettings;
-        this.openNews = openNews;
+
+        TitleBarButtons.Add(UiTheme.Link(
+            FontAwesomeIcon.ThLarge,
+            () => state.Loc.Get(LocKeys.WindowBarTitle),
+            openBar,
+            priority: 0));
+
+        TitleBarButtons.Add(UiTheme.Link(
+            FontAwesomeIcon.Cog,
+            () => state.Loc.Get(LocKeys.WindowSettingsTitle),
+            openSettings,
+            priority: 1));
+
+        // Kept as a field so its colour can be changed every frame. After the notes appear once
+        // by themselves, this is the only signal that there is anything to come back to, and a
+        // control that never says it has something is one nobody presses.
+        newsLink = UiTheme.Link(
+            FontAwesomeIcon.Book,
+            () => state.Loc.Get(unreadNow ? LocKeys.NewsUnread : LocKeys.WindowNewsTitle),
+            openNews,
+            priority: 2);
+
+        TitleBarButtons.Add(newsLink);
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -48,8 +70,16 @@ internal sealed class LibraryWindow : Window
     }
 
     /// <inheritdoc />
-    public override void PreDraw() =>
+    public override void PreDraw()
+    {
         WindowName = $"{state.Loc.Get(LocKeys.WindowLibraryTitle)}###GearbookLibrary";
+
+        // Every frame rather than once, because it has to go out the moment the notes are
+        // opened and the language underneath it can change while the window is up.
+        var character = state.Character;
+        unreadNow = character is not null && ReleaseNotesState.HasUnread(character);
+        newsLink.IconColor = unreadNow ? UiTheme.UnreadColour : null;
+    }
 
     /// <inheritdoc />
     public override void Draw()
@@ -146,37 +176,9 @@ internal sealed class LibraryWindow : Window
             ImGui.SetTooltip(loc.Get(LocKeys.SortHeading));
         }
 
-        ImGui.SameLine();
-        var right = ImGui.GetWindowWidth() - 170f;
-        if (right > ImGui.GetCursorPosX())
-        {
-            ImGui.SetCursorPosX(right);
-        }
-
-        if (ImGui.Button(loc.Get(LocKeys.SettingsTabGeneral)))
-        {
-            openSettings();
-        }
-
-        ImGui.SameLine();
-
-        // The control that opens the notes shows there is something unread. After the one
-        // automatic appearance it is the only route back into them, and a control that never
-        // signals it has anything is one nobody presses. Set every frame rather than once,
-        // because it has to go out the moment the notes are opened.
-        var unread = ReleaseNotesState.HasUnread(character);
-        using (ImRaii.PushColor(ImGuiCol.Text, new Vector4(1f, 0.85f, 0.35f, 1f), unread))
-        {
-            if (ImGui.Button(unread ? $"{loc.Get(LocKeys.NewsOpen)} *" : loc.Get(LocKeys.NewsOpen)))
-            {
-                openNews();
-            }
-        }
-
-        if (unread && ImGui.IsItemHovered())
-        {
-            ImGui.SetTooltip(loc.Get(LocKeys.NewsUnread));
-        }
+        // The ways to the other windows used to sit here as buttons. They live in the title bar
+        // now, which is where the host puts its own controls and therefore where a player looks,
+        // and having them in both places was two answers to one question.
     }
 
     private void DrawFilters(Core.Settings.CharacterSettings character, FilterSpec filter)
@@ -502,6 +504,9 @@ internal sealed class LibraryWindow : Window
             {
                 state.RequestEquip(gearset.Gearset.Slot, EquipTrigger.Library);
             }
+
+            // The same menu the bar's tiles carry, bound to the row that was just drawn.
+            UiTheme.GearsetContextMenu(state, gearset);
 
             if (duplicates.Contains(gearset.Record.Id))
             {

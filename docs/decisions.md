@@ -162,6 +162,38 @@ Each entry: date, decision, rationale, and what was rejected.
   the mistake is visible in the filter rather than silent. Rejected: a hardcoded list of job ids,
   which would be correct today and wrong the first time a job is added.
 
+- **(2026-08-15) Crafters and gatherers are separated by the job's category row, not by its
+  position in the hand-and-land sequence.** Rationale: the first attempt split them at index
+  eight, on the reasoning that the eight crafting jobs come first. They do, but the sequence
+  **restarts at zero for the gatherers**: a blacksmith and a botanist both sit at index one. Every
+  gatherer was therefore filed as a crafter, and a player noticed before any test did, because
+  every value in the test had been invented to match the assumption.
+
+  Fixed by reading the real job table out of the installed client rather than reasoning about it
+  again. The category row is the game's own grouping, 33 for Disciple of the Hand and 32 for
+  Disciple of the Land, and it separates them exactly. The same reading confirmed the two
+  attribute constants for the physical and magical ranged split, which were right.
+
+  The lesson is not about this table. Both the wrong value and the right one were reachable the
+  same way, by reading the data instead of the documentation, and one of them was reached only
+  after it broke. Rejected: hardcoding the job row ranges, which is correct today and wrong the
+  first time a job is added.
+
+- **(2026-08-15) Every window reaches every other from its title bar, and the buttons that did
+  the same job in the library's content area are gone.** Rationale: the blueprint puts cross-links
+  in the title bar because that is where the host puts its own controls and therefore where a
+  player already looks. Having them in both places was two answers to one question. The link to
+  the release notes carries the unread state, re-evaluated every frame, because after the notes
+  appear once by themselves it is the only signal that there is anything to come back to.
+
+  One honest limit: a locked bar has no title bar, so its two links disappear with it. That is
+  what locking is for, and both places stay reachable from the right-click menu.
+
+- **(2026-08-15) A gearset carries the same right-click menu wherever it appears.** Rationale:
+  marking a favourite decides what the bar holds, and reaching that through a window is a detour
+  from the thing the player is already pointing at. The same menu on a bar tile and on a library
+  row, so learning it once is enough.
+
 - **(2026-08-15) A gearset missing a piece is no longer refused. This supersedes the entry of
   2026-08-13 that made incompleteness a blocking reason.** Rationale: the first session with the
   game running showed what the game itself does in that case. It does not refuse. It opens a

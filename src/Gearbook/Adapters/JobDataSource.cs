@@ -43,7 +43,7 @@ internal sealed unsafe class JobDataSource : IJobDataSource
 
                 var (role, category) = JobClassifier.Classify(
                     row.Role,
-                    row.DohDolJobIndex,
+                    row.ClassJobCategory.RowId,
                     row.PrimaryStat);
 
                 var abbreviation = row.Abbreviation.ExtractText();

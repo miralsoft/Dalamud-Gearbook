@@ -9,15 +9,19 @@ namespace Gearbook.Core.Model;
 /// without a game. The adapter on the plugin side reads the row and passes the numbers in.
 /// </para>
 /// <para>
-/// Two of the values below could not be derived from a flag and are named constants here, in one
-/// place, with the reason. Everything else comes from a field the table carries explicitly.
+/// Every value below was read off the real job table in an installed client on 2026-08-15,
+/// not inferred. The first attempt at this was inferred, and it was wrong in a way that only a
+/// player noticed: it split crafters from gatherers by their position in the hand-and-land
+/// sequence, and that sequence restarts at zero for the gatherers. A blacksmith and a botanist
+/// both sit at index one, so every gatherer was filed as a crafter.
 /// </para>
 /// </remarks>
 public static class JobClassifier
 {
     /// <summary>
-    /// The role values the game's own table uses. Established from the table's shape rather
-    /// than from a job list, so a new job in a future patch classifies itself.
+    /// The role values the game's own table uses. Verified against the table: gladiator and
+    /// paladin are 1, pugilist and monk 2, archer and black mage 3, conjurer and white mage 4,
+    /// and every hand or land job is 0, as are the starting classes' own rows.
     /// </summary>
     private const byte RoleNone = 0;
     private const byte RoleTank = 1;
@@ -26,77 +30,75 @@ public static class JobClassifier
     private const byte RoleHealer = 4;
 
     /// <summary>
-    /// The primary attribute values used to tell a physical ranged job from a magical one. The
-    /// table has no flag for that distinction: both are role 3, and the only thing separating
-    /// them is which attribute their damage scales from.
+    /// The job category rows, which are the game's own grouping and the only field that
+    /// separates a crafter from a gatherer. Verified by reading the category sheet: 30 is
+    /// Disciple of War, 31 Disciple of Magic, 32 Disciple of the Land, 33 Disciple of the Hand.
     /// </summary>
-    /// <remarks>
-    /// These two numbers are the one part of this mapping that has not been checked against a
-    /// running game, only against the table's structure. If either is wrong, the affected jobs
-    /// classify as <see cref="JobRole.Unknown"/> and appear under "Other" in the filter, which
-    /// is a visible and reportable failure rather than a quietly wrong one. That is deliberate:
-    /// guessing the other way round would put a black mage under physical ranged and nothing
-    /// would ever say so.
-    /// </remarks>
-    private const byte PrimaryStatDexterity = 2;
-    private const byte PrimaryStatIntelligence = 4;
+    private const uint CategoryDiscipleOfWar = 30;
+    private const uint CategoryDiscipleOfMagic = 31;
+    private const uint CategoryDiscipleOfTheLand = 32;
+    private const uint CategoryDiscipleOfTheHand = 33;
 
     /// <summary>
-    /// How many of the hand and land indices belong to the hand jobs. The table sequences the
-    /// eight crafting jobs first and the three gathering jobs after them, and carries no flag
-    /// that separates the two, so this is the boundary.
+    /// The primary attributes that tell a physical ranged job from a magical one. The table has
+    /// no flag for that distinction, both are role 3, and the only thing separating them is
+    /// which attribute their damage scales from. Verified against the table: archer, bard,
+    /// machinist and dancer scale from dexterity, while thaumaturge, black mage, arcanist,
+    /// summoner, red mage, blue mage and pictomancer scale from intelligence.
     /// </summary>
-    /// <remarks>
-    /// A named constant rather than a job list, so a hypothetical twelfth land job classifies
-    /// itself. If the sequence ever changes, the failure is that crafters and gatherers swap
-    /// categories, which is immediately visible in the filter rather than silent.
-    /// </remarks>
-    private const sbyte HandJobCount = 8;
+    private const byte PrimaryStatDexterity = 2;
+    private const byte PrimaryStatIntelligence = 4;
 
     /// <summary>
     /// Classifies a job.
     /// </summary>
     /// <param name="role">The table's own role value.</param>
-    /// <param name="dohDolJobIndex">The table's index among the hand and land jobs. Negative for
-    /// a combat job, which is the flag that separates the three categories.</param>
+    /// <param name="classJobCategoryRowId">The row the job's category points at. This is what
+    /// separates the three categories, because the table gives crafters, gatherers and the
+    /// starting classes the same role.</param>
     /// <param name="primaryStat">The attribute the job scales from.</param>
     public static (JobRole Role, JobCategory Category) Classify(
         byte role,
-        sbyte dohDolJobIndex,
+        uint classJobCategoryRowId,
         byte primaryStat)
     {
-        // A hand or land job. The table gives these role 0, the same value it gives the
-        // starting classes, so the index is what tells them apart rather than the role.
-        if (dohDolJobIndex >= 0)
+        switch (classJobCategoryRowId)
         {
-            return dohDolJobIndex < HandJobCount
-                ? (JobRole.Crafter, JobCategory.Crafting)
-                : (JobRole.Gatherer, JobCategory.Gathering);
+            case CategoryDiscipleOfTheHand:
+                return (JobRole.Crafter, JobCategory.Crafting);
+
+            case CategoryDiscipleOfTheLand:
+                return (JobRole.Gatherer, JobCategory.Gathering);
+
+            default:
+                break;
         }
+
+        // Anything else is a fighting job. A category this build has never seen keeps its role
+        // and loses only the coarser grouping, which is the harmless direction: the gearset is
+        // still listed, still switchable, and still reachable by its role.
+        var category = classJobCategoryRowId is CategoryDiscipleOfWar or CategoryDiscipleOfMagic
+            ? JobCategory.Combat
+            : JobCategory.Unknown;
 
         return role switch
         {
-            RoleTank => (JobRole.Tank, JobCategory.Combat),
-            RoleHealer => (JobRole.Healer, JobCategory.Combat),
-            RoleMeleeDps => (JobRole.MeleeDps, JobCategory.Combat),
+            RoleTank => (JobRole.Tank, category),
+            RoleHealer => (JobRole.Healer, category),
+            RoleMeleeDps => (JobRole.MeleeDps, category),
 
             RoleRangedDps => primaryStat switch
             {
-                PrimaryStatDexterity => (JobRole.PhysicalRangedDps, JobCategory.Combat),
-                PrimaryStatIntelligence => (JobRole.MagicalRangedDps, JobCategory.Combat),
-
-                // Ranged, but the split could not be established. Combat is still known, so the
-                // set keeps its category and only loses the finer filter.
-                _ => (JobRole.Unknown, JobCategory.Combat),
+                PrimaryStatDexterity => (JobRole.PhysicalRangedDps, category),
+                PrimaryStatIntelligence => (JobRole.MagicalRangedDps, category),
+                _ => (JobRole.Unknown, category),
             },
 
-            // Role 0 with no hand or land index is a starting class rather than a job. It is
-            // still a combat gearset and still switchable, it simply has no role of its own.
-            RoleNone => (JobRole.Unknown, JobCategory.Combat),
+            // Role 0 in a fighting category is a starting class rather than a job. Still a
+            // gearset, still switchable, simply without a role of its own.
+            RoleNone => (JobRole.Unknown, category),
 
-            // A role value from a future patch. Not an error, and not a reason to hide the
-            // gearset.
-            _ => (JobRole.Unknown, JobCategory.Unknown),
+            _ => (JobRole.Unknown, category),
         };
     }
 }

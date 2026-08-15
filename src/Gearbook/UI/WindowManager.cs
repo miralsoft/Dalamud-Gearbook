@@ -28,10 +28,13 @@ internal sealed class WindowManager : IDisposable
     {
         this.state = state;
 
-        library = new LibraryWindow(state, ToggleSettings, ToggleNews);
-        settings = new SettingsWindow(state);
-        news = new ReleaseNotesWindow(state);
-        bar = new BarWindow(state, ToggleLibrary);
+        // Every window can reach every other from its title bar, which is where the host puts
+        // its own controls and therefore where a player already looks. The toggles are the same
+        // ones the commands and the installer's buttons call, not variants of them.
+        library = new LibraryWindow(state, ToggleBar, ToggleSettings, ToggleNews);
+        settings = new SettingsWindow(state, ToggleLibrary, ToggleNews);
+        news = new ReleaseNotesWindow(state, ToggleLibrary, ToggleSettings);
+        bar = new BarWindow(state, ToggleLibrary, ToggleSettings);
 
         windows.AddWindow(bar);
         windows.AddWindow(library);

@@ -1,7 +1,9 @@
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Interface.Windowing;
 using Gearbook.Core.Identity;
 using Gearbook.Core.Localization;
 using Gearbook.Services;
@@ -135,6 +137,73 @@ internal static class UiTheme
     }
 
     /// <summary>
+    /// A cross-link for a window's title bar.
+    /// </summary>
+    /// <remarks>
+    /// The title bar rather than the content area, because that is where the host puts its own
+    /// controls and therefore where a player already looks. The tooltip is a function rather
+    /// than a string so that it follows the language while the window is open.
+    /// </remarks>
+    public static TitleBarButton Link(
+        FontAwesomeIcon icon,
+        Func<string> tooltip,
+        Action click,
+        int priority)
+    {
+        ArgumentNullException.ThrowIfNull(tooltip);
+        ArgumentNullException.ThrowIfNull(click);
+
+        return new TitleBarButton
+        {
+            Icon = icon,
+            Priority = priority,
+            IconOffset = new Vector2(2f, 1f),
+            Click = _ => click(),
+            ShowTooltip = () => ImGui.SetTooltip(tooltip()),
+        };
+    }
+
+    /// <summary>The colour a title-bar link takes while it has something unread behind it.</summary>
+    public static Vector4 UnreadColour { get; } = new(1f, 0.85f, 0.35f, 1f);
+
+    /// <summary>
+    /// The right-click menu a gearset carries wherever it appears.
+    /// </summary>
+    /// <remarks>
+    /// The same menu on the bar and in the library, because a player who learns it in one place
+    /// should not have to discover it again in the other. Marking a favourite belongs here above
+    /// all: it is the one action that decides what the bar holds, and reaching it through a
+    /// window is a detour from the thing you are already pointing at.
+    /// </remarks>
+    public static void GearsetContextMenu(GearbookState state, ReconciledGearset gearset)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(gearset);
+
+        using var context = ImRaii.ContextPopupItem($"##gearset{gearset.Record.Id}");
+        if (!context)
+        {
+            return;
+        }
+
+        var loc = state.Loc;
+        var record = gearset.Record;
+
+        var favourite = record.IsFavourite;
+        if (ImGui.MenuItem(loc.Get(LocKeys.LibraryDetailFavourite), string.Empty, favourite))
+        {
+            state.UpdateRecords(records =>
+                [.. records.Select(r => r.Id == record.Id ? r with { IsFavourite = !favourite } : r)]);
+        }
+
+        var onBar = record.BarPosition is not null;
+        if (ImGui.MenuItem(loc.Get(LocKeys.LibraryDetailOnBar), string.Empty, onBar))
+        {
+            state.UpdateRecords(records => Core.Sorting.BarOrder.SetOnBar(records, record.Id, !onBar));
+        }
+    }
+
+    /// <summary>
     /// One gearset as a clickable icon.
     /// </summary>
     /// <returns>True when the player clicked it and it can be equipped.</returns>
@@ -177,6 +246,10 @@ internal static class UiTheme
                 }
             }
         }
+
+        // Bound to the icon that was just drawn, so right-clicking a tile reaches the same menu
+        // right-clicking a row in the library does.
+        GearsetContextMenu(state, gearset);
 
         var min = origin;
         var max = origin + new Vector2(size, size) + (ImGui.GetStyle().FramePadding * 2f);

@@ -1,5 +1,6 @@
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Gearbook.Core.Filtering;
@@ -23,10 +24,22 @@ internal sealed class SettingsWindow : Window
 
     private readonly GearbookState state;
 
-    public SettingsWindow(GearbookState state)
+    public SettingsWindow(GearbookState state, Action openLibrary, Action openNews)
         : base(WindowId)
     {
         this.state = state;
+
+        TitleBarButtons.Add(UiTheme.Link(
+            FontAwesomeIcon.ListUl,
+            () => state.Loc.Get(LocKeys.WindowLibraryTitle),
+            openLibrary,
+            priority: 0));
+
+        TitleBarButtons.Add(UiTheme.Link(
+            FontAwesomeIcon.Book,
+            () => state.Loc.Get(LocKeys.WindowNewsTitle),
+            openNews,
+            priority: 1));
 
         Size = new Vector2(520, 470);
         SizeCondition = ImGuiCond.FirstUseEver;

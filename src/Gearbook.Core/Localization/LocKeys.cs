@@ -140,7 +140,6 @@ public static class LocKeys
     public const string SettingsAboutNoAutomation = "settings.about.noAutomation";
 
     public const string NewsUnread = "news.unread";
-    public const string NewsOpen = "news.open";
     public const string NewsEmpty = "news.empty";
     public const string NewsCategoryAdded = "news.category.added";
     public const string NewsCategoryChanged = "news.category.changed";
