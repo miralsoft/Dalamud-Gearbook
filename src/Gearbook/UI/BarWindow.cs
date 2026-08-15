@@ -320,6 +320,18 @@ internal sealed class BarWindow : Window
             ImGui.OpenPopup(ViewMenuId);
         }
 
+        // The menu gets its own spacing rather than the bar's. The bar pushes a very small window
+        // padding and the player's own icon spacing, because a row of icons is meant to sit
+        // tight, and a popup opened inside that scope inherits both. That is right for the bar
+        // and wrong here: this is a list of words, and the same numbers that make icons look
+        // neat make text look pressed against the frame.
+        //
+        // Pushed before the popup begins, because window padding is read when the window is
+        // created and a push afterwards would arrive too late to matter.
+        using var menuPadding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(10f, 10f));
+        using var menuSpacing = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(10f, 6f));
+        using var menuInner = ImRaii.PushStyle(ImGuiStyleVar.ItemInnerSpacing, new Vector2(8f, 4f));
+
         using var popup = ImRaii.Popup(ViewMenuId);
         if (!popup)
         {
