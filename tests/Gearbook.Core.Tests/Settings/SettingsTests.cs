@@ -1,3 +1,4 @@
+using Gearbook.Core.Filtering;
 using Gearbook.Core.Model;
 using Gearbook.Core.Settings;
 using Gearbook.Core.Sorting;
@@ -112,6 +113,49 @@ public class SettingsMigratorTests
 
         Assert.Equal(BarViewKind.Role, settings.For(1).Bar.ViewKind);
         Assert.Equal(JobRole.Tank, settings.For(1).Bar.ViewRole);
+    }
+
+    [Fact]
+    public void A_bar_left_on_its_own_arrangement_keeps_it_when_the_bar_sort_is_retired()
+    {
+        var settings = new GearbookSettings { LayoutVersion = 5 };
+#pragma warning disable CS0618 // Writing the retired member is how the old file is described.
+        settings.For(1).Bar.Sort = null;
+#pragma warning restore CS0618
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+        Assert.True(settings.For(1).Bar.UseArrangement);
+    }
+
+    [Fact]
+    public void An_order_chosen_for_the_bar_moves_to_the_library_that_now_answers_for_both()
+    {
+        var settings = new GearbookSettings { LayoutVersion = 5 };
+#pragma warning disable CS0618
+        settings.For(1).Bar.Sort = GearsetSortOrder.Job;
+#pragma warning restore CS0618
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+
+        Assert.False(settings.For(1).Bar.UseArrangement);
+        Assert.Equal(GearsetSortOrder.Job, settings.For(1).CurrentFilter.Sort);
+    }
+
+    [Fact]
+    public void A_library_order_the_player_chose_is_not_overwritten_by_the_bars_old_one()
+    {
+        // Two answers, one control left. The library's is the one somebody set deliberately in a
+        // window built for the question, so it wins, and the bar's is dropped rather than allowed
+        // to silently reorder the library.
+        var settings = new GearbookSettings { LayoutVersion = 5 };
+#pragma warning disable CS0618
+        settings.For(1).Bar.Sort = GearsetSortOrder.Job;
+#pragma warning restore CS0618
+        settings.For(1).CurrentFilter.Sort = GearsetSortOrder.Role;
+
+        Assert.True(SettingsMigrator.Migrate(settings, _ => { }));
+
+        Assert.Equal(GearsetSortOrder.Role, settings.For(1).CurrentFilter.Sort);
     }
 
     [Fact]

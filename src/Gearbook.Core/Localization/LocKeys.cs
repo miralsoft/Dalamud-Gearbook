@@ -160,6 +160,7 @@ public static class LocKeys
     public const string SettingsBarSort = "settings.bar.sort";
     public const string SettingsBarSortHelp = "settings.bar.sort.help";
     public const string SettingsBarSortManual = "settings.bar.sort.manual";
+    public const string SettingsBarSortFollows = "settings.bar.sort.follows";
     public const string SettingsBarColumns = "settings.bar.columns";
     public const string SettingsBarIconSize = "settings.bar.iconSize";
     public const string SettingsBarShowItemLevel = "settings.bar.showItemLevel";

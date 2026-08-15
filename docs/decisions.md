@@ -339,3 +339,33 @@ Each entry: date, decision, rationale, and what was rejected.
 
   Rejected: offering the game's own order as one of the choices. Sorting a list into the order it
   is already in is not an option, it is the absence of one.
+
+- **(2026-08-15) The bar no longer has a sort of its own; it follows the library's.** Rationale:
+  there were two controls answering the same question, "in what order", and they could disagree.
+  They did: a bar sitting on "by job" while the library was grouped by role looked to the owner
+  like sorting that simply did not work, and no amount of reading the code would have found a bug,
+  because there was none. The second control was the bug.
+
+  What is left on the bar is the one question the library cannot answer: whether the arrangement
+  the player dragged into shape still wins. That is a genuinely different question, it applies only
+  to the favourites, and it is now a switch rather than an entry hidden at the top of a list of
+  orders.
+
+  Layout version 6 carries the old value across. A bar on the arrangement keeps it. A bar with an
+  explicit order loses the control but not the order: it is written into the library's setting,
+  though only where the library is still sitting on the value it shipped with. A library order
+  somebody set deliberately in the window built for the question is an answer, and the bar's
+  retired setting does not get to overwrite it.
+
+  Rejected: keeping both and documenting the precedence. Two controls with a rule about which wins
+  is the arrangement that produced this in the first place.
+
+- **(2026-08-15) Tooltips wrap at a width in letters, not at the window's edge.** Rationale: the
+  shared text helper wraps at the content region's right edge, which asks the window how wide it
+  is. A tooltip on its first frame has no answer yet, so every line broke against a provisional
+  width and the tooltip appeared for one frame as a tall narrow column before settling. From the
+  outside it read as a second dialog flashing past, which is exactly how it was reported.
+
+  The fix is to say the width in letters, once, around the whole tooltip, and to have the pieces
+  inside inherit it. The wrapping helper keeps its window-relative behaviour, because in a window
+  that already has a width that is the right answer and the one every settings caption needs.

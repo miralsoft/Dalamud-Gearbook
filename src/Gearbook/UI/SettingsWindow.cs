@@ -189,24 +189,19 @@ internal sealed class SettingsWindow : Window
 
         ImGui.Spacing();
 
-        // The arrangement first in the list, because it is the default and because it is the
-        // one that keeps an icon in the same place from one day to the next.
-        var sortValues = new List<GearsetSortOrder?> { null };
-        sortValues.AddRange(Enum.GetValues<GearsetSortOrder>().Select(v => (GearsetSortOrder?)v));
-
-        var sortLabels = sortValues
-            .Select(v => v is null ? loc.Get(LocKeys.SettingsBarSortManual) : SortName(v.Value))
-            .ToList();
-
-        var sortIndex = Math.Max(0, sortValues.IndexOf(bar.Sort));
-
+        // One switch where there used to be a list of orders. The bar takes the order chosen in
+        // the library now, so the only question left here is the one the library cannot answer:
+        // whether the arrangement the player dragged into shape still wins over it.
         UiTheme.Caption(loc.Get(LocKeys.SettingsBarSort), loc.Get(LocKeys.SettingsBarSortHelp));
-        ImGui.SetNextItemWidth(-1f);
-        if (ImGui.Combo("##barsort", ref sortIndex, sortLabels, sortLabels.Count))
+
+        var useArrangement = bar.UseArrangement;
+        if (UiTheme.WrappedCheckbox("barsort", loc.Get(LocKeys.SettingsBarSortManual), ref useArrangement))
         {
-            bar.Sort = sortValues[sortIndex];
+            bar.UseArrangement = useArrangement;
             changed = true;
         }
+
+        UiTheme.Caption(loc.Get(LocKeys.SettingsBarSortFollows));
 
         ImGui.Spacing();
 

@@ -431,6 +431,16 @@ internal static class UiTheme
     {
         using var tooltip = ImRaii.Tooltip();
 
+        // A width in letters, not the window's edge. Wrapping at the edge asks how wide the
+        // window is, and a tooltip on its first frame has no answer yet, so every line broke
+        // against a provisional width and the whole thing appeared once as a tall narrow column
+        // before settling. It read as a second dialog flashing past.
+        //
+        // Everything below inherits this, which is also why none of it wraps on its own any
+        // more: a nested wrap position at the window edge would bring the flicker back for that
+        // one line.
+        ImGui.PushTextWrapPos(ImGui.GetFontSize() * 24f);
+
         var loc = state.Loc;
 
         ImGui.TextUnformatted(gearset.Gearset.Name);
@@ -439,19 +449,17 @@ internal static class UiTheme
             ? found.Name
             : loc.Get(LocKeys.CommonUnknownJob);
 
-        Muted($"{job}   {gearset.Gearset.ItemLevel}");
+        MutedInherited($"{job}   {gearset.Gearset.ItemLevel}");
 
         if (!string.IsNullOrWhiteSpace(gearset.Record.Note))
         {
             ImGui.Separator();
-            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 24f);
             ImGui.TextUnformatted(gearset.Record.Note);
-            ImGui.PopTextWrapPos();
         }
 
         if (gearset.Record.Tags.Count > 0)
         {
-            Muted(string.Join(", ", gearset.Record.Tags));
+            MutedInherited(string.Join(", ", gearset.Record.Tags));
         }
 
         // Said out loud rather than left to the colour of a number, and phrased as what will
@@ -460,9 +468,7 @@ internal static class UiTheme
         {
             ImGui.Separator();
             using var incomplete = ImRaii.PushColor(ImGuiCol.Text, IncompleteColour);
-            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 24f);
             ImGui.TextUnformatted(loc.Get(LocKeys.GearsetIncomplete));
-            ImGui.PopTextWrapPos();
         }
 
         var badge = state.Bis.For(gearset.Gearset.Slot);
@@ -474,7 +480,7 @@ internal static class UiTheme
 
         // Said in the tooltip, because a modifier nobody is told about is a modifier nobody uses.
         ImGui.Separator();
-        Muted(loc.Get(LocKeys.GearsetFavouriteHint));
+        MutedInherited(loc.Get(LocKeys.GearsetFavouriteHint));
 
         var reason = BlockedReason(loc, blocked);
         if (reason is not null)
@@ -483,6 +489,15 @@ internal static class UiTheme
             using var colour = ImRaii.PushColor(ImGuiCol.Text, IncompleteColour);
             ImGui.TextUnformatted(reason);
         }
+
+        ImGui.PopTextWrapPos();
+    }
+
+    /// <summary>Muted text that wraps wherever the caller already said it should.</summary>
+    private static void MutedInherited(string text)
+    {
+        using var colour = ImRaii.PushColor(ImGuiCol.Text, MutedColour);
+        ImGui.TextUnformatted(text);
     }
 
     /// <summary>

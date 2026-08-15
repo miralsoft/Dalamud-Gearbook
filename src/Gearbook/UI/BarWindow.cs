@@ -343,10 +343,16 @@ internal sealed class BarWindow : Window
         // words about pictures.
         var iconSize = settings.IconSize;
 
+        // Every row is drawn to one width, worked out from the longest name in the menu. Letting
+        // each row take the width of the window instead would ask how wide the window is, and a
+        // popup on its first frame has no answer yet, which is the same flicker the tooltips had.
+        var rowWidth = MenuWidth(settings, iconSize);
+
         foreach (var role in BarView.SelectableRoles)
         {
             if (ViewButton(
                     iconSize,
+                    rowWidth,
                     RoleIcons.For(role),
                     ViewIconFor(BarViewKind.Role, role, JobCategory.Combat),
                     RoleName(role),
@@ -363,6 +369,7 @@ internal sealed class BarWindow : Window
         {
             if (ViewButton(
                     iconSize,
+                    rowWidth,
                     RoleIcons.For(category),
                     ViewIconFor(BarViewKind.Category, JobRole.Unknown, category),
                     CategoryName(category),
@@ -378,14 +385,14 @@ internal sealed class BarWindow : Window
         // No game symbol for these two, and none is borrowed. The game has stars and grids, but
         // each of them already means something else in it, and a player who knows what a symbol
         // means there reads it as that here too. A plain glyph says less and misleads nobody.
-        if (ViewButton(iconSize, RoleIcons.None, FontAwesomeIcon.Star,
+        if (ViewButton(iconSize, rowWidth, RoleIcons.None, FontAwesomeIcon.Star,
                 loc.Get(LocKeys.SettingsBarContentsFavourites),
                 settings.ViewKind == BarViewKind.Favourites))
         {
             SetView(settings, BarViewKind.Favourites);
         }
 
-        if (ViewButton(iconSize, RoleIcons.None, FontAwesomeIcon.ThLarge,
+        if (ViewButton(iconSize, rowWidth, RoleIcons.None, FontAwesomeIcon.ThLarge,
                 loc.Get(LocKeys.SettingsBarContentsAll),
                 settings.ViewKind == BarViewKind.All))
         {
@@ -411,7 +418,7 @@ internal sealed class BarWindow : Window
             // The same symbol on every tag, deliberately. A row of bare words under a column of
             // pictures reads as a list that ran out, and numbering them instead would claim an
             // order among the player's own words that nothing here means.
-            if (ViewButton(iconSize, RoleIcons.None, FontAwesomeIcon.Tag, tag, active))
+            if (ViewButton(iconSize, rowWidth, RoleIcons.None, FontAwesomeIcon.Tag, tag, active))
             {
                 settings.ViewTag = tag;
                 SetView(settings, BarViewKind.Tag);
@@ -421,15 +428,25 @@ internal sealed class BarWindow : Window
 
     /// <summary>
     /// One entry of the fold-out strip: the symbol, its name beside it, and a frame when it is
-    /// the view currently showing.
+    /// the view currently showing. The whole row answers, not only the symbol.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The name is kept beside the symbol rather than left to a tooltip. A strip of unfamiliar
     /// glyphs is a guessing game the first few times, and the words cost one row of width in a
     /// menu that opens on demand.
+    /// </para>
+    /// <para>
+    /// The row is one selectable with the picture and the words drawn over it, rather than a
+    /// button with a label next to it. A menu entry whose name is inert is a menu entry that
+    /// misses half the presses aimed at it, and the name is the part somebody reads before
+    /// pressing. Neither the picture nor the text takes input, so nothing competes with the row
+    /// underneath.
+    /// </para>
     /// </remarks>
     private static bool ViewButton(
         float size,
+        float width,
         uint gameIcon,
         FontAwesomeIcon fallback,
         string label,
@@ -437,10 +454,18 @@ internal sealed class BarWindow : Window
     {
         using var id = ImRaii.PushId(label);
 
+        var style = ImGui.GetStyle();
         var origin = ImGui.GetCursorScreenPos();
-        var top = ImGui.GetCursorPosY();
-        var box = new Vector2(size, size) + (ImGui.GetStyle().FramePadding * 2f);
-        var pressed = ViewSymbol(gameIcon, fallback, size, box);
+        var start = ImGui.GetCursorPos();
+        var box = new Vector2(size, size) + (style.FramePadding * 2f);
+
+        var pressed = ImGui.Selectable("##row", false, ImGuiSelectableFlags.None, new Vector2(width, box.Y));
+        var afterRow = ImGui.GetCursorPos();
+
+        // Back over the selectable to lay the contents on top of it. Drawn after, so they appear
+        // above the highlight rather than under it.
+        ImGui.SetCursorPos(start);
+        ViewSymbol(gameIcon, fallback, size, box, asButton: false);
 
         if (active)
         {
@@ -453,15 +478,56 @@ internal sealed class BarWindow : Window
                 2.5f);
         }
 
-        ImGui.SameLine();
-
         // Centred against the tile rather than against a text frame. The usual alignment call
         // assumes the thing beside the text is one line tall, and these tiles are as tall as the
         // player's icon size, so it left every name sitting near the top of its own row.
-        ImGui.SetCursorPosY(top + ((box.Y - ImGui.GetTextLineHeight()) * 0.5f));
+        ImGui.SetCursorPos(new Vector2(
+            start.X + box.X + style.ItemSpacing.X,
+            start.Y + ((box.Y - ImGui.GetTextLineHeight()) * 0.5f)));
+
         ImGui.TextUnformatted(label);
 
+        ImGui.SetCursorPos(afterRow);
         return pressed;
+    }
+
+    /// <summary>
+    /// How wide every row in the menu is drawn.
+    /// </summary>
+    /// <remarks>
+    /// Measured from the longest name the menu will hold rather than taken from the window. A row
+    /// that stretches to the window's edge has to ask how wide the window is, and a popup on its
+    /// first frame has no answer yet, which is the flicker the tooltips had for the same reason.
+    /// </remarks>
+    private float MenuWidth(BarSettings settings, float iconSize)
+    {
+        var loc = state.Loc;
+        var widest = 0f;
+
+        void Consider(string label) => widest = Math.Max(widest, ImGui.CalcTextSize(label).X);
+
+        foreach (var role in BarView.SelectableRoles)
+        {
+            Consider(RoleName(role));
+        }
+
+        foreach (var category in BarView.SelectableCategories)
+        {
+            Consider(CategoryName(category));
+        }
+
+        Consider(loc.Get(LocKeys.SettingsBarContentsFavourites));
+        Consider(loc.Get(LocKeys.SettingsBarContentsAll));
+
+        foreach (var tag in FilterEngine.CollectTags(state.Gearsets))
+        {
+            Consider(tag);
+        }
+
+        var style = ImGui.GetStyle();
+        var tile = iconSize + (style.FramePadding.X * 2f);
+
+        return tile + style.ItemSpacing.X + widest;
     }
 
     /// <summary>
@@ -472,13 +538,21 @@ internal sealed class BarWindow : Window
     /// <param name="fallback">The glyph to draw when there is no game icon.</param>
     /// <param name="size">The picture's edge length.</param>
     /// <param name="box">The whole control's size, picture plus frame padding.</param>
+    /// <param name="asButton">True for a control that takes the click itself, false for a picture
+    /// drawn over something else that does. The menu rows use the second form, so that the row
+    /// underneath answers rather than competing with the symbol on top of it.</param>
     /// <remarks>
     /// Both sizes are passed because the two controls measure differently: an image button is
     /// given the picture and adds the padding around it, while a plain button is given the
     /// finished control. Handing either one the other's number makes this tile a different size
     /// from the gearset tiles beside it.
     /// </remarks>
-    private static bool ViewSymbol(uint gameIcon, FontAwesomeIcon fallback, float size, Vector2 box)
+    private static bool ViewSymbol(
+        uint gameIcon,
+        FontAwesomeIcon fallback,
+        float size,
+        Vector2 box,
+        bool asButton = true)
     {
         if (gameIcon != RoleIcons.None)
         {
@@ -486,11 +560,31 @@ internal sealed class BarWindow : Window
                 .GetFromGameIcon(new GameIconLookup(gameIcon))
                 .GetWrapOrEmpty();
 
+            if (!asButton)
+            {
+                // Inside the frame padding an image button would have added, so the picture sits
+                // where it would have sat and the two forms cannot drift apart.
+                ImGui.SetCursorPos(ImGui.GetCursorPos() + ImGui.GetStyle().FramePadding);
+                ImGui.Image(texture.Handle, new Vector2(size, size));
+                return false;
+            }
+
             return ImGui.ImageButton(texture.Handle, new Vector2(size, size));
         }
 
         using var font = GearbookState.IconFont.Push();
-        return ImGui.Button(fallback.ToIconString(), box);
+
+        if (asButton)
+        {
+            return ImGui.Button(fallback.ToIconString(), box);
+        }
+
+        // Centred in the same box the button form would have filled, by hand, because plain text
+        // has no alignment of its own.
+        var glyph = fallback.ToIconString();
+        ImGui.SetCursorPos(ImGui.GetCursorPos() + ((box - ImGui.CalcTextSize(glyph)) * 0.5f));
+        ImGui.TextUnformatted(glyph);
+        return false;
     }
 
     private static FontAwesomeIcon ViewIconFor(BarViewKind kind, JobRole role, JobCategory category) =>
@@ -635,25 +729,19 @@ internal sealed class BarWindow : Window
             bar.ViewTag,
             state.Jobs);
 
-        // Outside the favourites view the arrangement orders a handful of what is on screen and
-        // leaves the rest in an arbitrary tail, which reads as a fault rather than a rule. So a
-        // view that is not the favourites needs some other order, and it is the standard one
-        // rather than the game's own numbering.
-        //
-        // The game's numbering is the order the sets happened to be created in, which is exactly
-        // the disorder somebody switches to a tag or a role to escape. Falling back to it meant
-        // that choosing "manual arrangement" quietly turned every view except the favourites into
-        // an unsorted list, and there is no arrangement to protect there anyway.
-        if (bar.Sort is not { } sort)
+        // The hand-made arrangement wins where there is one, which is the favourites view and
+        // nowhere else. Every other view holds gearsets that were never arranged, so it would
+        // order a handful of them and leave the rest in an arbitrary tail.
+        if (bar.UseArrangement && BarView.UsesArrangement(bar.ViewKind))
         {
-            return BarView.UsesArrangement(bar.ViewKind)
-                ? chosen
-                : FilterEngine.Sort(chosen, GearsetSortOrder.Role, state.Jobs, character.RoleOrder);
+            return chosen;
         }
 
-        // The role order is the one from the settings, so the bar and the library group things
-        // the same way. Two orders called "by role" that disagreed would be worse than not
-        // offering it on the bar at all.
-        return FilterEngine.Sort(chosen, sort, state.Jobs, character.RoleOrder);
+        // Otherwise the order is the one chosen in the library, deliberately the same setting
+        // rather than a second one beside it. The bar had its own sort until it turned out that
+        // two controls answering "in what order" can disagree, and that the one nobody is looking
+        // at is the one that will: a bar quietly left on "by job" while the library was grouped by
+        // role looked like the sorting was simply broken.
+        return FilterEngine.Sort(chosen, character.CurrentFilter.Sort, state.Jobs, character.RoleOrder);
     }
 }

@@ -65,23 +65,35 @@ public sealed class BarSettings
     public string ViewTag { get; set; } = string.Empty;
 
     /// <summary>
-    /// How the bar is ordered, or null for the arrangement the player made by hand.
+    /// Retired. The bar follows the order chosen in the library now, so this is only read to
+    /// migrate a stored file forward.
+    /// </summary>
+    [Obsolete("Layout version 6 replaced this with UseArrangement plus the library's own order.")]
+    public Filtering.GearsetSortOrder? Sort { get; set; }
+
+    /// <summary>
+    /// Whether the favourites keep the order the player dragged them into.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Null by default, and null is not an oversight. A bar is a click target, and the value of
-    /// a click target is that the third icon is always in the third place: the hand learns the
+    /// True by default, and that is not an oversight. A bar is a click target, and the value of a
+    /// click target is that the third icon is always in the third place: the hand learns the
     /// position and stops reading the picture. Any rule that reorders the bar when something
     /// changes throws that away, which is why the game's own hotbars do not sort themselves
     /// either.
     /// </para>
     /// <para>
-    /// A rule is offered anyway, because arranging thirty icons by hand is work somebody may not
-    /// want to do, and reading a bar grouped by role is a perfectly good way to use it. The
-    /// choice is the player's; the default is the one that protects what they have learned.
+    /// Switched off, the favourites follow the same order as everything else. That order is the
+    /// one chosen in the library and is not repeated here: two controls that both answer "in what
+    /// order" can disagree, and the one nobody is looking at is the one that will.
+    /// </para>
+    /// <para>
+    /// It only reaches the favourites either way. Every other view holds gearsets that were never
+    /// arranged, so an arrangement there would order a handful of them and leave the rest in an
+    /// arbitrary tail.
     /// </para>
     /// </remarks>
-    public Filtering.GearsetSortOrder? Sort { get; set; }
+    public bool UseArrangement { get; set; } = true;
 
     /// <summary>Icons per row. One column gives a vertical bar, a large number a horizontal one.</summary>
     public int Columns { get; set; } = 6;

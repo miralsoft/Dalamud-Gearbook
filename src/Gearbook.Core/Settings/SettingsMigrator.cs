@@ -1,4 +1,5 @@
 using System.Globalization;
+using Gearbook.Core.Filtering;
 using Gearbook.Core.Model;
 using Gearbook.Core.Sorting;
 
@@ -23,7 +24,7 @@ namespace Gearbook.Core.Settings;
 public static class SettingsMigrator
 {
     /// <summary>The layout version this build writes.</summary>
-    public const int CurrentVersion = 5;
+    public const int CurrentVersion = 6;
 
     /// <summary>
     /// Migrates in place and reports what it did.
@@ -177,6 +178,41 @@ public static class SettingsMigrator
                     }
 
                     settings.LayoutVersion = 5;
+                    break;
+
+                case 5:
+                    // The bar stopped having a sort of its own and follows the library's. Two
+                    // controls both answering "in what order" could disagree, and a bar left on
+                    // "by job" while the library was grouped by role read as sorting that simply
+                    // did not work.
+                    //
+                    // What is left on the bar is the one question the library cannot answer:
+                    // whether the arrangement the player dragged into shape still wins.
+                    foreach (var character in settings.Characters.Values)
+                    {
+                        if (character?.Bar is null)
+                        {
+                            continue;
+                        }
+
+#pragma warning disable CS0618 // Reading the retired member is the entire point of this step.
+                        var storedSort = character.Bar.Sort;
+#pragma warning restore CS0618
+
+                        character.Bar.UseArrangement = storedSort is null;
+
+                        // An order the player picked for the bar is carried over to the library
+                        // rather than dropped, but only where the library is still sitting on the
+                        // value it shipped with. A library that was set deliberately is an answer
+                        // somebody gave, and the bar's old setting does not get to overwrite it.
+                        if (storedSort is { } sort
+                            && character.CurrentFilter is { Sort: GearsetSortOrder.Slot })
+                        {
+                            character.CurrentFilter.Sort = sort;
+                        }
+                    }
+
+                    settings.LayoutVersion = 6;
                     break;
 
                 default:
