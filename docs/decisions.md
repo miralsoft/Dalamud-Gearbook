@@ -369,3 +369,34 @@ Each entry: date, decision, rationale, and what was rejected.
   The fix is to say the width in letters, once, around the whole tooltip, and to have the pieces
   inside inherit it. The wrapping helper keeps its window-relative behaviour, because in a window
   that already has a width that is the right answer and the one every settings caption needs.
+
+- **(2026-08-16) Crafting and gathering are drawn as an anvil and a pickaxe, not as the last two
+  entries of the role block.** Rationale: the role block ends with a pair that the ordering says
+  is the hand and the land, and they were used first for that reason. They draw four metal discs
+  and three nuggets on a green ground, and nobody reading the bar could tell what either meant.
+  A symbol that has to be explained has already failed at the only thing it does.
+
+  The owner said so twice, which is what moved this. The second time came with pictures of what
+  the game supposedly uses, a purple tile with an anvil and a gold one with a fish, and those sent
+  the search somewhere useful even though it came back empty.
+
+  What the search established, and it is worth keeping because it closes the question rather than
+  postponing it: every icon between 0 and 79999 in a plausible size was measured by the colour
+  just inside its frame, looking for those two tiles. They are not in the game's icon folder. The
+  game also marks each of its icon groups with a label tile it draws itself, `CLASS JOB`,
+  `GTR TYPE`, `ROLE FRAMED`, `GEAR SET` and a dozen more, and there is no group for job
+  categories among them. The window textures for the gearset list, the character sheet and the
+  crafting log were opened and looked at as well. The tiles in those pictures are almost certainly
+  a website's own artwork: the small job symbols beside them on the same page are the game's, the
+  large ones are on colours the game uses nowhere.
+
+  So the choice was between the game's pictures that exist. 62109 and 62116 are the blacksmith's
+  anvil and the miner's pickaxe, framed and on the dark ground the crafting and gathering jobs all
+  use, which is the same frame and size as everything else in the menu. Strictly this is a job's
+  picture standing in for a whole category, which is the borrowing this project refused for the
+  favourites star. It loses here to a plainer point: an anvil reads as making things and a pickaxe
+  as digging them up, to anybody, immediately, and the star had a working alternative while these
+  two had none.
+
+  Rejected: keeping the role-block pair and explaining it in a tooltip. A tooltip that has to say
+  what a picture means is the picture admitting it does not work.

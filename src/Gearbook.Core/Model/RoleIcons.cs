@@ -18,9 +18,15 @@ namespace Gearbook.Core.Model;
 /// and 62587 drawn on top of each other, which only makes sense if it is the general case of
 /// both, and that fixes the whole sequence around it.
 ///
-/// Two of the nine are deliberately unused. 62583, the plain sword, is the game's symbol for
-/// damage of any kind, and 62585 is ranged damage of either kind; this plugin separates
-/// physical from magical everywhere else, so neither has anything to label.
+/// Four of the nine are unused. 62583, the plain sword, is the game's symbol for damage of any
+/// kind, and 62585 is ranged damage of either kind; this plugin separates physical from magical
+/// everywhere else, so neither has anything to label. The last two, which the ordering says are
+/// the hand and the land, lost to a pair of tool symbols for the reason given below.
+///
+/// The rest of the icon folder was swept for anything better before settling on tools: every
+/// picture between 0 and 79999 in a plausible size was measured by the colour just inside its
+/// frame. There is no crafting or gathering emblem in it beyond these, and no group label for
+/// one either, where the game marks its other groups with label tiles it draws itself.
 /// </remarks>
 public static class RoleIcons
 {
@@ -35,8 +41,25 @@ public static class RoleIcons
     private const uint MeleeDamage = 62584;
     private const uint PhysicalRangedDamage = 62586;
     private const uint MagicalRangedDamage = 62587;
-    private const uint DiscipleOfTheHand = 62588;
-    private const uint DiscipleOfTheLand = 62589;
+
+    /// <summary>An anvil, and a pickaxe, both framed the way the role symbols are.</summary>
+    /// <remarks>
+    /// These are tools rather than role emblems, and that is the second attempt at these two.
+    /// The role block ends with a pair that is almost certainly the hand and the land, and they
+    /// were used first for that reason, but they draw four metal discs and three nuggets on a
+    /// green ground and nobody reading the bar could tell what either meant. A symbol that has to
+    /// be explained has already failed at the only thing it does.
+    ///
+    /// The game gives these two to the blacksmith and the miner, so strictly a job's picture is
+    /// standing in for a whole category. That is a real objection and it loses to a plainer one:
+    /// an anvil reads as making things and a pickaxe as digging them up, to anybody, immediately.
+    /// It also stays inside the game's own art, at the same size and in the same frame as
+    /// everything beside it.
+    /// </remarks>
+    private const uint DiscipleOfTheHand = 62109;
+
+    /// <inheritdoc cref="DiscipleOfTheHand"/>
+    private const uint DiscipleOfTheLand = 62116;
 
     /// <summary>The game's symbol for a role, or <see cref="None"/>.</summary>
     public static uint For(JobRole role) => role switch
