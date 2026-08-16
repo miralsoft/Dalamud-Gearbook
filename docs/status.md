@@ -137,3 +137,27 @@ drawing.
 
 Both are the same mistake in two shapes: a game call written where it was convenient rather than
 where the rule puts it. Worth naming, because the next one will look convenient too.
+
+## The per-frame cost, measured (2026-08-16, before `1.0.0`)
+
+Read out of the host's own plugin statistics window rather than estimated, which is what the
+pre-release list asked for.
+
+Drawing, with the bar on screen and no window open: **0.16 ms** on average. Twelve other plugins
+were loaded at the time and the nearest were Ice's Cosmic Exploration at 0.11 and vnavmesh at
+0.11, with most of the rest between 0.003 and 0.04. The framework tick averages 0.14 ms.
+
+Gearbook is therefore still the most expensive drawer of the thirteen, and that is structural
+rather than a defect: its surface is permanent and holds a dozen or more tiles, where most of the
+others cost what they cost only while a window is open. A frame at sixty per second is 16.6 ms, so
+this is about one per cent of it.
+
+Both averages carry a one-off inside them. The longest single draw was 21 ms and the longest tick
+13 ms; those are the first frame loading a texture per job icon and the first tick reading the job
+and territory tables. Over a few hundred frames a single 21 ms outlier accounts for a large share
+of a 0.16 ms average, so the settled figure is lower than the one written above.
+
+The first reading was 0.20 ms, taken before the two defects the reading itself uncovered were
+fixed: a game read per tile per frame from the draw callback, and the bar re-deriving its contents
+every frame. Measuring is what found them; neither was visible in the code by reading it, and one
+had already survived a deliberate audit.
