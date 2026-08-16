@@ -64,7 +64,7 @@ never will; it only displays what the other plugin tells it.
 Gearbook is distributed through the plugin index at:
 
 ```
-https://xivarsenal.app/plugin.json
+https://xivarsenal.app/plugins.json
 ```
 
 Add that address in Dalamud's settings under the experimental section, then find Gearbook in the
