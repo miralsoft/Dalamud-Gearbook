@@ -38,6 +38,7 @@ still open.
   tests apply the moves under both readings. Establishing it anyway would let the run predict its
   own number of moves exactly rather than treating one entry per pass as a ceiling. Watch the first
   run in a client with the gearset window open beside it; the answer is visible in one move.
+
 Both `JobClassifier` questions that sat here were closed on 2026-08-15 by reading the real job
 table out of the installed client. One of the two constants was wrong and had already reached a
 player. See the entries of that date in `decisions.md`.
@@ -48,11 +49,12 @@ entry of that date in `decisions.md`.
 
 ## Waiting on the owner
 
-- **(open since 2026-08-13) The icon.** Needed before the first release, not before the first
-  commit. Exactly 512 by 512 and square, or Dalamud drops it in favour of the default without
-  reporting anything. Dalamud stamps its own status badges over the bottom right corner, so nothing
-  essential goes there. Judge a candidate by rendering it at the size it is actually drawn at, in
-  colour and greyed out, before accepting it.
+The icon question that sat here was closed on 2026-08-16. The file is exactly 512 by 512, which is
+what `PluginImageCache.PluginIconWidth` requires, and it holds up at the size the installer draws
+it. The advice in this entry to judge it at the size it is actually drawn at was then not followed
+by the person who wrote it: 32 pixels was assumed rather than checked, and it is nowhere near the
+real one. Gearbook draws no small icon of its own anywhere, so the installer list is the only place
+this picture appears.
 
 - **(open since 2026-08-13) Whether the repository gets branch protection.** R-16 requires every
   change to reach `main` through a pull request from the first public release onward. The

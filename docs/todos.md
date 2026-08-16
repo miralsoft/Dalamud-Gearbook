@@ -18,7 +18,7 @@ either a running client or a decision.
 
 ## Before the first release
 
-- [ ] The icon, exactly 512 by 512 and square, judged at the size it is actually drawn at, in
+- [x] The icon, exactly 512 by 512 and square, judged at the size it is actually drawn at, in
       colour and in the greyed-out state
 - [ ] Measure per-frame cost with Dalamud's own plugin statistics window rather than estimating
 - [x] The crash-safety audit over every unsafe block, pointer dereference, pinning block and
