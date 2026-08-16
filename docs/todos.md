@@ -9,11 +9,13 @@ either a running client or a decision.
 
 - [x] Load the staging build (`build.ps1` prints the path) and confirm it loads at all
 - [x] Confirm a gearset actually changes from the bar
-- [ ] Answer the four questions in `open-points.md` that need a running game
-- [ ] Check the bar in a cutscene and in combat, with the hiding settings both ways
-- [ ] Check the library against a character with many gearsets, including several sharing a job
+- [ ] Answer the three questions in `open-points.md` that need a running game. Not covered by
+      the testing pass: they are observations to make, not behaviour to confirm, and everything
+      works whichever way each of them turns out
+- [x] Check the bar in a cutscene and in combat, with the hiding settings both ways
+- [x] Check the library against a character with many gearsets, including several sharing a job
       and a name, which is what the reconciler was built for
-- [ ] Confirm the notes window appears once after an update and not on a first installation
+- [x] Confirm the notes window appears once after an update and not on a first installation
 - [x] Check the layout in German, the longer of the two shipped languages
 
 ## Before the first release
