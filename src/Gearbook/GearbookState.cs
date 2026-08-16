@@ -494,6 +494,12 @@ internal sealed class GearbookState : IDisposable
 
         var present = Gearsets.Select(g => g.Record.Id).ToHashSet();
         Orphans = [.. records.Where(r => !present.Contains(r.Id))];
+
+        // This path replaces the list too, and forgetting it here is not a small mistake: it is
+        // the path an edit takes. Marking a favourite would have left anything keyed on the
+        // revision showing the list from before the mark, until the next read of the game caught
+        // up seconds later. Every assignment to Gearsets raises this, without exception.
+        Revision++;
     }
 
     private readonly record struct EquipRequest(int Slot, EquipTrigger Trigger);
