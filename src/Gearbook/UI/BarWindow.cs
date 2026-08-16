@@ -306,8 +306,9 @@ internal sealed class BarWindow : Window
 
         var crafting = ShowsCrafting(settings);
         var gathering = ShowsGathering(settings);
+        var combat = ShowsCombat(settings);
 
-        if (!crafting && !gathering)
+        if (!crafting && !gathering && !combat)
         {
             return;
         }
@@ -319,7 +320,14 @@ internal sealed class BarWindow : Window
             DrawToolTile(ExternalTool.Artisan, FontAwesomeIcon.Hammer, settings, ref drawn, columns);
         }
 
-        if (state.GameState.IsInCosmicExploration)
+        // Combat only for now. Best in slot is a combat idea today; if that ever covers the
+        // crafting and gathering tools as well, this is where it widens.
+        if (combat)
+        {
+            DrawToolTile(ExternalTool.Arsenal, FontAwesomeIcon.Bullseye, settings, ref drawn, columns);
+        }
+
+        if ((crafting || gathering) && state.GameState.IsInCosmicExploration)
         {
             DrawToolTile(ExternalTool.Cosmic, FontAwesomeIcon.Moon, settings, ref drawn, columns);
         }
@@ -366,6 +374,15 @@ internal sealed class BarWindow : Window
     private static bool ShowsCrafting(BarSettings settings) =>
         (settings.ViewKind == BarViewKind.Category && settings.ViewCategory == JobCategory.Crafting)
         || (settings.ViewKind == BarViewKind.Role && settings.ViewRole == JobRole.Crafter);
+
+    /// <summary>True when the bar is currently showing combat gearsets.</summary>
+    /// <remarks>
+    /// Any of the combat roles counts, as well as the combat category. A player looking at their
+    /// tanks is looking at combat gear, and best in slot is about exactly that.
+    /// </remarks>
+    private static bool ShowsCombat(BarSettings settings) =>
+        (settings.ViewKind == BarViewKind.Category && settings.ViewCategory == JobCategory.Combat)
+        || (settings.ViewKind == BarViewKind.Role && BarView.SelectableRoles.Contains(settings.ViewRole));
 
     /// <summary>True when the bar is currently showing gathering gearsets.</summary>
     private static bool ShowsGathering(BarSettings settings) =>

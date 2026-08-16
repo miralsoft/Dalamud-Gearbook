@@ -10,6 +10,9 @@ internal enum ExternalTool
 
     /// <summary>Ice's Cosmic Exploration.</summary>
     Cosmic,
+
+    /// <summary>Eorzea Arsenal, the sibling plugin that compares gear against best in slot.</summary>
+    Arsenal,
 }
 
 /// <summary>
@@ -51,10 +54,17 @@ internal sealed class ExternalTools : IExternalTools
     /// itself `ICE` internally and shows a much longer name. Keying on the display name would
     /// have missed it, and would break the moment either plugin was translated.
     /// </remarks>
-    private static readonly Dictionary<ExternalTool, string> InternalNames = new()
+    /// <remarks>
+    /// More than one candidate each, because a manifest that omits `InternalName` leaves the host
+    /// deriving it from the assembly name, and Eorzea Arsenal omits it today. Matching a short
+    /// list costs nothing and means the shortcut still finds it if that manifest later says the
+    /// name outright. Confirming which one it answers to is in the project's open points.
+    /// </remarks>
+    private static readonly Dictionary<ExternalTool, string[]> InternalNames = new()
     {
-        [ExternalTool.Artisan] = "Artisan",
-        [ExternalTool.Cosmic] = "ICE",
+        [ExternalTool.Artisan] = ["Artisan"],
+        [ExternalTool.Cosmic] = ["ICE"],
+        [ExternalTool.Arsenal] = ["EorzeaArsenalPlugin", "EorzeaArsenal", "Eorzea Arsenal"],
     };
 
     /// <inheritdoc />
@@ -62,7 +72,7 @@ internal sealed class ExternalTools : IExternalTools
 
     /// <inheritdoc />
     public string NameOf(ExternalTool tool) =>
-        Find(tool)?.Name ?? InternalNames[tool];
+        Find(tool)?.Name ?? InternalNames[tool][0];
 
     /// <inheritdoc />
     public void Open(ExternalTool tool)
@@ -74,7 +84,7 @@ internal sealed class ExternalTools : IExternalTools
             // player can have disabled the plugin from the installer. Saying so beats throwing.
             GearbookServices.Log.Information(
                 "Opening {Tool} was asked for, but it is no longer available.",
-                InternalNames[tool]);
+                InternalNames[tool][0]);
 
             return;
         }
@@ -89,7 +99,12 @@ internal sealed class ExternalTools : IExternalTools
 
         foreach (var plugin in GearbookServices.PluginInterface.InstalledPlugins)
         {
-            if (string.Equals(plugin.InternalName, wanted, StringComparison.Ordinal)
+            // The display name counts as a candidate too, for the same reason the list has more
+            // than one entry: a manifest without an explicit internal name leaves it derived, and
+            // guessing wrong here shows nothing and explains nothing.
+            if (Array.Exists(wanted, n =>
+                    string.Equals(plugin.InternalName, n, StringComparison.Ordinal)
+                    || string.Equals(plugin.Name, n, StringComparison.Ordinal))
                 && plugin.IsLoaded
                 && plugin.HasMainUi)
             {

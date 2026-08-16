@@ -47,6 +47,14 @@ The role symbol question that sat here was closed on 2026-08-15 without needing 
 after all: the icon files were read straight out of the installed game and looked at. See the
 entry of that date in `decisions.md`.
 
+- **(open since 2026-08-16) Which internal name Eorzea Arsenal answers to.** Its manifest has no
+  `InternalName`, so the host derives one from the assembly name, and the plugin is not installed
+  here to look at. The shortcut therefore matches a short list of candidates,
+  `EorzeaArsenalPlugin`, `EorzeaArsenal` and the display name `Eorzea Arsenal`, against both
+  the internal and the display name. Confirm which one it actually answers to once it is installed
+  and reduce the list, or better, ask that repository to state an `InternalName` outright, which
+  is recorded below as work belonging there.
+
 ## Waiting on the owner
 
 The icon question that sat here was closed on 2026-08-16. The file is exactly 512 by 512, which is

@@ -7,6 +7,7 @@ using Gearbook.Core.Filtering;
 using Gearbook.Core.Localization;
 using Gearbook.Core.Model;
 using Gearbook.Core.Settings;
+using Gearbook.Core.Sorting;
 
 namespace Gearbook.UI;
 
@@ -362,6 +363,13 @@ internal sealed class SettingsWindow : Window
 
         UiTheme.Caption(loc.Get(LocKeys.SettingsRoleOrder), loc.Get(LocKeys.SettingsRoleOrderHelp));
         UiTheme.Muted(loc.Get(LocKeys.SettingsRoleOrderDragHint));
+
+        if (ImGui.SmallButton($"{loc.Get(LocKeys.SettingsOrderReset)}##roleorder"))
+        {
+            character.RoleOrder = [.. CharacterSettings.DefaultRoleOrder];
+            changed = true;
+        }
+
         ImGui.Spacing();
 
         var order = character.RoleOrder;
@@ -474,7 +482,6 @@ internal sealed class SettingsWindow : Window
         ImGui.Separator();
 
         UiTheme.Caption(loc.Get(LocKeys.SettingsJobOrder), loc.Get(LocKeys.SettingsJobOrderHelp));
-        ImGui.Spacing();
 
         var order = character.JobOrder;
         if (order.Count == 0)
@@ -482,6 +489,21 @@ internal sealed class SettingsWindow : Window
             UiTheme.Muted(loc.Get(LocKeys.SettingsJobOrderEmpty));
             return;
         }
+
+        // The game's own order, which is what every reset here puts back. Read from the job
+        // table rather than kept, so it stays right when a patch adds a job.
+        var gameOrder = order
+            .OrderBy(id => state.Jobs.TryGetValue(id, out var job) ? job.SortablePriority : int.MaxValue)
+            .ThenBy(id => id)
+            .ToList();
+
+        if (ImGui.SmallButton($"{loc.Get(LocKeys.SettingsOrderResetAll)}##joborderall"))
+        {
+            character.JobOrder = [.. gameOrder];
+            changed = true;
+        }
+
+        ImGui.Spacing();
 
         var rowHeight = ImGui.GetFrameHeight();
         var style = ImGui.GetStyle();
@@ -499,6 +521,15 @@ internal sealed class SettingsWindow : Window
 
             ImGui.Spacing();
             UiTheme.Muted(RoleName(role));
+            ImGui.SameLine();
+
+            // One reset per role, because that is the unit somebody arranges. Resetting the
+            // tanks leaves the healers exactly where they were, which an assignment would not.
+            if (ImGui.SmallButton($"{loc.Get(LocKeys.SettingsOrderReset)}##reset{role}"))
+            {
+                character.JobOrder = [.. JobOrderEditing.Reset(order, inRole, gameOrder)];
+                changed = true;
+            }
 
             for (var i = 0; i < inRole.Count; i++)
             {

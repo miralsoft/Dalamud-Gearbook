@@ -155,6 +155,8 @@
   "settings.roleOrder.dragHint": "Zeile ziehen oder die Pfeile benutzen.",
   "settings.jobOrder": "Reihenfolge der Jobs innerhalb einer Rolle",
   "settings.jobOrder.help": "Gilt nur innerhalb einer Rolle, denn die Rolle trennt zuerst: ein Heiler kann nie zwischen deinen Verteidigern landen, egal wie du die Jobs anordnest. Wirkt bei der Sortierung nach Rolle. Nach Job allein bleibt alphabetisch.",
+  "settings.order.reset": "Zurücksetzen",
+  "settings.order.resetAll": "Alle zurücksetzen",
   "settings.bar.tools": "Verknüpfungen zu anderen Plugins zeigen",
   "settings.bar.tools.help": "Zeigt am Ende der Leiste eine Schaltfläche für Artisan und für Ice's Cosmic Exploration, sofern sie installiert und aktiv sind. Artisan erscheint in den Handwerker-Ansichten, Ice in Handwerker und Sammler, aber nur solange du in einem Kosmos-Gebiet stehst. Ein Druck öffnet das Hauptfenster des jeweiligen Plugins, mehr passiert nicht.",
   "bar.tool.tooltip": "Öffnet das Hauptfenster dieses Plugins.",
