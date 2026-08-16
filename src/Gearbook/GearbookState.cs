@@ -80,6 +80,16 @@ internal sealed class GearbookState : IDisposable
     /// <summary>The gearsets as of the last read. Safe to enumerate from the draw callback.</summary>
     public IReadOnlyList<ReconciledGearset> Gearsets { get; private set; } = [];
 
+    /// <summary>
+    /// Counts up every time the gearset list is replaced.
+    /// </summary>
+    /// <remarks>
+    /// So that a window can tell whether anything it derives from the list is still good, without
+    /// comparing the list itself. The bar is on screen permanently and would otherwise filter and
+    /// sort its contents sixty times a second to arrive at the answer it already had.
+    /// </remarks>
+    public int Revision { get; private set; }
+
     /// <summary>Records with no gearset behind them right now. Kept, never deleted.</summary>
     public IReadOnlyList<GearsetRecord> Orphans { get; private set; } = [];
 
@@ -143,8 +153,30 @@ internal sealed class GearbookState : IDisposable
     /// Why a gearset cannot be equipped right now, or <see cref="EquipOutcome.Sent"/>. The same
     /// answer the equipper will give, so the tooltip and the log cannot disagree.
     /// </summary>
-    public EquipOutcome CheckCanEquip(ReconciledGearset gearset) =>
-        equipper.CheckCanEquip(gearset.Gearset.Slot);
+    /// <remarks>
+    /// The state half is asked of the equipper, which owns that question, and the "already worn"
+    /// half is answered from the slot read on the last tick rather than from the game.
+    ///
+    /// That matters because the only caller is the draw callback, once per tile per frame, and
+    /// the equipper's own version reaches the gearset module to find the current slot. It was
+    /// therefore a read of game memory while drawing, sixteen times over on a bar of sixteen
+    /// icons, against GB-03. The crash-safety audit did not catch it: it looked for the shape of
+    /// a pointer dereference, and this one reaches the game through two interfaces and looks like
+    /// a plain method call at the point of use.
+    ///
+    /// The equipper still reads it live on the path that actually equips, where a value from up
+    /// to three seconds ago would be the wrong thing to trust.
+    /// </remarks>
+    public EquipOutcome CheckCanEquip(ReconciledGearset gearset)
+    {
+        var allowed = equipper.CheckCanChangeGear();
+        if (allowed != EquipOutcome.Sent)
+        {
+            return allowed;
+        }
+
+        return CurrentSlot == gearset.Gearset.Slot ? EquipOutcome.AlreadyWorn : EquipOutcome.Sent;
+    }
 
     /// <summary>Saves the configuration.</summary>
     public void Save() => configuration.Save();
@@ -211,6 +243,7 @@ internal sealed class GearbookState : IDisposable
                     CharacterId = null;
                     Gearsets = [];
                     icons = [];
+                    Revision++;
                     Orphans = [];
                     CurrentSlot = null;
                 }
@@ -411,6 +444,7 @@ internal sealed class GearbookState : IDisposable
         }
 
         Gearsets = result.Present;
+        Revision++;
         Orphans = result.Orphans;
 
         var records = BarOrder.Normalise(result.AllRecords);

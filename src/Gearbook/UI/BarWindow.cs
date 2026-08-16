@@ -37,6 +37,10 @@ internal sealed class BarWindow : Window
     private const string ViewMenuId = "##gearbookviewmenu";
 
     private readonly GearbookState state;
+
+    private IReadOnlyList<ReconciledGearset>? cachedContents;
+    private (int, BarViewKind, JobRole, JobCategory, string, bool, GearsetSortOrder) cachedKey;
+
     private readonly Action openLibrary;
     private readonly Action openSettings;
 
@@ -868,6 +872,21 @@ internal sealed class BarWindow : Window
     /// empty bar that says how to fill it is easier to understand than a full one that cannot
     /// explain itself.
     /// </remarks>
+    /// <summary>
+    /// What the bar holds, worked out when something changes rather than every frame.
+    /// </summary>
+    /// <remarks>
+    /// The bar is on screen permanently, so anything it does per frame it does forever. Selecting
+    /// a view and sorting it is not expensive, but it was arriving at an answer it already had
+    /// sixty times a second, and against the plugin statistics window this was the most expensive
+    /// drawer of thirteen plugins loaded at the time. The others cost what they cost only while a
+    /// window is open.
+    ///
+    /// The key holds everything the answer depends on: the gearset list, through the state's
+    /// revision, and each setting that selects or orders. A setting missing from it would show a
+    /// stale bar until the next read of the game, which is the failure this shape has to be read
+    /// carefully for.
+    /// </remarks>
     private IReadOnlyList<ReconciledGearset> Contents()
     {
         var character = state.Character;
@@ -877,6 +896,29 @@ internal sealed class BarWindow : Window
         }
 
         var bar = character.Bar;
+
+        var key = (
+            state.Revision,
+            bar.ViewKind,
+            bar.ViewRole,
+            bar.ViewCategory,
+            bar.ViewTag,
+            bar.UseArrangement,
+            character.CurrentFilter.Sort);
+
+        if (cachedContents is not null && cachedKey == key)
+        {
+            return cachedContents;
+        }
+
+        cachedContents = Select(character, bar);
+        cachedKey = key;
+
+        return cachedContents;
+    }
+
+    private IReadOnlyList<ReconciledGearset> Select(CharacterSettings character, BarSettings bar)
+    {
 
         var chosen = BarView.Select(
             state.Gearsets,
