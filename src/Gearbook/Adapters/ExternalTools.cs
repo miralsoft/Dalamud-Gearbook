@@ -39,10 +39,9 @@ internal sealed class ExternalTools : IExternalTools
     /// </summary>
     /// <remarks>
     /// Read off the installed manifests rather than guessed: Ice's Cosmic Exploration calls
-    /// itself `ICE` internally and shows a much longer name. Keying on the display name would
-    /// have missed it, and would break the moment either plugin was translated.
-    /// </remarks>
-    /// <remarks>
+    /// itself `ICE` internally and shows a much longer name. Keying on the display name alone
+    /// would have missed it, and would break the moment either plugin was translated.
+    ///
     /// More than one candidate each, because a manifest that omits `InternalName` leaves the host
     /// deriving it from the assembly name, and Eorzea Arsenal omits it today. Matching a short
     /// list costs nothing and means the shortcut still finds it if that manifest later says the
