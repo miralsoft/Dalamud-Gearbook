@@ -1,19 +1,7 @@
+using Gearbook.Core.Model;
 using Gearbook.Services;
 
 namespace Gearbook.Adapters;
-
-/// <summary>Another plugin Gearbook can put a shortcut to on the bar.</summary>
-internal enum ExternalTool
-{
-    /// <summary>Artisan, the crafting plugin.</summary>
-    Artisan = 0,
-
-    /// <summary>Ice's Cosmic Exploration.</summary>
-    Cosmic,
-
-    /// <summary>Eorzea Arsenal, the sibling plugin that compares gear against best in slot.</summary>
-    Arsenal,
-}
 
 /// <summary>
 /// Shortcuts to other plugins' own windows.

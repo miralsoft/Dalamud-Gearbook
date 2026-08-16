@@ -187,6 +187,7 @@ public static class LocKeys
     public const string SettingsOrderResetAll = "settings.order.resetAll";
     public const string SettingsBarTools = "settings.bar.tools";
     public const string SettingsBarToolsHelp = "settings.bar.tools.help";
+    public const string SettingsBarToolsMissing = "settings.bar.tools.missing";
     public const string BarToolTooltip = "bar.tool.tooltip";
     public const string SettingsNewsAutoOpen = "settings.news.autoOpen";
     public const string SettingsPerCharacterNote = "settings.perCharacterNote";

@@ -109,6 +109,21 @@ public sealed class BarSettings
     /// </remarks>
     public bool ShowExternalTools { get; set; }
 
+    /// <summary>
+    /// The shortcuts the player has switched off individually, while the setting above is on.
+    /// </summary>
+    /// <remarks>
+    /// What is stored is what is hidden rather than what is shown, so that a shortcut added to a
+    /// later version appears for somebody who has already turned the feature on. They asked for
+    /// shortcuts; asking again per plugin would mean a new one stays invisible until they happen
+    /// to look at the settings, which is the same as not adding it.
+    ///
+    /// The two settings are a switch and a filter, not two switches. Turning the one above off
+    /// hides everything regardless of what is in here, and what is in here is remembered for when
+    /// it comes back on.
+    /// </remarks>
+    public List<ExternalTool> HiddenTools { get; set; } = [];
+
     /// <summary>Icons per row. One column gives a vertical bar, a large number a horizontal one.</summary>
     public int Columns { get; set; } = 6;
 

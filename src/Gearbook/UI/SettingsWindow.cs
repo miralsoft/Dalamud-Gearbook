@@ -217,6 +217,44 @@ internal sealed class SettingsWindow : Window
 
         UiTheme.Caption(loc.Get(LocKeys.SettingsBarToolsHelp));
 
+        // The individual choices sit under the switch that turns the whole idea on, and only
+        // while it is on. Offering them above it would ask which shortcuts to show before
+        // establishing that any should be.
+        if (bar.ShowExternalTools)
+        {
+            ImGui.Indent();
+
+            foreach (var tool in Enum.GetValues<ExternalTool>())
+            {
+                var shown = !bar.HiddenTools.Contains(tool);
+                var available = state.Tools.IsAvailable(tool);
+
+                if (UiTheme.WrappedCheckbox($"tool{tool}", state.Tools.NameOf(tool), ref shown))
+                {
+                    // Stored as what is hidden, so a shortcut added later shows up for somebody
+                    // who has already said yes to the idea.
+                    bar.HiddenTools.Remove(tool);
+
+                    if (!shown)
+                    {
+                        bar.HiddenTools.Add(tool);
+                    }
+
+                    changed = true;
+                }
+
+                // Said rather than left to be worked out. A ticked box for a plugin that is not
+                // there would otherwise look like a shortcut that does not work.
+                if (!available)
+                {
+                    ImGui.SameLine();
+                    UiTheme.Muted(loc.Get(LocKeys.SettingsBarToolsMissing));
+                }
+            }
+
+            ImGui.Unindent();
+        }
+
         ImGui.Spacing();
 
         // The ceiling is the gearset limit rather than a round number somebody liked. One column

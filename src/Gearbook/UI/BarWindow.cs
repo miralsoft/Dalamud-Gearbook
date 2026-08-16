@@ -341,7 +341,7 @@ internal sealed class BarWindow : Window
         ref int drawn,
         int columns)
     {
-        if (!state.Tools.IsAvailable(tool))
+        if (settings.HiddenTools.Contains(tool) || !state.Tools.IsAvailable(tool))
         {
             return;
         }
