@@ -30,7 +30,11 @@ worth saying out loud.
 - **Sorting the game's own gearset list**, on request and never by itself. It uses the same
   operation the game's window performs when you drag an entry, puts your list into the order
   Gearbook shows, keeps the order it found so you can have it back, and reads every move back out
-  of the game before making the next.
+  of the game before making the next. It asks the same question the equip gate asks before it
+  starts and again before every move, so it will not begin while you are crafting, gathering,
+  fishing, casting, in combat or in a cutscene, and stops cleanly if any of those begins mid-run.
+  That check is not politeness: the game answers a reordering it will not take by doing nothing
+  at all, which read back is indistinguishable from a move landing somewhere unexpected.
 - **The game's own role symbols**, established by reading the icon files out of the installed
   client and cross-checked against a mature plugin that has shipped the same numbers for years.
   Crafting and gathering have no such symbol in the game at all, so theirs are assembled at

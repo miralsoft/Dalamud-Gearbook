@@ -268,6 +268,16 @@ internal sealed class GearbookState : IDisposable
     /// <summary>How the last rearrangement of the game's list ended, or null if none has run.</summary>
     public ArrangeResult? LastArrangeResult { get; private set; }
 
+    /// <summary>
+    /// Whether the game's list could be sorted right now, or what is preventing it.
+    /// </summary>
+    /// <remarks>
+    /// Safe from the draw callback: it reads the host's condition flags and never the game's own
+    /// memory. The arranger asks the same question again on the framework thread, because the
+    /// answer can change between a player reading a button and pressing it.
+    /// </remarks>
+    public ArrangeOutcome CanArrange() => arranger.CanArrange();
+
     private void ProcessPendingArrange()
     {
         IReadOnlyList<string>? wanted;

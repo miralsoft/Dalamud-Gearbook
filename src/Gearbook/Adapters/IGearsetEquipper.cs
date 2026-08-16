@@ -73,4 +73,19 @@ internal interface IGearsetEquipper
     /// failure than letting a dialog appear.
     /// </remarks>
     EquipOutcome CheckCanEquip(int slot);
+
+    /// <summary>
+    /// Whether the game will accept a change of gear at all right now, without asking about a
+    /// particular set.
+    /// </summary>
+    /// <remarks>
+    /// Split out of <see cref="CheckCanEquip"/> because a second thing needs the answer: the
+    /// component that reorders the gearset list must not run while the game is refusing to touch
+    /// gear either. Two lists of conditions would drift, and the one nobody is looking at is the
+    /// one that would be missing the condition that mattered.
+    ///
+    /// Reads the host's condition flags and nothing else, so the interface may ask it while
+    /// drawing.
+    /// </remarks>
+    EquipOutcome CheckCanChangeGear();
 }

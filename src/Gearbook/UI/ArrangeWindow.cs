@@ -177,7 +177,14 @@ internal sealed class ArrangeWindow : Window
     {
         var loc = state.Loc;
 
-        using (ImRaii.Disabled(moves == 0))
+        // Said before the button rather than after the failure. The game refuses a reordering
+        // while it is busy by doing nothing at all, so somebody who starts a craft halfway
+        // through gets a run that stops with half the list moved and no obvious cause.
+        UiTheme.Caption(loc.Get(LocKeys.ArrangeUndisturbed));
+
+        var allowed = state.CanArrange();
+
+        using (ImRaii.Disabled(moves == 0 || allowed != ArrangeOutcome.Ready))
         {
             if (ImGui.Button(loc.Get(LocKeys.ArrangeApply), new Vector2(-1f, 0f)))
             {
@@ -193,6 +200,14 @@ internal sealed class ArrangeWindow : Window
         }
 
         UiTheme.Caption(loc.Get(LocKeys.ArrangeApplyHelp));
+
+        // The reason under the button it explains, in the warning colour, because a control that
+        // is greyed out without saying why reads as a fault in the plugin.
+        if (allowed != ArrangeOutcome.Ready)
+        {
+            using var colour = ImRaii.PushColor(ImGuiCol.Text, UiTheme.UnreadColour);
+            UiTheme.Wrapped(ResultText(new ArrangeResult(allowed, 0)));
+        }
     }
 
     private void DrawRestore(CharacterSettings character)
@@ -229,6 +244,7 @@ internal sealed class ArrangeWindow : Window
             ArrangeOutcome.NothingToDo => LocKeys.ArrangeResultNothing,
             ArrangeOutcome.NotLoggedIn => LocKeys.ArrangeResultNotLoggedIn,
             ArrangeOutcome.Unavailable => LocKeys.ArrangeResultUnavailable,
+            ArrangeOutcome.Busy => LocKeys.ArrangeResultBusy,
             _ => LocKeys.ArrangeResultStopped,
         };
 

@@ -26,12 +26,12 @@ namespace Gearbook.Adapters;
 internal sealed unsafe class GearsetArranger : IGearsetArranger
 {
     private readonly IGearsetReader reader;
-    private readonly IGameStateProbe gameState;
+    private readonly IGearsetEquipper equipper;
 
-    public GearsetArranger(IGearsetReader reader, IGameStateProbe gameState)
+    public GearsetArranger(IGearsetReader reader, IGearsetEquipper equipper)
     {
         this.reader = reader;
-        this.gameState = gameState;
+        this.equipper = equipper;
     }
 
     /// <inheritdoc />
@@ -39,9 +39,11 @@ internal sealed unsafe class GearsetArranger : IGearsetArranger
     {
         ArgumentNullException.ThrowIfNull(wantedOrder);
 
-        if (!gameState.IsLoggedIn)
+        var allowed = CanArrange();
+        if (allowed != ArrangeOutcome.Ready)
         {
-            return new ArrangeResult(ArrangeOutcome.NotLoggedIn, 0);
+            GearbookServices.Log.Debug("Sorting the game's gearset list was skipped: {Reason}.", allowed);
+            return new ArrangeResult(allowed, 0);
         }
 
         if (RaptureGearsetModule.Instance() is null)
@@ -70,6 +72,22 @@ internal sealed unsafe class GearsetArranger : IGearsetArranger
 
             var from = current[move.Value.FromPosition].Slot;
             var to = current[move.Value.ToPosition].Slot;
+
+            // Asked again before every move, not only at the start. A run of thirty moves takes
+            // long enough for somebody to begin a craft in the middle of it, and the game answers
+            // a reordering it will not take by doing nothing at all rather than by refusing. Read
+            // back, silence is indistinguishable from a move that landed somewhere unexpected, so
+            // without this the run would stop and give the wrong reason for stopping.
+            var stillAllowed = CanArrange();
+            if (stillAllowed != ArrangeOutcome.Ready)
+            {
+                GearbookServices.Log.Information(
+                    "Sorting the game's gearset list stopped after {Applied} moves: {Reason}.",
+                    applied,
+                    stillAllowed);
+
+                return new ArrangeResult(stillAllowed, applied);
+            }
 
             // Fetched again for every single move rather than once before the loop. This runs up
             // to one pass per gearset with a read of game memory between each, and an instance
@@ -121,6 +139,23 @@ internal sealed unsafe class GearsetArranger : IGearsetArranger
 
         return new ArrangeResult(ArrangeOutcome.Stopped, applied);
     }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// The same question the equip gate asks, asked through it rather than answered again here.
+    /// If the game will not let the player change gear at this moment, it will not accept the
+    /// list being rearranged either, and keeping two lists of conditions would guarantee that one
+    /// day one of them is missing the condition that mattered.
+    ///
+    /// Every kind of busy collapses to one answer, because the player does not need to be told
+    /// which: the remedy is the same in all of them, which is to finish what they are doing.
+    /// </remarks>
+    public ArrangeOutcome CanArrange() => equipper.CheckCanChangeGear() switch
+    {
+        EquipOutcome.Sent => ArrangeOutcome.Ready,
+        EquipOutcome.NotLoggedIn => ArrangeOutcome.NotLoggedIn,
+        _ => ArrangeOutcome.Busy,
+    };
 
     private static IReadOnlyList<string> Keys(IReadOnlyList<GearsetSnapshot> gearsets) =>
         [.. gearsets.OrderBy(g => g.Slot).Select(ListArrangement.KeyFor)];

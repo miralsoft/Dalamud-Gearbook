@@ -28,7 +28,7 @@ internal sealed unsafe class GearsetEquipper : IGearsetEquipper
     }
 
     /// <inheritdoc />
-    public EquipOutcome CheckCanEquip(int slot)
+    public EquipOutcome CheckCanChangeGear()
     {
         if (!gameState.IsLoggedIn)
         {
@@ -48,6 +48,18 @@ internal sealed unsafe class GearsetEquipper : IGearsetEquipper
         if (gameState.IsOccupied)
         {
             return EquipOutcome.Occupied;
+        }
+
+        return EquipOutcome.Sent;
+    }
+
+    /// <inheritdoc />
+    public EquipOutcome CheckCanEquip(int slot)
+    {
+        var allowed = CheckCanChangeGear();
+        if (allowed != EquipOutcome.Sent)
+        {
+            return allowed;
         }
 
         // A set missing a piece is not refused here. The game answers that case itself, by

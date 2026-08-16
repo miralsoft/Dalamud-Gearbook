@@ -17,6 +17,8 @@
   "arrange.result.notLoggedIn": "Dafür musst du eingeloggt sein.",
   "arrange.result.unavailable": "Das Spiel hat seine Ausrüstungsliste gerade nicht bereitgestellt.",
   "arrange.result.stopped": "Abgebrochen nach {0} Zügen: ein Eintrag ist nicht dort gelandet, wo er hin sollte. Es wurde nichts weiter angefasst.",
+  "arrange.result.busy": "Abgebrochen nach {0} Zügen, weil nebenher etwas anderes lief. Die Liste ist zum Teil geordnet, drück einfach noch einmal, wenn du fertig bist.",
+  "arrange.undisturbed": "Mach währenddessen nichts anderes: kein Handwerk, kein Sammeln, kein Kampf, keine Zwischensequenz. Das Spiel nimmt eine Umsortierung dann nicht an, und zwar ohne es zu sagen.",
 
   "common.search": "Suchen",
   "common.clear": "Leeren",

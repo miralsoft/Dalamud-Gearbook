@@ -53,7 +53,7 @@ public sealed class Plugin : IDalamudPlugin
         reader = new GearsetReader();
         gameState = new GameStateProbe(reader);
         equipper = new GearsetEquipper(gameState);
-        arranger = new GearsetArranger(reader, gameState);
+        arranger = new GearsetArranger(reader, equipper);
         jobData = new JobDataSource();
         bis = new ArsenalBisProvider();
 

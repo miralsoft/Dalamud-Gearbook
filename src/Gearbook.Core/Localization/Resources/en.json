@@ -17,6 +17,8 @@
   "arrange.result.notLoggedIn": "You have to be logged in for this.",
   "arrange.result.unavailable": "The game did not hand over its gearset list just now.",
   "arrange.result.stopped": "Stopped after {0} moves: an entry did not land where it was aimed. Nothing further was touched.",
+  "arrange.result.busy": "Stopped after {0} moves because something else was going on. The list is partly sorted; just press again when you are finished.",
+  "arrange.undisturbed": "Do nothing else while this runs: no crafting, no gathering, no combat, no cutscene. The game will not take a reordering then, and it does not say so.",
 
   "common.search": "Search",
   "common.clear": "Clear",

@@ -34,6 +34,8 @@ public static class LocKeys
     public const string ArrangeResultNotLoggedIn = "arrange.result.notLoggedIn";
     public const string ArrangeResultUnavailable = "arrange.result.unavailable";
     public const string ArrangeResultStopped = "arrange.result.stopped";
+    public const string ArrangeResultBusy = "arrange.result.busy";
+    public const string ArrangeUndisturbed = "arrange.undisturbed";
 
     public const string CommonSearch = "common.search";
     public const string CommonClear = "common.clear";

@@ -6,11 +6,24 @@ internal enum ArrangeOutcome
     /// <summary>The list now reads as asked.</summary>
     Done = 0,
 
+    /// <summary>Nothing is preventing a run right now. Only <c>CanArrange</c> answers this.</summary>
+    Ready,
+
     /// <summary>It already did before anything was moved.</summary>
     NothingToDo,
 
     /// <summary>The player is not logged in.</summary>
     NotLoggedIn,
+
+    /// <summary>
+    /// Crafting, gathering, fishing, casting, in combat, in a cutscene, or changing zone.
+    /// </summary>
+    /// <remarks>
+    /// The game will not take a reordering while it is busy with something else, and it does not
+    /// say so: the call simply does nothing. Read back, that looks exactly like a move landing
+    /// somewhere unexpected, so without this the run would stop with the wrong explanation.
+    /// </remarks>
+    Busy,
 
     /// <summary>The gearset module was not there to ask.</summary>
     Unavailable,
@@ -61,4 +74,16 @@ internal interface IGearsetArranger
     /// <param name="onProgress">Called after each applied move with the number applied so far,
     /// so a long run can say something while it is happening.</param>
     ArrangeResult Arrange(IReadOnlyList<string> wantedOrder, Action<int>? onProgress = null);
+
+    /// <summary>
+    /// Whether a run could start right now, or what is preventing it.
+    /// </summary>
+    /// <remarks>
+    /// Reads the host's condition flags and nothing else, so the interface may ask it while
+    /// drawing to grey the button out with a reason. The same question is asked again on the
+    /// framework thread before the run and before every single move, because the answer can
+    /// change between a player reading a button and pressing it, and again while a run of thirty
+    /// moves is under way.
+    /// </remarks>
+    ArrangeOutcome CanArrange();
 }
