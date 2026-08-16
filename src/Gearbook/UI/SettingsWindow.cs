@@ -205,6 +205,19 @@ internal sealed class SettingsWindow : Window
 
         ImGui.Spacing();
 
+        // Off by default and stated plainly, because this is the one setting that puts something
+        // on the bar which is not a gearset.
+        var tools = bar.ShowExternalTools;
+        if (UiTheme.WrappedCheckbox("bartools", loc.Get(LocKeys.SettingsBarTools), ref tools))
+        {
+            bar.ShowExternalTools = tools;
+            changed = true;
+        }
+
+        UiTheme.Caption(loc.Get(LocKeys.SettingsBarToolsHelp));
+
+        ImGui.Spacing();
+
         // The ceiling is the gearset limit rather than a round number somebody liked. One column
         // gives a vertical bar and the limit gives a single row whatever the character owns, so
         // between them every shape is reachable and no setting is wasted on the impossible.

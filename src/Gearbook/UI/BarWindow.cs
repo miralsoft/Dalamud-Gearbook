@@ -258,6 +258,8 @@ internal sealed class BarWindow : Window
             }
         }
 
+        DrawExternalTools(settings, shown.Count + drawn, columns);
+
         // The bar's own menu, and only where no tile is under the pointer. Without that flag it
         // opens over the icons too and swallows the right-click that was meant for the gearset,
         // so the per-tile menu would look as though it did not exist.
@@ -272,6 +274,103 @@ internal sealed class BarWindow : Window
             UiTheme.BarContextEntries(state, barControls);
         }
     }
+
+    /// <summary>
+    /// Shortcuts to other plugins, at the end of the bar.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only where they belong: the crafting views get Artisan and the cosmic one, the gathering
+    /// views get the cosmic one, and every other view gets neither. A shortcut to a crafting
+    /// plugin among a row of tanks is a tile that is in the way rather than to hand.
+    /// </para>
+    /// <para>
+    /// The cosmic one additionally waits until the player is standing in that content. It has
+    /// nothing to offer anywhere else, and a permanent tile for a place somebody visits
+    /// occasionally is the kind of clutter this bar exists to avoid.
+    /// </para>
+    /// <para>
+    /// Drawn with a glyph rather than the other plugin's own icon. Dalamud publishes which
+    /// plugins are installed and lets one open another's window, but not their pictures: those
+    /// are fetched from the web by the installer, and this plugin does not reach the network at
+    /// all. One of the two happens to ship an icon file locally, the other does not, so taking
+    /// that route would give one shortcut a picture and the other a placeholder.
+    /// </para>
+    /// </remarks>
+    private void DrawExternalTools(BarSettings settings, int drawnSoFar, int columns)
+    {
+        if (!settings.ShowExternalTools)
+        {
+            return;
+        }
+
+        var crafting = ShowsCrafting(settings);
+        var gathering = ShowsGathering(settings);
+
+        if (!crafting && !gathering)
+        {
+            return;
+        }
+
+        var drawn = drawnSoFar;
+
+        if (crafting)
+        {
+            DrawToolTile(ExternalTool.Artisan, FontAwesomeIcon.Hammer, settings, ref drawn, columns);
+        }
+
+        if (state.GameState.IsInCosmicExploration)
+        {
+            DrawToolTile(ExternalTool.Cosmic, FontAwesomeIcon.Moon, settings, ref drawn, columns);
+        }
+    }
+
+    /// <summary>One shortcut tile, or nothing at all when the plugin behind it is not there.</summary>
+    private void DrawToolTile(
+        ExternalTool tool,
+        FontAwesomeIcon glyph,
+        BarSettings settings,
+        ref int drawn,
+        int columns)
+    {
+        if (!state.Tools.IsAvailable(tool))
+        {
+            return;
+        }
+
+        if (drawn % columns != 0)
+        {
+            ImGui.SameLine();
+        }
+
+        var size = new Vector2(settings.IconSize, settings.IconSize)
+                   + (ImGui.GetStyle().FramePadding * 2f);
+
+        using (ImRaii.PushId($"##tool{tool}"))
+        {
+            if (ViewSymbol(RoleIcons.None, glyph, settings.IconSize, size))
+            {
+                state.Tools.Open(tool);
+            }
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip($"{state.Tools.NameOf(tool)}\n{state.Loc.Get(LocKeys.BarToolTooltip)}");
+        }
+
+        drawn++;
+    }
+
+    /// <summary>True when the bar is currently showing crafting gearsets.</summary>
+    private static bool ShowsCrafting(BarSettings settings) =>
+        (settings.ViewKind == BarViewKind.Category && settings.ViewCategory == JobCategory.Crafting)
+        || (settings.ViewKind == BarViewKind.Role && settings.ViewRole == JobRole.Crafter);
+
+    /// <summary>True when the bar is currently showing gathering gearsets.</summary>
+    private static bool ShowsGathering(BarSettings settings) =>
+        (settings.ViewKind == BarViewKind.Category && settings.ViewCategory == JobCategory.Gathering)
+        || (settings.ViewKind == BarViewKind.Role && settings.ViewRole == JobRole.Gatherer);
 
     /// <summary>
     /// The first tile: what the bar is showing, and a menu to change it.

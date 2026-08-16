@@ -43,6 +43,11 @@ worth saying out loud.
   in the colours the game uses in its own party list.
 - **Multi-select with bulk editing** in the library, plus select-all, so tagging thirty gearsets
   is one gesture rather than thirty.
+- **Shortcuts to Artisan and to Ice's Cosmic Exploration** at the end of the bar, off by default.
+  They appear only where they are useful: Artisan with the crafting views showing, the cosmic one
+  with crafting or gathering and only while you are standing in that content, which the game's
+  own territory table is asked about rather than a list of zone numbers. Pressing one opens that
+  plugin's own window through the host's supported call; nothing is typed or sent on your behalf.
 - **Sorting by role**, in an order you arrange yourself, and within each role an order for the
   jobs. Only within: the role separates first, so no arrangement can put a healer among your
   tanks, which is why the setting is presented per role rather than as one long list. Untouched,

@@ -472,3 +472,36 @@ Each entry: date, decision, rationale, and what was rejected.
   nothing to review, nothing to re-copy under M-19, and the declaration stays where it is. Written
   down because "there was nothing new" and "nobody looked" are indistinguishable a year later, and
   only one of them is a review.
+
+- **(2026-08-16) The bar can carry shortcuts to Artisan and to Ice's Cosmic Exploration, off by
+  default.** Rationale: the owner opens both from macros while crafting, and the bar is already on
+  screen at that moment. Dalamud publishes the installed plugins and lets one open another's main
+  window through `IExposedPlugin.OpenMainUi`, so this needs no text command typed on anybody's
+  behalf, nothing sent to the game, and no agreement with either plugin's authors. The other
+  plugin decides what its own button does.
+
+  A shortcut appears only when all three of installed, loaded and "has a main window" hold. A
+  plugin that is installed but switched off would give a button that does nothing, which is worse
+  than no button.
+
+  **Where** they appear is the part worth stating. Artisan in the crafting views, the cosmic one in
+  crafting and gathering and only while the player is standing in that content. A shortcut to a
+  crafting plugin among a row of tanks is a tile in the way rather than to hand.
+
+  **The cosmic zones are recognised from the game's own data, not from a list of four numbers and
+  not by asking the other plugin.** `TerritoryIntendedUse` is 60 for Sinus Ardorum, Phaenna, Oizys
+  and Auxesia, and for nothing else in the game. Reading that mark means a zone added to the
+  content in a later patch is recognised with nothing changing here. The owner suggested asking
+  Ice, which was the natural thought and was rejected for two reasons that both matter: the answer
+  is wanted before deciding whether Ice is even loaded, and an undocumented gate into another
+  plugin breaks when that plugin changes something it never promised.
+
+  **No icons.** Dalamud publishes which plugins are installed but not their pictures; the installer
+  fetches those from the web, and this plugin does not reach the network at all. One of the two
+  ships an icon file inside its own install folder and the other does not, so taking that route
+  would have given one shortcut a picture and the other a placeholder, and would have meant reading
+  another plugin's files by a path that changes with its version. Two plain glyphs instead.
+
+  Off by default. Somebody who installs a gearset switcher did not ask for buttons to other
+  people's plugins on it, and a bar that grows a tile because an unrelated plugin was installed is
+  a bar that changed without anybody deciding anything.

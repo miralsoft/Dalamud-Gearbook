@@ -41,6 +41,7 @@ internal sealed class GearbookState : IDisposable
     private readonly IGameStateProbe gameState;
     private readonly IJobDataSource jobData;
     private readonly IBisProvider bis;
+    private readonly IExternalTools tools;
     private readonly ConfigurationStore configuration;
     private readonly Localizer localizer;
 
@@ -61,6 +62,7 @@ internal sealed class GearbookState : IDisposable
         IGameStateProbe gameState,
         IJobDataSource jobData,
         IBisProvider bis,
+        IExternalTools tools,
         ConfigurationStore configuration,
         Localizer localizer)
     {
@@ -70,6 +72,7 @@ internal sealed class GearbookState : IDisposable
         this.gameState = gameState;
         this.jobData = jobData;
         this.bis = bis;
+        this.tools = tools;
         this.configuration = configuration;
         this.localizer = localizer;
     }
@@ -100,6 +103,9 @@ internal sealed class GearbookState : IDisposable
 
     /// <summary>The last best-in-slot answer. Unavailable until something answers.</summary>
     public Core.Bis.BisSnapshot Bis => bis.Current;
+
+    /// <summary>Shortcuts to other plugins, for the bar to offer where they are useful.</summary>
+    public IExternalTools Tools => tools;
 
     /// <summary>The game state, for greying controls out with a reason.</summary>
     public IGameStateProbe GameState => gameState;

@@ -95,6 +95,20 @@ public sealed class BarSettings
     /// </remarks>
     public bool UseArrangement { get; set; } = true;
 
+    /// <summary>
+    /// Whether the bar offers shortcuts to other plugins alongside the gearsets.
+    /// </summary>
+    /// <remarks>
+    /// Off by default, and that is the right default rather than a cautious one. Somebody who
+    /// installs a gearset switcher did not ask for buttons to other people's plugins on it, and a
+    /// bar that grows an extra tile because an unrelated plugin was installed is a bar that
+    /// changed without anybody deciding anything.
+    ///
+    /// Switched on, a shortcut still only appears where it is useful: with the crafting or
+    /// gathering view showing, and for the cosmic one, only while standing in that content.
+    /// </remarks>
+    public bool ShowExternalTools { get; set; }
+
     /// <summary>Icons per row. One column gives a vertical bar, a large number a horizontal one.</summary>
     public int Columns { get; set; } = 6;
 

@@ -183,6 +183,9 @@ public static class LocKeys
     public const string SettingsJobOrder = "settings.jobOrder";
     public const string SettingsJobOrderHelp = "settings.jobOrder.help";
     public const string SettingsJobOrderEmpty = "settings.jobOrder.empty";
+    public const string SettingsBarTools = "settings.bar.tools";
+    public const string SettingsBarToolsHelp = "settings.bar.tools.help";
+    public const string BarToolTooltip = "bar.tool.tooltip";
     public const string SettingsNewsAutoOpen = "settings.news.autoOpen";
     public const string SettingsPerCharacterNote = "settings.perCharacterNote";
     public const string SettingsAboutVersion = "settings.about.version";
