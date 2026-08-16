@@ -136,13 +136,15 @@ if (-not (Test-Path $builtManifest)) {
 }
 Copy-Item $builtManifest (Join-Path $stagingDir 'Gearbook.json') -Force
 
-# The icon, because a development build reads it from its own directory rather than from the
-# manifest. Without this the local build shows the default picture while the plugin list shows
-# the real one, and the two never agree.
-$icon = Join-Path $root 'src/Gearbook/images/icon.png'
-if (Test-Path $icon) {
-    Copy-Item $icon (Join-Path $stagingDir 'icon.png') -Force
-}
+# No icon is copied to the root of the staging folder, and the belief that one had to be is
+# recorded here so nobody adds it back. The host takes the picture from the manifest's IconUrl and
+# fetches it over the web, for a development build exactly as for an installed one; there is no
+# local fallback. Established by comparing three sibling plugins loaded the same way, two of which
+# showed their icon and had a reachable URL while this one did not.
+#
+# What that means in practice: the icon is missing from the installer until this repository is
+# pushed, and nothing in the build can change that. The copy the project file makes into
+# images/ stays, so the packaged archive still carries its own artwork.
 
 # The main assembly last. This is the line the whole staging step exists for: the host reloads
 # on a change to it, so it must not see it until everything it depends on is already complete.

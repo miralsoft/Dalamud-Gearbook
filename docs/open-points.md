@@ -55,6 +55,10 @@ entry of that date in `decisions.md`.
   and reduce the list, or better, ask that repository to state an `InternalName` outright, which
   is recorded below as work belonging there.
 
+  Confirmed working on 2026-08-16 with the plugin installed: the shortcut finds it. Which of the
+  three candidates it matched is still not known, and the list stays until it is, because removing
+  two of three by guess is how it would break.
+
 ## Waiting on the owner
 
 The icon question that sat here was closed on 2026-08-16. The file is exactly 512 by 512, which is
