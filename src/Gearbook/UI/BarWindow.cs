@@ -783,6 +783,11 @@ internal sealed class BarWindow : Window
         // two controls answering "in what order" can disagree, and that the one nobody is looking
         // at is the one that will: a bar quietly left on "by job" while the library was grouped by
         // role looked like the sorting was simply broken.
-        return FilterEngine.Sort(chosen, character.CurrentFilter.Sort, state.Jobs, character.RoleOrder);
+        return FilterEngine.Sort(
+            chosen,
+            character.CurrentFilter.Sort,
+            state.Jobs,
+            character.RoleOrder,
+            character.JobOrder);
     }
 }

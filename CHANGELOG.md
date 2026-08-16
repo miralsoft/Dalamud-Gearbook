@@ -43,7 +43,11 @@ worth saying out loud.
   in the colours the game uses in its own party list.
 - **Multi-select with bulk editing** in the library, plus select-all, so tagging thirty gearsets
   is one gesture rather than thirty.
-- **Sorting by role**, in an order you arrange yourself.
+- **Sorting by role**, in an order you arrange yourself, and within each role an order for the
+  jobs. Only within: the role separates first, so no arrangement can put a healer among your
+  tanks, which is why the setting is presented per role rather than as one long list. Untouched,
+  the jobs take the position the game's own character window gives them, read from its job table
+  so a job added in a later patch files itself in without a line changing here.
 
 ### Changed
 

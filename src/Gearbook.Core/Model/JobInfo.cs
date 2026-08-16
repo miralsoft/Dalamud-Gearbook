@@ -11,12 +11,22 @@ namespace Gearbook.Core.Model;
 /// <param name="Name">The full job name, already localised by the caller.</param>
 /// <param name="Role">What the job does.</param>
 /// <param name="Category">The coarse grouping the filter sidebar uses.</param>
+/// <param name="DisplayPriority">Where the game itself puts this job in a list, from its own
+/// `UIPriority` column. Zero when it is not known.</param>
+/// <remarks>
+/// The display priority is read rather than written down, and that is the point of it. It
+/// reproduces the order the game's own character window uses exactly, tanks then healers then
+/// melee and so on, each role in the sequence a player already knows. A job added in a future
+/// patch arrives with its own number and files itself in the right place without a line changing
+/// here, which a hand-kept list could not do.
+/// </remarks>
 public sealed record JobInfo(
     uint Id,
     string Abbreviation,
     string Name,
     JobRole Role,
-    JobCategory Category)
+    JobCategory Category,
+    int DisplayPriority = 0)
 {
     /// <summary>
     /// The stand-in used when a gearset names a job the job table does not describe. Returning
@@ -25,4 +35,13 @@ public sealed record JobInfo(
     /// </summary>
     public static JobInfo Unknown(uint id) =>
         new(id, "???", "???", JobRole.Unknown, JobCategory.Unknown);
+
+    /// <summary>
+    /// The display priority as something to sort by, with "not known" sorting last.
+    /// </summary>
+    /// <remarks>
+    /// Zero means the number was never read, and zero sorts first, so used raw it would put every
+    /// undescribed job at the top of the list. An absence is not a first place.
+    /// </remarks>
+    public int SortablePriority => DisplayPriority <= 0 ? int.MaxValue : DisplayPriority;
 }

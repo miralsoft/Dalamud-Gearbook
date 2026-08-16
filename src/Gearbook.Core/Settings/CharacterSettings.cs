@@ -55,6 +55,20 @@ public sealed class CharacterSettings
     /// </remarks>
     public List<JobRole> RoleOrder { get; set; } = [];
 
+    /// <summary>
+    /// The order the jobs are put in within their role, by the game's own job id.
+    /// </summary>
+    /// <remarks>
+    /// Empty by default, and empty means the alphabetical order this shipped with. That is not a
+    /// placeholder: a list nobody has touched should sort the way it always did, and a default
+    /// order over forty jobs is a long opinion to hold on somebody's behalf.
+    ///
+    /// Deliberately empty rather than pre-filled for the same reason <see cref="RoleOrder"/> is:
+    /// a serialiser reading a list into a property that already holds items appends instead of
+    /// replacing. <see cref="NormaliseJobOrder"/> is what repairs a file that happened to.
+    /// </remarks>
+    public List<uint> JobOrder { get; set; } = [];
+
     /// <summary>The order the roles ship in.</summary>
     public static IReadOnlyList<JobRole> DefaultRoleOrder { get; } =
     [
@@ -133,6 +147,50 @@ public sealed class CharacterSettings
         }
 
         RoleOrder = normalised;
+    }
+
+    /// <summary>
+    /// Makes the job order hold each of the given jobs exactly once, keeping the order it
+    /// already describes and dropping jobs that are no longer among them.
+    /// </summary>
+    /// <param name="known">The jobs worth ordering, which is the ones the character has gearsets
+    /// for, already in the order they should take if nobody has arranged them. Everything else
+    /// would be a row nobody can act on, and passing them ordered keeps job names out of a
+    /// namespace that has no business knowing how they are spelled.</param>
+    /// <remarks>
+    /// The list is filled rather than left empty to mean a default, so there is one path instead
+    /// of two: what is stored is what is used, always. A first call on an untouched setting
+    /// therefore produces exactly the order that was the fallback, which is the point.
+    ///
+    /// Dropping a job is safe here in a way dropping a role is not. A role that disappears loses
+    /// a position somebody chose; a job disappears only while it has no gearsets at all, and if
+    /// one comes back it returns at the end, which is where a new job belongs anyway.
+    /// </remarks>
+    public void NormaliseJobOrder(IEnumerable<uint> known)
+    {
+        ArgumentNullException.ThrowIfNull(known);
+
+        var wanted = known.ToList();
+        var present = new HashSet<uint>(wanted);
+        var normalised = new List<uint>(wanted.Count);
+
+        foreach (var job in JobOrder)
+        {
+            if (present.Contains(job) && !normalised.Contains(job))
+            {
+                normalised.Add(job);
+            }
+        }
+
+        foreach (var job in wanted)
+        {
+            if (!normalised.Contains(job))
+            {
+                normalised.Add(job);
+            }
+        }
+
+        JobOrder = normalised;
     }
 
     /// <summary>The saved records as model objects.</summary>

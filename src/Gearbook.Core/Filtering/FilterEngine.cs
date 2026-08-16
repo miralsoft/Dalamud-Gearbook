@@ -21,12 +21,15 @@ public static class FilterEngine
     /// <param name="now">The clock, for the "not used in N days" axis.</param>
     /// <param name="roleOrder">The player's order for the roles, used only when sorting by
     /// role. Null falls back to the order the roles are declared in.</param>
+    /// <param name="jobOrder">The player's order for the jobs within a role, used only when
+    /// sorting by role. Null leaves the jobs alphabetical.</param>
     public static IReadOnlyList<ReconciledGearset> Apply(
         IEnumerable<ReconciledGearset> gearsets,
         FilterSpec filter,
         IReadOnlyDictionary<uint, JobInfo> jobs,
         DateTimeOffset now,
-        IReadOnlyList<JobRole>? roleOrder = null)
+        IReadOnlyList<JobRole>? roleOrder = null,
+        IReadOnlyList<uint>? jobOrder = null)
     {
         ArgumentNullException.ThrowIfNull(gearsets);
         ArgumentNullException.ThrowIfNull(filter);
@@ -36,7 +39,7 @@ public static class FilterEngine
 
         var kept = gearsets.Where(g => Matches(g, filter, jobs, terms, now));
 
-        return Sort(kept, filter.Sort, jobs, roleOrder);
+        return Sort(kept, filter.Sort, jobs, roleOrder, jobOrder);
     }
 
     /// <summary>
@@ -47,7 +50,8 @@ public static class FilterEngine
         IEnumerable<ReconciledGearset> gearsets,
         GearsetSortOrder order,
         IReadOnlyDictionary<uint, JobInfo> jobs,
-        IReadOnlyList<JobRole>? roleOrder = null)
+        IReadOnlyList<JobRole>? roleOrder = null,
+        IReadOnlyList<uint>? jobOrder = null)
     {
         ArgumentNullException.ThrowIfNull(gearsets);
         ArgumentNullException.ThrowIfNull(jobs);
@@ -60,7 +64,8 @@ public static class FilterEngine
             GearsetSortOrder.Role =>
                 [.. gearsets
                     .OrderBy(g => RolePosition(JobFor(g, jobs).Role, roleOrder))
-                    .ThenBy(g => JobFor(g, jobs).Name, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(g => JobPosition(g.Gearset.ClassJobId, jobOrder))
+                    .ThenBy(g => JobFor(g, jobs).SortablePriority)
                     .ThenBy(g => g.Gearset.Slot)],
 
             GearsetSortOrder.Name =>
@@ -224,6 +229,39 @@ public static class FilterEngine
     /// happens to a role added in a later version of this plugin: the player's saved order
     /// predates it, and appending it is the answer that changes least about what they arranged.
     /// </remarks>
+    /// <summary>
+    /// Where a job sits in the player's own job order, or the end when they have not placed it.
+    /// </summary>
+    /// <remarks>
+    /// Only ever consulted after the role has already decided, which is the whole scope of this
+    /// setting: arranging jobs across roles would have no visible effect, because the role
+    /// separates them first whatever the job order says. Sorting by job on its own stays
+    /// alphabetical for the same reason in reverse: there, the roles are not separating anything,
+    /// and a stored order grouped by role would silently turn "by job" into "by role, then job".
+    ///
+    /// A job with no position falls through to the game's own list position behind this, which is
+    /// the order its character window uses: tanks, then healers, then melee, each role in the
+    /// sequence a player already knows. That number is read from the job table rather than kept
+    /// here, so a job added in a later patch takes its place without anything changing.
+    /// </remarks>
+    private static int JobPosition(uint classJobId, IReadOnlyList<uint>? order)
+    {
+        if (order is null)
+        {
+            return int.MaxValue;
+        }
+
+        for (var i = 0; i < order.Count; i++)
+        {
+            if (order[i] == classJobId)
+            {
+                return i;
+            }
+        }
+
+        return int.MaxValue;
+    }
+
     private static int RolePosition(JobRole role, IReadOnlyList<JobRole>? order)
     {
         if (order is null)

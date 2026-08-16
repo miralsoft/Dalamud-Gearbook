@@ -113,7 +113,13 @@ internal sealed class LibraryWindow : Window
 
         var filter = character.CurrentFilter;
         var effective = filter.AtLevel(character.FilterLevel);
-        var shown = FilterEngine.Apply(state.Gearsets, effective, state.Jobs, DateTimeOffset.UtcNow, character.RoleOrder);
+        var shown = FilterEngine.Apply(
+            state.Gearsets,
+            effective,
+            state.Jobs,
+            DateTimeOffset.UtcNow,
+            character.RoleOrder,
+            character.JobOrder);
 
         DrawHeader(character, filter, shown);
         ImGui.Separator();

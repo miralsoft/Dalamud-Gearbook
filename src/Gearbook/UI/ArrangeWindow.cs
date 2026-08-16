@@ -146,7 +146,8 @@ internal sealed class ArrangeWindow : Window
             state.Gearsets,
             character.ArrangeOrder,
             state.Jobs,
-            character.RoleOrder);
+            character.RoleOrder,
+            character.JobOrder);
 
         var current = CurrentKeys();
 
@@ -231,7 +232,7 @@ internal sealed class ArrangeWindow : Window
 
     private IReadOnlyList<string> TargetKeys(CharacterSettings character) =>
         [.. FilterEngine
-            .Sort(state.Gearsets, character.ArrangeOrder, state.Jobs, character.RoleOrder)
+            .Sort(state.Gearsets, character.ArrangeOrder, state.Jobs, character.RoleOrder, character.JobOrder)
             .Select(g => ListArrangement.KeyFor(g.Gearset))];
 
     private string ResultText(ArrangeResult result)

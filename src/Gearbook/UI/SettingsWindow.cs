@@ -430,11 +430,118 @@ internal sealed class SettingsWindow : Window
             }
         }
 
+        DrawJobOrder(character, ref changed);
+
         if (changed)
         {
             state.Save();
         }
     }
+
+    /// <summary>
+    /// The order the jobs take inside their own role.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Grouped under the roles rather than shown as one list, because that is the only place the
+    /// setting has any effect: sorting by role separates the roles first, so a job moved past a
+    /// role boundary would not move on screen at all. A flat list would offer a gesture that
+    /// silently does nothing, which is worse than not offering it.
+    /// </para>
+    /// <para>
+    /// Only the jobs this character has gearsets for appear. The rest would be rows nobody can
+    /// see the effect of, and there are forty of them.
+    /// </para>
+    /// </remarks>
+    private void DrawJobOrder(CharacterSettings character, ref bool changed)
+    {
+        var loc = state.Loc;
+
+        ImGui.Spacing();
+        ImGui.Separator();
+
+        UiTheme.Caption(loc.Get(LocKeys.SettingsJobOrder), loc.Get(LocKeys.SettingsJobOrderHelp));
+        ImGui.Spacing();
+
+        var order = character.JobOrder;
+        if (order.Count == 0)
+        {
+            UiTheme.Muted(loc.Get(LocKeys.SettingsJobOrderEmpty));
+            return;
+        }
+
+        var rowHeight = ImGui.GetFrameHeight();
+        var style = ImGui.GetStyle();
+        var reserved = (rowHeight * 2f) + (style.ItemSpacing.X * 2f) + style.WindowPadding.X;
+
+        foreach (var role in character.RoleOrder)
+        {
+            // Read fresh for each role from the one stored list, so a move writes back into that
+            // list and there is no second copy of the order to keep in step.
+            var inRole = order.Where(id => RoleOf(id) == role).ToList();
+            if (inRole.Count == 0)
+            {
+                continue;
+            }
+
+            ImGui.Spacing();
+            UiTheme.Muted(RoleName(role));
+
+            for (var i = 0; i < inRole.Count; i++)
+            {
+                using var id = ImRaii.PushId($"job{inRole[i]}");
+
+                var rowWidth = Math.Max(rowHeight * 3f, ImGui.GetContentRegionAvail().X - reserved);
+                ImGui.Selectable(JobName(inRole[i]), false, ImGuiSelectableFlags.None,
+                    new Vector2(rowWidth, rowHeight));
+
+                ImGui.SameLine();
+
+                // The arrows swap with the neighbour inside this role, never across the boundary
+                // above or below it. There is nothing on the other side of that boundary that a
+                // move could change.
+                using (ImRaii.Disabled(i == 0))
+                {
+                    if (ImGui.ArrowButton("##up", ImGuiDir.Up))
+                    {
+                        Swap(order, inRole[i - 1], inRole[i]);
+                        changed = true;
+                    }
+                }
+
+                ImGui.SameLine();
+
+                using (ImRaii.Disabled(i == inRole.Count - 1))
+                {
+                    if (ImGui.ArrowButton("##down", ImGuiDir.Down))
+                    {
+                        Swap(order, inRole[i], inRole[i + 1]);
+                        changed = true;
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>Swaps two jobs where they sit in the stored order.</summary>
+    private static void Swap(List<uint> order, uint first, uint second)
+    {
+        var a = order.IndexOf(first);
+        var b = order.IndexOf(second);
+
+        if (a >= 0 && b >= 0)
+        {
+            (order[a], order[b]) = (order[b], order[a]);
+        }
+    }
+
+    private JobRole RoleOf(uint classJobId) =>
+        state.Jobs.TryGetValue(classJobId, out var job) ? job.Role : JobRole.Unknown;
+
+    private string JobName(uint classJobId) =>
+        state.Jobs.TryGetValue(classJobId, out var job)
+            ? job.Name
+            : state.Loc.Get(LocKeys.CommonUnknownJob);
 
     private string SortName(GearsetSortOrder order) => state.Loc.Get(order switch
     {

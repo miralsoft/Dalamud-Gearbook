@@ -54,12 +54,15 @@ internal sealed unsafe class JobDataSource : IJobDataSource
                     continue;
                 }
 
+                // The game's own list position, so a job added in a later patch files itself in
+                // the right place without anything here changing.
                 jobs[row.RowId] = new JobInfo(
                     row.RowId,
                     string.IsNullOrWhiteSpace(abbreviation) ? name : abbreviation,
                     name,
                     role,
-                    category);
+                    category,
+                    row.UIPriority);
             }
 
             GearbookServices.Log.Debug("Read {Count} jobs from the game data.", jobs.Count);

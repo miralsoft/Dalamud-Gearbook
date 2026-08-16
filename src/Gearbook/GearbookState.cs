@@ -379,6 +379,20 @@ internal sealed class GearbookState : IDisposable
         // for a number that changes only when the list does.
         icons = gearsets.ToDictionary(g => g.Slot, g => jobData.IconIdFor(g.Slot));
 
+        // The job order is kept to the jobs this character actually has gearsets for, which is
+        // what makes the setting a short list somebody can work with rather than forty rows of
+        // which thirty do nothing. Done here rather than at load, because it depends on the
+        // gearsets and those are only known once the game has been read.
+        //
+        // An unarranged job arrives in the game's own list position, the one the character
+        // window uses, rather than alphabetically. Read from the job table, so a job added in a
+        // later patch takes its place without anything here changing.
+        character.NormaliseJobOrder(gearsets
+            .Select(g => g.ClassJobId)
+            .Distinct()
+            .OrderBy(id => jobData.Jobs.TryGetValue(id, out var job) ? job.SortablePriority : int.MaxValue)
+            .ThenBy(id => id));
+
         var result = GearsetReconciler.Reconcile(
             character.ToRecords(),
             gearsets,
