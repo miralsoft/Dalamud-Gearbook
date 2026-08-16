@@ -92,6 +92,51 @@ public sealed class JobOrderSortTests
         Assert.Equal([3, 5, 1], sorted.Select(g => g.Gearset.Slot));
     }
 
+    /// <summary>
+    /// Crafters and gatherers take the game's order too, from the same column.
+    /// </summary>
+    /// <remarks>
+    /// Worth its own test because the numbers look like a separate scheme: the crafters run from
+    /// 101 and the gatherers from 201, where the combat jobs run from 1. They are the real values
+    /// out of the job table. Nothing has to reconcile the ranges, because the role sorts first and
+    /// two jobs from different ranges are therefore never compared with each other.
+    /// </remarks>
+    [Fact]
+    public void CraftersAndGatherersTakeTheGamesOrderFromTheSameColumn()
+    {
+        const uint Carpenter = 8;
+        const uint Culinarian = 15;
+        const uint Miner = 16;
+        const uint Fisher = 18;
+
+        var jobs = new Dictionary<uint, JobInfo>
+        {
+            [Carpenter] = new(Carpenter, "CRP", "Carpenter", JobRole.Crafter, JobCategory.Crafting, 101),
+            [Culinarian] = new(Culinarian, "CUL", "Culinarian", JobRole.Crafter, JobCategory.Crafting, 108),
+            [Miner] = new(Miner, "MIN", "Miner", JobRole.Gatherer, JobCategory.Gathering, 201),
+            [Fisher] = new(Fisher, "FSH", "Fisher", JobRole.Gatherer, JobCategory.Gathering, 203),
+        };
+
+        // Deliberately arriving in the wrong order, and alphabetically the other way round from
+        // the answer, so neither a sort that did nothing nor the old alphabetical one would pass.
+        var gearsets = new List<ReconciledGearset>
+        {
+            Set(1, Fisher),
+            Set(2, Culinarian),
+            Set(3, Miner),
+            Set(4, Carpenter),
+        };
+
+        var sorted = FilterEngine.Sort(
+            gearsets,
+            GearsetSortOrder.Role,
+            jobs,
+            [JobRole.Crafter, JobRole.Gatherer],
+            jobOrder: null);
+
+        Assert.Equal([Carpenter, Culinarian, Miner, Fisher], Jobs2(sorted));
+    }
+
     private static IReadOnlyList<ReconciledGearset> Sort(IReadOnlyList<uint>? jobOrder)
     {
         // Deliberately not already in the wanted order, so a sort that did nothing would fail.
