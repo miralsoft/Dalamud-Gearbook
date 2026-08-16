@@ -505,3 +505,23 @@ Each entry: date, decision, rationale, and what was rejected.
   Off by default. Somebody who installs a gearset switcher did not ask for buttons to other
   people's plugins on it, and a bar that grows a tile because an unrelated plugin was installed is
   a bar that changed without anybody deciding anything.
+
+- **(2026-08-16) `main` is protected, and the protection includes administrators.** R-16 requires
+  every change to reach `main` through a pull request from the first public release onward, and
+  that release is now out.
+
+  The settings: pull requests required, `Build` and `Content checks` required and required to be
+  up to date with the branch, linear history, no force pushes, no branch deletion, conversation
+  resolution required, and **administrators are not exempt**.
+
+  Zero approving reviews are required, which looks like a hole and is not one. This is a
+  single-maintainer project; requiring an approval would mean nobody could ever merge, so the
+  choice is between zero approvals and no protection at all. What the protection is actually
+  buying here is the checks: nothing reaches `main` without the build, the tests, the format gate
+  and the content checks passing on the merged result.
+
+  Including administrators is the part worth defending, because excluding them is the usual
+  default and would have been easier. Excluded, the rule would read "every change goes through a
+  pull request, except the ones by the only person who commits", which is not the rule. The
+  escape hatch for a genuinely stuck required check is to edit the protection deliberately, which
+  is a visible act rather than a habit.
