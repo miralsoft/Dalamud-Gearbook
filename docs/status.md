@@ -161,3 +161,58 @@ The first reading was 0.20 ms, taken before the two defects the reading itself u
 fixed: a game read per tile per frame from the draw callback, and the bar re-deriving its contents
 every frame. Measuring is what found them; neither was visible in the code by reading it, and one
 had already survived a deliberate audit.
+
+## Where the project stands (2026-08-16, after `1.0.0`)
+
+Written so that a session starting from nothing can pick this up. The documents in `docs/` are the
+only handover there is (M-08, I-07), and everything below is here because it would otherwise live
+only on one machine.
+
+**`1.0.0` is released.** Tag `v1.0.0`, both assets published, the manifest inside the archive names
+the version, and the icon resolves now that the repository is pushed. What remains of the release
+chain is not in this repository: the entry in `miralsoft/Dalamud-Plugins`, which is one line in
+`plugins.json` plus a section in its README, and which somebody adds over there (M-18).
+
+**`main` is protected, and administrators are not exempt.** Every change now reaches it through a
+pull request with `Build` and `Content checks` passing on the merged result. Zero approving reviews
+are required, because a single maintainer requiring one could never merge. Committing straight to
+`main` will be refused, and that refusal is the rule working rather than a fault to route around.
+
+**The last thing discussed and refused** was a button to extract materia from every eligible piece
+at once. It is bulk automation of a game action and the plugin's own manifest promises users that
+nothing happens on its own. Artisan is where that belongs. Two alternatives were offered and both
+withdrawn: a warning that extraction destroys the gear, which is simply false, the game only resets
+spiritbond to one per cent; and an overview of spiritbond across gearsets, which the game's own
+materia window already provides. Recorded because both were confidently wrong and the next person
+should not spend the afternoon rediscovering it.
+
+## The parts of the setup that are not in this repository
+
+A fresh clone needs these, and none of them is carried by git. `CLAUDE.md` covers the first three;
+the fourth is written down here because nothing else says it.
+
+1. **The foundation clone.** `git clone` it into `.foundation-docs/` and exclude it through
+   `.git/info/exclude`, never `.gitignore`.
+2. **The git hooks**, copied out of the foundation into `.git/hooks/`. They are not part of any
+   repository, so a fresh clone has none.
+3. **`.git/info/exclude`** holds two lines: `.foundation-docs/` and `.claude/`.
+4. **The automatic staging hook.** The owner tests in a running client, and a build that stays in
+   `bin/` is a change they cannot see. A `Stop` hook in `.claude/settings.local.json` runs
+   `build.ps1 -SkipChecks` after every turn and stamps `dist/last-build.txt` so that "it ran" and
+   "they can see it ran" are the same thing. That file holds absolute paths, so it is deliberately
+   not committed; recreate it pointing at this checkout.
+
+Dalamud is pointed at `dist/Gearbook/Gearbook.dll` as a development plugin. That registration lives
+in the host's own configuration and survives independently of anything here.
+
+## How the game's own data was read, when it was needed
+
+Several answers in this project came from reading the installed client rather than from memory: the
+job table that exposed a wrong constant, the role icon numbers, the job display order, the cosmic
+exploration zones, and the wording of the materia extraction dialog. The method is worth keeping
+because it settled questions nothing else could.
+
+A throwaway console project referencing `Lumina.dll` and `Lumina.Excel.dll` out of the Dalamud
+install, pointed at the game's `sqpack` folder, reads any sheet or texture. Icons were written out
+as PNG contact sheets and looked at. None of it belongs in this repository, and all of it is a few
+minutes to rebuild when the next question arrives.
