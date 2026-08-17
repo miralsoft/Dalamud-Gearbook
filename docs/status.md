@@ -216,3 +216,44 @@ A throwaway console project referencing `Lumina.dll` and `Lumina.Excel.dll` out 
 install, pointed at the game's `sqpack` folder, reads any sheet or texture. Icons were written out
 as PNG contact sheets and looked at. None of it belongs in this repository, and all of it is a few
 minutes to rebuild when the next question arrives.
+
+## The crash-safety audit, redone by reachability (2026-08-17, raising the foundation to 3.1.0)
+
+R-21 says an audit follows reachability, not form, and records what it looked for: start at the
+places a rule constrains (here, GB-03's "the draw callback reads only this plugin's own snapshot")
+and follow every call path outward, rather than searching the source for the shape of the thing
+already known to be wrong. The 2026-08-16 pass had searched for pointer dereferences and found two
+real defects that way; this pass started instead from every method the windowing system calls each
+frame (`Draw`, `DrawConditions`, `PreDraw`) and from every popup and tooltip block inside them, and
+followed each one outward until it was settled whether it reached a live host or game read.
+
+**What it found.** Five call chains reached a live read from inside a draw path, none of them a
+pointer dereference and none of them a crash risk in the sense the framework profile's crash-safety
+section means: `BarWindow.DrawConditions` read `IGameStateProbe.IsInCutscene` and `IsInCombat`
+directly to decide whether to hide the bar; `BarWindow.DrawExternalTools` read
+`IsInCosmicExploration` the same way; `UiTheme.GearsetTile` and `LibraryWindow`'s detail panel both
+reached `GearsetEquipper.CheckCanChangeGear()` through `GearbookState.CheckCanEquip`, once per tile
+per frame; `ArrangeWindow` reached the same gate through `GearsetArranger.CanArrange()`; and both
+`BarWindow` and `SettingsWindow` read `ExternalTools.IsAvailable`/`NameOf`, which walk the host's
+installed-plugin list, as a checkbox label and a shortcut-tile condition drawn every frame.
+
+Every one of these reads like an ordinary property or method call at the point of use, which is
+exactly why grep for a pointer operator, the shape the previous pass searched for, could not have
+found them. The `CheckCanEquip` one is the same mistake the icon-fetch defect was, in a different
+member: a game-reaching call sitting where it was convenient, once per tile per frame, on a bar
+that is already the most expensive drawer of the plugins measured against it.
+
+**What was searched, so the next pass can see what this one covers.** Every `Draw`, `DrawConditions`
+and `PreDraw` override in `src/Gearbook/UI/`, every call they make into `GearbookState` and from
+there into the four adapter interfaces, and the two `IExternalTools` methods reachable from a
+tooltip or a checkbox label. Not searched: the settings and release-notes windows' own layout code,
+which touches no adapter, and the framework-tick path itself, which was already the audited-safe
+side of the split.
+
+**The fix.** `GearbookState` now snapshots `IsInCutscene`, `IsInCombat`, `IsInCosmicExploration`,
+`EquipAvailability`, `ArrangeAvailability`, tool availability and tool names once per tick, on the
+framework thread, the same place the icon lookup and the equip queue already lived. Every draw-path
+caller now reads the cached value. Combat and cutscene detection stay as responsive as before,
+because the tick runs every frame regardless; nothing here waits for the three-second slow refresh
+that gates the expensive reconciliation. Build clean, format clean, all 286 tests still passing (the
+change touches only the plugin project, which has no unit tests of its own by design).
