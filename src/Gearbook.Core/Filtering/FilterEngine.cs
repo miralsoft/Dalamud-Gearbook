@@ -43,9 +43,18 @@ public static class FilterEngine
     }
 
     /// <summary>
-    /// Orders a list without filtering it. Every order falls back to the game's own number for
-    /// ties, so two sets that compare equal keep a stable position.
+    /// Orders a list without filtering it. Every order breaks a tie by the highest item level
+    /// first, and only then by the game's own number, so two sets that still compare equal keep a
+    /// stable position.
     /// </summary>
+    /// <remarks>
+    /// The item level step sits between whatever the chosen order groups by and the final slot
+    /// fallback, deliberately: it decides who leads within a group the order already formed
+    /// (the same job, the same name, both never worn), it does not reach across groups the order
+    /// itself keeps apart. <see cref="GearsetSortOrder.ItemLevel"/> already sorts by nothing else,
+    /// so it needs no separate step, and <see cref="GearsetSortOrder.Slot"/> has no ties to begin
+    /// with, since every gearset's slot is unique.
+    /// </remarks>
     public static IReadOnlyList<ReconciledGearset> Sort(
         IEnumerable<ReconciledGearset> gearsets,
         GearsetSortOrder order,
@@ -66,16 +75,19 @@ public static class FilterEngine
                     .OrderBy(g => RolePosition(JobFor(g, jobs).Role, roleOrder))
                     .ThenBy(g => JobPosition(g.Gearset.ClassJobId, jobOrder))
                     .ThenBy(g => JobFor(g, jobs).SortablePriority)
+                    .ThenByDescending(g => g.Gearset.ItemLevel)
                     .ThenBy(g => g.Gearset.Slot)],
 
             GearsetSortOrder.Name =>
                 [.. gearsets
                     .OrderBy(g => g.Gearset.Name, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenByDescending(g => g.Gearset.ItemLevel)
                     .ThenBy(g => g.Gearset.Slot)],
 
             GearsetSortOrder.Job =>
                 [.. gearsets
                     .OrderBy(g => JobFor(g, jobs).Name, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenByDescending(g => g.Gearset.ItemLevel)
                     .ThenBy(g => g.Gearset.Slot)],
 
             GearsetSortOrder.ItemLevel =>
@@ -90,6 +102,7 @@ public static class FilterEngine
                 [.. gearsets
                     .OrderBy(g => g.Record.LastUsedUtc is null ? 1 : 0)
                     .ThenByDescending(g => g.Record.LastUsedUtc ?? DateTimeOffset.MinValue)
+                    .ThenByDescending(g => g.Gearset.ItemLevel)
                     .ThenBy(g => g.Gearset.Slot)],
 
             GearsetSortOrder.Slot or _ =>

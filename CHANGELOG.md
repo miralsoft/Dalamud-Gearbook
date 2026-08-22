@@ -12,6 +12,14 @@ A withdrawn release stays here, marked as withdrawn, rather than being deleted.
 
 ## [Unreleased]
 
+### Changed
+
+- **Every sort order now breaks a tie by the highest item level first**, and only then by the
+  game's own number. Sorting by role, for instance, still groups by role and then by job, but a
+  dark knight set at 790 now leads a dark knight set at 640 rather than whichever one the game
+  happens to number lower. Sorting by item level itself is unaffected, since it already sorted by
+  nothing else.
+
 ### Fixed
 
 - The bar's cutscene and combat hiding, its cosmic-exploration shortcut, every gearset tile's
