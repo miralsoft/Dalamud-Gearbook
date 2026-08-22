@@ -117,8 +117,40 @@ internal sealed class GearbookState : IDisposable
     /// <summary>Shortcuts to other plugins, for the bar to offer where they are useful.</summary>
     public IExternalTools Tools => tools;
 
-    /// <summary>The game state, for greying controls out with a reason.</summary>
-    public IGameStateProbe GameState => gameState;
+    /// <summary>
+    /// Whether the player is currently in a cutscene, as of the last tick.
+    /// </summary>
+    /// <remarks>
+    /// Read on the framework thread rather than from the draw callback that decides whether the
+    /// bar should hide for it (GB-03). It is a safe Dalamud service call and not a pointer into
+    /// game memory, but the rule draws no line between the two: a call that reaches through an
+    /// accessor is exactly the shape R-21 was written to catch, because it reads like an ordinary
+    /// property at the point of use.
+    /// </remarks>
+    public bool IsInCutscene { get; private set; }
+
+    /// <summary>Whether the player is currently in combat, as of the last tick. See <see cref="IsInCutscene"/>.</summary>
+    public bool IsInCombat { get; private set; }
+
+    /// <summary>Whether the player is standing in a cosmic exploration zone, as of the last tick. See <see cref="IsInCutscene"/>.</summary>
+    public bool IsInCosmicExploration { get; private set; }
+
+    /// <summary>
+    /// Whether a gearset change is currently possible, as of the last tick.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="CheckCanEquip"/> and <see cref="CanArrange"/> both read this rather than asking
+    /// the equip gate live, because both are asked once per tile per frame from the draw callback.
+    /// The gate is asked again on the framework thread immediately before anything is actually
+    /// sent, where a value from up to one frame ago would be the wrong thing to trust.
+    /// </remarks>
+    public EquipOutcome EquipAvailability { get; private set; } = EquipOutcome.NotLoggedIn;
+
+    /// <summary>Whether the game's own gearset list can currently be rearranged, as of the last tick.</summary>
+    public ArrangeOutcome ArrangeAvailability { get; private set; } = ArrangeOutcome.NotLoggedIn;
+
+    private HashSet<ExternalTool> availableTools = [];
+    private Dictionary<ExternalTool, string> toolNames = [];
 
     /// <summary>
     /// The icon the game itself uses for a gearset, as collected on the last read.
@@ -154,25 +186,24 @@ internal sealed class GearbookState : IDisposable
     /// answer the equipper will give, so the tooltip and the log cannot disagree.
     /// </summary>
     /// <remarks>
-    /// The state half is asked of the equipper, which owns that question, and the "already worn"
-    /// half is answered from the slot read on the last tick rather than from the game.
+    /// The state half is answered from <see cref="EquipAvailability"/>, the tick's own snapshot,
+    /// and the "already worn" half from the slot read on the last tick rather than from the game.
     ///
-    /// That matters because the only caller is the draw callback, once per tile per frame, and
-    /// the equipper's own version reaches the gearset module to find the current slot. It was
-    /// therefore a read of game memory while drawing, sixteen times over on a bar of sixteen
-    /// icons, against GB-03. The crash-safety audit did not catch it: it looked for the shape of
-    /// a pointer dereference, and this one reaches the game through two interfaces and looks like
-    /// a plain method call at the point of use.
+    /// That matters because the only caller is the draw callback, once per tile per frame. Asking
+    /// the equipper live from here reaches the gearset module to find the current slot, sixteen
+    /// times over on a bar of sixteen icons, against GB-03. The crash-safety audit did not catch
+    /// it: it looked for the shape of a pointer dereference, and this one reaches the game through
+    /// two interfaces and looks like a plain method call at the point of use. Found again, by the
+    /// same reachability method, on the R-21 pass that this comment now documents.
     ///
     /// The equipper still reads it live on the path that actually equips, where a value from up
-    /// to three seconds ago would be the wrong thing to trust.
+    /// to one frame ago would be the wrong thing to trust.
     /// </remarks>
     public EquipOutcome CheckCanEquip(ReconciledGearset gearset)
     {
-        var allowed = equipper.CheckCanChangeGear();
-        if (allowed != EquipOutcome.Sent)
+        if (EquipAvailability != EquipOutcome.Sent)
         {
-            return allowed;
+            return EquipAvailability;
         }
 
         return CurrentSlot == gearset.Gearset.Slot ? EquipOutcome.AlreadyWorn : EquipOutcome.Sent;
@@ -232,6 +263,16 @@ internal sealed class GearbookState : IDisposable
 
         try
         {
+            // Cheap condition-flag reads, taken every tick rather than on the slower refresh
+            // below: combat and cutscene state have to stay responsive, and the draw callback
+            // that used to ask for them live is exactly what GB-03 forbids.
+            IsInCutscene = gameState.IsInCutscene;
+            IsInCombat = gameState.IsInCombat;
+            IsInCosmicExploration = gameState.IsInCosmicExploration;
+            EquipAvailability = equipper.CheckCanChangeGear();
+            ArrangeAvailability = arranger.CanArrange();
+            (availableTools, toolNames) = ComputeToolInfo();
+
             ProcessPendingRequests();
             ProcessPendingArrange();
 
@@ -311,11 +352,29 @@ internal sealed class GearbookState : IDisposable
     /// Whether the game's list could be sorted right now, or what is preventing it.
     /// </summary>
     /// <remarks>
-    /// Safe from the draw callback: it reads the host's condition flags and never the game's own
-    /// memory. The arranger asks the same question again on the framework thread, because the
-    /// answer can change between a player reading a button and pressing it.
+    /// Answered from <see cref="ArrangeAvailability"/>, the tick's own snapshot, for the same
+    /// reason <see cref="CheckCanEquip"/> is: the only caller is a draw callback. The arranger
+    /// asks the same question again on the framework thread before every move, because the answer
+    /// can change between a player reading a button and pressing it, and again between one move
+    /// and the next.
     /// </remarks>
-    public ArrangeOutcome CanArrange() => arranger.CanArrange();
+    public ArrangeOutcome CanArrange() => ArrangeAvailability;
+
+    /// <summary>Whether a shortcut to this tool can currently be offered, as of the last tick.</summary>
+    public bool IsToolAvailable(ExternalTool tool) => availableTools.Contains(tool);
+
+    /// <summary>
+    /// The other plugin's own name for itself, as of the last tick, or a fallback if it has never
+    /// been seen.
+    /// </summary>
+    /// <remarks>
+    /// Cached alongside <see cref="IsToolAvailable"/> for the same reason: <c>SettingsWindow</c>
+    /// draws it as a checkbox label every frame the tab is open, for every tool, which is the same
+    /// per-frame reach into the host's installed-plugin list that GB-03 rules out from a draw
+    /// callback.
+    /// </remarks>
+    public string ToolName(ExternalTool tool) =>
+        toolNames.TryGetValue(tool, out var name) ? name : tool.ToString();
 
     private void ProcessPendingArrange()
     {
@@ -360,6 +419,28 @@ internal sealed class GearbookState : IDisposable
                 refreshRequested = true;
             }
         }
+    }
+
+    /// <summary>
+    /// Which external tools currently have a shortcut to offer, and what each calls itself, read
+    /// on the framework thread rather than per tile per frame from the draw callback (GB-03).
+    /// </summary>
+    private (HashSet<ExternalTool>, Dictionary<ExternalTool, string>) ComputeToolInfo()
+    {
+        var available = new HashSet<ExternalTool>();
+        var names = new Dictionary<ExternalTool, string>();
+
+        foreach (var tool in Enum.GetValues<ExternalTool>())
+        {
+            if (tools.IsAvailable(tool))
+            {
+                available.Add(tool);
+            }
+
+            names[tool] = tools.NameOf(tool);
+        }
+
+        return (available, names);
     }
 
     private void RecordUse(int slot)

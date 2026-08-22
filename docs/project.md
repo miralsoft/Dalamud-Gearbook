@@ -25,7 +25,8 @@ Purpose: the identity card of the project. Who it is, what it is, which rules ap
 
 ## Targeted foundation version
 
-**2.0.0.** Reviewed whenever a release is cut (M-17): read the foundation changelog from this
+**3.1.0.** Raised from 2.0.0 on 2026-08-17; see `decisions.md` for the review and the work it
+required. Reviewed whenever a release is cut (M-17): read the foundation changelog from this
 version onward, then either raise it and do the work, or leave it and record why. Raising it
 includes re-copying anything copied out of the foundation and updating its provenance line (M-19).
 

@@ -61,3 +61,26 @@ is looking at is the one that goes wrong.
   but blank. The majority of players will never install Eorzea Arsenal, and the common failure with
   an integration like this one is building the interface around the extra information, after which
   the plugin looks broken to everybody who does not have it.
+
+- **GB-07 Between releases, features collect on a `release/<version>` branch rather than landing on
+  `main` one at a time.** A feature still gets its own branch and its own pull request, but that
+  request targets the release branch, not `main`. `main` only receives the release branch itself,
+  as one pull request, when the version is actually cut.
+
+  This extends R-16 rather than falling short of it (R-01's branching section permits a project
+  branching strategy on that condition): every change still reaches `main` through a pull request
+  with the required checks on the merged result, there is simply one more branch in front of it.
+  Nothing about the release procedure in `release.md` changes; the release branch is what gets
+  merged to `main` in its step 6.
+
+  The release branch is not protected the way `main` is, so a pull request into it is not blocked by
+  a failing check, only informed by one: both `ci.yml` and `content-checks.yml` already trigger on
+  every push and every pull request regardless of branch, so the same gates run and report, without
+  needing a change to either workflow.
+
+  Rationale: several features are meant to ship together in the next version, and merging each one
+  straight to `main` would mean either releasing after every single change or leaving `main` sitting
+  ahead of the last tag for a stretch, both of which the owner would rather avoid. Renaming the
+  branch if the version it targets turns out wrong (a patch growing into a minor, say) is one `git
+  branch -m` and a force-push of a branch nobody else is tracking, so naming it early costs nothing
+  worth guarding against.

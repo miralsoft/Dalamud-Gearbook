@@ -69,7 +69,13 @@ update, not a release.
    - the manifest **inside the archive** names the new version, because that is the copy the channel
      and the installer read, not the one in the repository;
    - the entry in the aggregate index has appeared;
-   - the public address serves it.
+   - the public address serves it, checked by what it returns rather than by its status code
+     (D-16): the content type reads `application/json`, not `text/html`, and the body actually
+     contains this release. A single-page application answers 200 with its HTML shell for any
+     unknown path, so a 200 alone proves a web server exists and nothing about the address asked
+     for. Sanity-check the comparison itself by asking the same question of a path invented on the
+     spot, `https://xivarsenal.app/this-does-not-exist`; if that also answers 200 with the same
+     shape of body, the check was never a comparison and needs a sharper one before it is trusted.
 
 ## The two silent delays
 

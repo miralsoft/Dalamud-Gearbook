@@ -1,8 +1,8 @@
 # Content checks, the server-side half of the git hooks (R-17).
 #
 # Copied from: miralsoft-foundation-docs, enforcement/ci/content-checks.yml
-# Foundation version: 2.0.0
-# Copied on: 2026-08-13
+# Foundation version: 3.1.0
+# Copied on: 2026-08-17
 #
 # Keep the three lines above and fill in the date. A hook is fetched again on every fresh
 # clone, so it cannot go stale; a workflow file is committed and ages silently, and nothing

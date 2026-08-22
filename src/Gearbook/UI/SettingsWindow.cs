@@ -227,9 +227,9 @@ internal sealed class SettingsWindow : Window
             foreach (var tool in Enum.GetValues<ExternalTool>())
             {
                 var shown = !bar.HiddenTools.Contains(tool);
-                var available = state.Tools.IsAvailable(tool);
+                var available = state.IsToolAvailable(tool);
 
-                if (UiTheme.WrappedCheckbox($"tool{tool}", state.Tools.NameOf(tool), ref shown))
+                if (UiTheme.WrappedCheckbox($"tool{tool}", state.ToolName(tool), ref shown))
                 {
                     // Stored as what is hidden, so a shortcut added later shows up for somebody
                     // who has already said yes to the idea.

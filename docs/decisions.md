@@ -525,3 +525,56 @@ Each entry: date, decision, rationale, and what was rejected.
   pull request, except the ones by the only person who commits", which is not the rule. The
   escape hatch for a genuinely stuck required check is to edit the protection deliberately, which
   is a visible act rather than a habit.
+
+- **(2026-08-17) The declared foundation version is raised from 2.0.0 to 3.1.0.** Not tied to a
+  release this time; the foundation moved twice in one day shortly after the 1.0.0 review had just
+  found nothing to do, and the gap was noticed on load rather than left for the next release to
+  surface it. M-17 ties the review to a release, not to every session, but nothing forbids doing it
+  early, and a foundation two major versions ahead is not a state worth sitting in on purpose.
+
+  **What 3.0.0 asked for, and what was done for each.**
+
+  R-21, an audit follows reachability rather than form. The 2026-08-16 crash-safety pass had
+  searched for the shape of a pointer dereference and found two real defects that way. Redone by
+  starting from every method the windowing system calls each frame and following what it reaches
+  outward, it found a third shape of the same underlying mistake: `IGameStateProbe.IsInCutscene`,
+  `IsInCombat` and `IsInCosmicExploration`, the equip gate reached through `CheckCanEquip` and
+  `CanArrange`, and the external-tool checks, were all being read live from inside a draw path,
+  once per tile per frame in the worst case. None of them are pointer dereferences and none are a
+  crash risk in the sense the crash-safety section means; all of them are GB-03 violations of
+  exactly the shape R-21 was written to catch, reading like an ordinary property at the point of
+  use. Fixed by snapshotting all of it once per tick in `GearbookState`, the same place the icon
+  lookup already lived after the first such defect. Recorded in full in `status.md`.
+
+  T-07, a test's values come from the reality they describe. The suite already practised this
+  before the rule had a number: `JobClassifierTests` documents that its inputs are the real job
+  table, and `RoleIconsTests` documents that a test cannot verify a picture and says so. The one
+  gap was `TestData.cs`, whose job ids are also the game's real ones but said nothing about it; a
+  wrong id there would have let a sorting or filtering test agree with a bug rather than catch one.
+  Closed with a note pointing at where the ids actually come from.
+
+  D-15, the install instruction names the address the channel documents. Already true:
+  `README.md` names `https://xivarsenal.app/plugins.json`, the address `rules/frameworks/
+  dalamud.md` names as canonical for this family of plugins, and the singular courtesy alias
+  appears nowhere in this repository. Nothing to change; recorded as checked rather than assumed.
+
+  D-16, an endpoint is checked by what it returns, not by its status code. `release.md`'s
+  confirmation step named only "the public address serves it", which a single-page application
+  answering 200 for any path would have passed without proving anything. Tightened to check the
+  content type against `application/json` and to sanity-check the comparison itself against a
+  made-up path, per the rule.
+
+  3.1.0 needed no work: P-05 formalises a practice already followed here (nothing in this plugin
+  auto-publishes or acts without being asked), and the automation-ships-off/ships-on split it adds
+  to the Dalamud profile matches the reasoning already used for the bar-order sort and the list
+  arrangement feature, both of which ship on because they touch only the plugin's own presentation
+  and ordering, never the server, and both already carry a setting and a command.
+
+  **What was not touched.** R-21's audit did not extend to the settings and release-notes windows'
+  own layout code, which calls no adapter, or to the framework-tick path itself, which the
+  crash-safety section already covers and which this session's changes only added to, not
+  restructured. Recorded so the next pass knows where this one stopped.
+
+  The provenance lines in `CLAUDE.md` and `.github/workflows/content-checks.yml` are updated to
+  3.1.0 and today's date (M-19); neither file's content otherwise changed, because the foundation's
+  own templates for both are unchanged in substance since 2.0.0.

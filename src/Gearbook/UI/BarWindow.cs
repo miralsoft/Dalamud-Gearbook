@@ -80,12 +80,12 @@ internal sealed class BarWindow : Window
 
         // Nothing sits over a cutscene, and it is also the one moment the player is definitely
         // not switching gear.
-        if (character.Bar.HideInCutscene && state.GameState.IsInCutscene)
+        if (character.Bar.HideInCutscene && state.IsInCutscene)
         {
             return false;
         }
 
-        if (character.Bar.HideInCombat && state.GameState.IsInCombat)
+        if (character.Bar.HideInCombat && state.IsInCombat)
         {
             return false;
         }
@@ -331,7 +331,7 @@ internal sealed class BarWindow : Window
             DrawToolTile(ExternalTool.Arsenal, FontAwesomeIcon.Bullseye, settings, ref drawn, columns);
         }
 
-        if ((crafting || gathering) && state.GameState.IsInCosmicExploration)
+        if ((crafting || gathering) && state.IsInCosmicExploration)
         {
             DrawToolTile(ExternalTool.Cosmic, FontAwesomeIcon.Moon, settings, ref drawn, columns);
         }
@@ -345,7 +345,7 @@ internal sealed class BarWindow : Window
         ref int drawn,
         int columns)
     {
-        if (settings.HiddenTools.Contains(tool) || !state.Tools.IsAvailable(tool))
+        if (settings.HiddenTools.Contains(tool) || !state.IsToolAvailable(tool))
         {
             return;
         }
@@ -368,7 +368,7 @@ internal sealed class BarWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip($"{state.Tools.NameOf(tool)}\n{state.Loc.Get(LocKeys.BarToolTooltip)}");
+            ImGui.SetTooltip($"{state.ToolName(tool)}\n{state.Loc.Get(LocKeys.BarToolTooltip)}");
         }
 
         drawn++;
