@@ -1,7 +1,7 @@
 <!--
   Copied from: miralsoft-foundation-docs, entrypoints/for-project-repos/CLAUDE.md
-  Foundation version: 2.0.0
-  Copied on: 2026-08-13
+  Foundation version: 3.1.0
+  Copied on: 2026-08-17
 
   Keep the three lines above. A committed copy of a template ages silently and nothing about
   it says how old it is, so M-19 requires it to carry the version it came from. It is what the

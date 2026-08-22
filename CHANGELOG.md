@@ -12,6 +12,15 @@ A withdrawn release stays here, marked as withdrawn, rather than being deleted.
 
 ## [Unreleased]
 
+### Fixed
+
+- The bar's cutscene and combat hiding, its cosmic-exploration shortcut, every gearset tile's
+  enabled state, and the arrange window's button all read live host state from inside a draw
+  callback, against GB-03. None of it was a crash risk, but it was the same shape of mistake the
+  icon-fetch defect was: a call that reaches through an interface and looks like a plain property
+  at the point of use. Found by redoing the crash-safety audit by reachability rather than by
+  grepping for a pointer, per R-21. All of it now reads a snapshot taken once per tick instead.
+
 ## [1.0.0] - 2026-08-16
 
 The first public release. Everything below came out of playing with `0.1.0` in a running client,

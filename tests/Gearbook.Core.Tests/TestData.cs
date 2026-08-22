@@ -8,6 +8,14 @@ namespace Gearbook.Core.Tests;
 /// reads a shipped default: improving a default must not break a test that has nothing to do
 /// with it.
 /// </summary>
+/// <remarks>
+/// The job ids and the role each one carries below are the game's own (T-07): dark knight 32,
+/// white mage 24, machinist 31, black mage 25, dragoon 22, culinarian 15, botanist 17, the same
+/// table <see cref="Gearbook.Core.Tests.Model.JobClassifierTests"/> reads its inputs from. They
+/// stand in here for "some real job of this role" rather than testing classification itself, but a
+/// wrong id would still let a sorting or filtering test agree with a bug instead of catching one,
+/// which is the failure T-07 exists to rule out.
+/// </remarks>
 internal static class TestData
 {
     public const uint DarkKnightId = 32;
