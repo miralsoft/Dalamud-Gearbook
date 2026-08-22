@@ -164,6 +164,66 @@ public class FilterEngineTests
     }
 
     [Fact]
+    public void Sorting_by_role_puts_the_highest_item_level_first_within_the_same_job()
+    {
+        var gearsets = new[]
+        {
+            TestData.Entry(1, 1, TestData.DarkKnightId, "Low", itemLevel: 640),
+            TestData.Entry(2, 2, TestData.DarkKnightId, "High", itemLevel: 790),
+        };
+
+        var order = FilterEngine.Sort(gearsets, GearsetSortOrder.Role, TestData.Jobs)
+            .Select(g => g.Record.Id);
+
+        Assert.Equal([2, 1], order);
+    }
+
+    [Fact]
+    public void Sorting_by_job_puts_the_highest_item_level_first_within_the_same_job()
+    {
+        var gearsets = new[]
+        {
+            TestData.Entry(1, 1, TestData.DarkKnightId, "Low", itemLevel: 640),
+            TestData.Entry(2, 2, TestData.DarkKnightId, "High", itemLevel: 790),
+        };
+
+        var order = FilterEngine.Sort(gearsets, GearsetSortOrder.Job, TestData.Jobs)
+            .Select(g => g.Record.Id);
+
+        Assert.Equal([2, 1], order);
+    }
+
+    [Fact]
+    public void Sorting_by_name_puts_the_highest_item_level_first_when_two_names_tie()
+    {
+        var gearsets = new[]
+        {
+            TestData.Entry(1, 1, TestData.DarkKnightId, "Same", itemLevel: 640),
+            TestData.Entry(2, 2, TestData.WhiteMageId, "Same", itemLevel: 790),
+        };
+
+        var order = FilterEngine.Sort(gearsets, GearsetSortOrder.Name, TestData.Jobs)
+            .Select(g => g.Record.Id);
+
+        Assert.Equal([2, 1], order);
+    }
+
+    [Fact]
+    public void Sorting_by_last_used_puts_the_highest_item_level_first_among_sets_never_worn()
+    {
+        var gearsets = new[]
+        {
+            TestData.Entry(1, 1, TestData.WhiteMageId, "Low", itemLevel: 640),
+            TestData.Entry(2, 2, TestData.DarkKnightId, "High", itemLevel: 790),
+        };
+
+        var order = FilterEngine.Sort(gearsets, GearsetSortOrder.LastUsed, TestData.Jobs)
+            .Select(g => g.Record.Id);
+
+        Assert.Equal([2, 1], order);
+    }
+
+    [Fact]
     public void Every_order_breaks_ties_by_the_game_number_so_the_list_never_reshuffles()
     {
         var gearsets = new[]
