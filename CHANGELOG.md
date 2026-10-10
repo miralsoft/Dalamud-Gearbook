@@ -14,6 +14,13 @@ A withdrawn release stays here, marked as withdrawn, rather than being deleted.
 
 ### Changed
 
+- **The shortcuts at the end of the bar follow the gearsets on it, not the view that put them
+  there.** A favourites or tag bar holding crafters now offers Artisan, which before only the
+  crafting views did. Eorzea Arsenal, which compares crafting and gathering gear as well as
+  combat gear now, appears with any combat, crafting or gathering set rather than only in the
+  combat views. A set whose job the table does not describe brings no shortcut at all. The rule
+  lives in the core as `ExternalToolPlacement`, under test.
+
 - **Every sort order now breaks a tie by the highest item level first**, and only then by the
   game's own number. Sorting by role, for instance, still groups by role and then by job, but a
   dark knight set at 790 now leads a dark knight set at 640 rather than whichever one the game
