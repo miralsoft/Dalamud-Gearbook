@@ -257,3 +257,16 @@ caller now reads the cached value. Combat and cutscene detection stay as respons
 because the tick runs every frame regardless; nothing here waits for the three-second slow refresh
 that gates the expensive reconciliation. Build clean, format clean, all 286 tests still passing (the
 change touches only the plugin project, which has no unit tests of its own by design).
+
+## Toward `1.1.0` (2026-10-10)
+
+Work for the next version collects on `release/1.1.0` (GB-07), renamed from `release/1.0.1` once
+the shortcut change below made it a minor rather than a patch release. The version in
+`Directory.Build.props` is still `1.0.0` on purpose: it is raised once, when the release is cut
+(C-13), together with the release notes for `1.1.0` in both languages, which the tests require to
+name the version being built.
+
+Merged into the release branch so far: the foundation raise to 3.1.0 with the GB-03 draw-callback
+fix, the item level as every sort order's tie-break, and the shortcuts following the gearsets
+shown rather than the view (see `decisions.md`). Verified by build, format check and 297 passing
+tests; the shortcut change has not yet been looked at in a running client.

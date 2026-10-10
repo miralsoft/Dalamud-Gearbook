@@ -158,7 +158,7 @@
   "settings.order.reset": "Zurücksetzen",
   "settings.order.resetAll": "Alle zurücksetzen",
   "settings.bar.tools": "Verknüpfungen zu anderen Plugins zeigen",
-  "settings.bar.tools.help": "Zeigt am Ende der Leiste eine Schaltfläche für Artisan und für Ice's Cosmic Exploration, sofern sie installiert und aktiv sind. Artisan erscheint in den Handwerker-Ansichten, Ice in Handwerker und Sammler, aber nur solange du in einem Kosmos-Gebiet stehst. Ein Druck öffnet das Hauptfenster des jeweiligen Plugins, mehr passiert nicht.",
+  "settings.bar.tools.help": "Zeigt am Ende der Leiste Schaltflächen für Artisan, Eorzea Arsenal und Ice's Cosmic Exploration, sofern sie installiert und aktiv sind. Welche erscheinen, richtet sich nach den Sets, die gerade auf der Leiste stehen, egal ob über Favoriten, Tag oder Ansicht: Artisan bei Handwerkern, Eorzea Arsenal bei Kampf-, Handwerks- und Sammlersets, Ice bei Handwerkern und Sammlern, aber nur solange du in einem Kosmos-Gebiet stehst. Ein Druck öffnet das Hauptfenster des jeweiligen Plugins, mehr passiert nicht.",
   "settings.bar.tools.missing": "(gerade nicht installiert)",
   "bar.tool.tooltip": "Öffnet das Hauptfenster dieses Plugins.",
   "settings.jobOrder.empty": "Sobald du Ausrüstungssets hast, stehen die dazugehörigen Jobs hier.",

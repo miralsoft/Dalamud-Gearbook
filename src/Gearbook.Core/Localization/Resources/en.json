@@ -158,7 +158,7 @@
   "settings.order.reset": "Reset",
   "settings.order.resetAll": "Reset all",
   "settings.bar.tools": "Show shortcuts to other plugins",
-  "settings.bar.tools.help": "Puts a button for Artisan and for Ice's Cosmic Exploration at the end of the bar, where they are installed and running. Artisan appears in the crafting views, Ice in crafting and gathering but only while you are standing in cosmic exploration content. Pressing one opens that plugin's own main window, and nothing else happens.",
+  "settings.bar.tools.help": "Puts buttons for Artisan, Eorzea Arsenal and Ice's Cosmic Exploration at the end of the bar, where they are installed and running. Which ones appear follows the gearsets currently on the bar, whether they got there as favourites, by a tag or through a view: Artisan with crafters, Eorzea Arsenal with combat, crafting and gathering sets, Ice with crafters and gatherers but only while you are standing in cosmic exploration content. Pressing one opens that plugin's own main window, and nothing else happens.",
   "settings.bar.tools.missing": "(not installed right now)",
   "bar.tool.tooltip": "Opens this plugin's own main window.",
   "settings.jobOrder.empty": "Once you have gearsets, the jobs they belong to appear here.",

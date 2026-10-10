@@ -40,6 +40,9 @@ internal sealed class BarWindow : Window
 
     private IReadOnlyList<ReconciledGearset>? cachedContents;
     private (int, BarViewKind, JobRole, JobCategory, string, bool, GearsetSortOrder) cachedKey;
+    private IReadOnlySet<JobCategory> cachedCategories = new HashSet<JobCategory>();
+    private IReadOnlyList<ExternalTool>? cachedTools;
+    private bool cachedToolsInCosmic;
 
     private readonly Action openLibrary;
     private readonly Action openSettings;
@@ -284,9 +287,10 @@ internal sealed class BarWindow : Window
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Only where they belong: the crafting views get Artisan and the cosmic one, the gathering
-    /// views get the cosmic one, and every other view gets neither. A shortcut to a crafting
-    /// plugin among a row of tanks is a tile that is in the way rather than to hand.
+    /// Decided by the gearsets on the bar, not by the view that put them there
+    /// (<see cref="ExternalToolPlacement"/>), so a favourites or tag bar holding crafters offers
+    /// Artisan just as the crafting view does. A shortcut to a crafting plugin beside a row of
+    /// tanks only, by the same rule, does not appear.
     /// </para>
     /// <para>
     /// The cosmic one additionally waits until the player is standing in that content. It has
@@ -297,8 +301,8 @@ internal sealed class BarWindow : Window
     /// Drawn with a glyph rather than the other plugin's own icon. Dalamud publishes which
     /// plugins are installed and lets one open another's window, but not their pictures: those
     /// are fetched from the web by the installer, and this plugin does not reach the network at
-    /// all. One of the two happens to ship an icon file locally, the other does not, so taking
-    /// that route would give one shortcut a picture and the other a placeholder.
+    /// all. One of them happens to ship an icon file locally, the others do not, so taking that
+    /// route would give one shortcut a picture and the rest a placeholder.
     /// </para>
     /// </remarks>
     private void DrawExternalTools(BarSettings settings, int drawnSoFar, int columns)
@@ -308,34 +312,38 @@ internal sealed class BarWindow : Window
             return;
         }
 
-        var crafting = ShowsCrafting(settings);
-        var gathering = ShowsGathering(settings);
-        var combat = ShowsCombat(settings);
-
-        if (!crafting && !gathering && !combat)
-        {
-            return;
-        }
-
         var drawn = drawnSoFar;
 
-        if (crafting)
+        foreach (var tool in ToolsForContents())
         {
-            DrawToolTile(ExternalTool.Artisan, FontAwesomeIcon.Hammer, settings, ref drawn, columns);
-        }
-
-        // Combat only for now. Best in slot is a combat idea today; if that ever covers the
-        // crafting and gathering tools as well, this is where it widens.
-        if (combat)
-        {
-            DrawToolTile(ExternalTool.Arsenal, FontAwesomeIcon.Bullseye, settings, ref drawn, columns);
-        }
-
-        if ((crafting || gathering) && state.IsInCosmicExploration)
-        {
-            DrawToolTile(ExternalTool.Cosmic, FontAwesomeIcon.Moon, settings, ref drawn, columns);
+            DrawToolTile(tool, GlyphFor(tool), settings, ref drawn, columns);
         }
     }
+
+    /// <summary>
+    /// The shortcuts for what the bar currently holds, recomputed only when the contents or the
+    /// cosmic exploration state change rather than every frame.
+    /// </summary>
+    private IReadOnlyList<ExternalTool> ToolsForContents()
+    {
+        var inCosmic = state.IsInCosmicExploration;
+
+        if (cachedTools is null || cachedToolsInCosmic != inCosmic)
+        {
+            cachedTools = ExternalToolPlacement.For(cachedCategories, inCosmic);
+            cachedToolsInCosmic = inCosmic;
+        }
+
+        return cachedTools;
+    }
+
+    private static FontAwesomeIcon GlyphFor(ExternalTool tool) => tool switch
+    {
+        ExternalTool.Artisan => FontAwesomeIcon.Hammer,
+        ExternalTool.Arsenal => FontAwesomeIcon.Bullseye,
+        ExternalTool.Cosmic => FontAwesomeIcon.Moon,
+        _ => FontAwesomeIcon.QuestionCircle,
+    };
 
     /// <summary>One shortcut tile, or nothing at all when the plugin behind it is not there.</summary>
     private void DrawToolTile(
@@ -373,25 +381,6 @@ internal sealed class BarWindow : Window
 
         drawn++;
     }
-
-    /// <summary>True when the bar is currently showing crafting gearsets.</summary>
-    private static bool ShowsCrafting(BarSettings settings) =>
-        (settings.ViewKind == BarViewKind.Category && settings.ViewCategory == JobCategory.Crafting)
-        || (settings.ViewKind == BarViewKind.Role && settings.ViewRole == JobRole.Crafter);
-
-    /// <summary>True when the bar is currently showing combat gearsets.</summary>
-    /// <remarks>
-    /// Any of the combat roles counts, as well as the combat category. A player looking at their
-    /// tanks is looking at combat gear, and best in slot is about exactly that.
-    /// </remarks>
-    private static bool ShowsCombat(BarSettings settings) =>
-        (settings.ViewKind == BarViewKind.Category && settings.ViewCategory == JobCategory.Combat)
-        || (settings.ViewKind == BarViewKind.Role && BarView.SelectableRoles.Contains(settings.ViewRole));
-
-    /// <summary>True when the bar is currently showing gathering gearsets.</summary>
-    private static bool ShowsGathering(BarSettings settings) =>
-        (settings.ViewKind == BarViewKind.Category && settings.ViewCategory == JobCategory.Gathering)
-        || (settings.ViewKind == BarViewKind.Role && settings.ViewRole == JobRole.Gatherer);
 
     /// <summary>
     /// The first tile: what the bar is showing, and a menu to change it.
@@ -913,6 +902,11 @@ internal sealed class BarWindow : Window
 
         cachedContents = Select(character, bar);
         cachedKey = key;
+
+        // Derived here, with the contents, because it depends on nothing else. The shortcuts
+        // follow from it once the cosmic state is known, which can change without the contents.
+        cachedCategories = ExternalToolPlacement.CategoriesShown(cachedContents, state.Jobs);
+        cachedTools = null;
 
         return cachedContents;
     }
