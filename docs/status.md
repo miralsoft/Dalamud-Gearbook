@@ -280,3 +280,7 @@ Not yet looked at in a running client, and worth doing before the release is cut
    plugins, log in here: that set is not marked as worn and switches when pressed. The plugin log
    should carry one line naming the stale index.
 3. Pressing the set currently worn re-equips it rather than being refused.
+4. With GatherBuddy Reborn installed and a gathering set on the bar, its shortcut (a seedling)
+   appears and opens its main window. This also confirms it reports a main window to the host,
+   which the shortcut requires and which could only be assumed from outside.
+5. The bar settings show the shortcut and order explanations behind `(?)`, not as paragraphs.
