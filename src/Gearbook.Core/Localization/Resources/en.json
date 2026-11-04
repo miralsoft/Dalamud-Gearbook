@@ -113,7 +113,6 @@
   "switch.blocked.inCutscene": "Not during a cutscene.",
   "switch.blocked.occupied": "Not right now.",
   "switch.blocked.notLoggedIn": "Not while you are logged out.",
-  "switch.alreadyActive": "Already worn.",
   "switch.failed": "The game refused the change. Nothing was equipped.",
 
   "settings.tab.general": "General",

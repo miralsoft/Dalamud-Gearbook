@@ -52,7 +52,7 @@ public sealed class Plugin : IDalamudPlugin
         localizer = new Localizer(catalogues);
 
         reader = new GearsetReader();
-        gameState = new GameStateProbe(reader);
+        gameState = new GameStateProbe();
         equipper = new GearsetEquipper(gameState);
         arranger = new GearsetArranger(reader, equipper);
         jobData = new JobDataSource();

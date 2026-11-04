@@ -332,7 +332,7 @@ internal static class UiTheme
         bool highlightActive,
         BarContextActions? barControls = null)
     {
-        var blocked = state.CheckCanEquip(gearset);
+        var blocked = state.EquipAvailability;
         var clickable = blocked is Adapters.EquipOutcome.Sent;
 
         var iconId = state.IconFor(gearset.Gearset.Slot);
@@ -591,7 +591,6 @@ internal static class UiTheme
         Adapters.EquipOutcome.InCombat => loc.Get(LocKeys.SwitchBlockedInCombat),
         Adapters.EquipOutcome.InCutscene => loc.Get(LocKeys.SwitchBlockedInCutscene),
         Adapters.EquipOutcome.Occupied => loc.Get(LocKeys.SwitchBlockedOccupied),
-        Adapters.EquipOutcome.AlreadyWorn => loc.Get(LocKeys.SwitchAlreadyActive),
         Adapters.EquipOutcome.Refused => loc.Get(LocKeys.SwitchFailed),
         _ => null,
     };

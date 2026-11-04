@@ -136,13 +136,17 @@ internal sealed class GearbookState : IDisposable
     public bool IsInCosmicExploration { get; private set; }
 
     /// <summary>
-    /// Whether a gearset change is currently possible, as of the last tick.
+    /// Whether a gearset change is currently possible, as of the last tick, or why not. What a
+    /// tile asks before greying itself out, so the tooltip and the log give the same answer.
     /// </summary>
     /// <remarks>
-    /// <see cref="CheckCanEquip"/> and <see cref="CanArrange"/> both read this rather than asking
-    /// the equip gate live, because both are asked once per tile per frame from the draw callback.
-    /// The gate is asked again on the framework thread immediately before anything is actually
-    /// sent, where a value from up to one frame ago would be the wrong thing to trust.
+    /// A snapshot rather than a live question, because the draw callback asks it once per tile
+    /// per frame (GB-03). The gate is asked again on the framework thread immediately before
+    /// anything is actually sent, where a value from up to one frame ago would be the wrong thing
+    /// to trust.
+    ///
+    /// No particular set is ever a reason, including the one marked as worn: the game re-equips
+    /// it, and that mark comes from data that can be stale (<see cref="CurrentGearset"/>).
     /// </remarks>
     public EquipOutcome EquipAvailability { get; private set; } = EquipOutcome.NotLoggedIn;
 
@@ -179,34 +183,6 @@ internal sealed class GearbookState : IDisposable
         {
             pending.Enqueue(new EquipRequest(slot, trigger));
         }
-    }
-
-    /// <summary>
-    /// Why a gearset cannot be equipped right now, or <see cref="EquipOutcome.Sent"/>. The same
-    /// answer the equipper will give, so the tooltip and the log cannot disagree.
-    /// </summary>
-    /// <remarks>
-    /// The state half is answered from <see cref="EquipAvailability"/>, the tick's own snapshot,
-    /// and the "already worn" half from the slot read on the last tick rather than from the game.
-    ///
-    /// That matters because the only caller is the draw callback, once per tile per frame. Asking
-    /// the equipper live from here reaches the gearset module to find the current slot, sixteen
-    /// times over on a bar of sixteen icons, against GB-03. The crash-safety audit did not catch
-    /// it: it looked for the shape of a pointer dereference, and this one reaches the game through
-    /// two interfaces and looks like a plain method call at the point of use. Found again, by the
-    /// same reachability method, on the R-21 pass that this comment now documents.
-    ///
-    /// The equipper still reads it live on the path that actually equips, where a value from up
-    /// to one frame ago would be the wrong thing to trust.
-    /// </remarks>
-    public EquipOutcome CheckCanEquip(ReconciledGearset gearset)
-    {
-        if (EquipAvailability != EquipOutcome.Sent)
-        {
-            return EquipAvailability;
-        }
-
-        return CurrentSlot == gearset.Gearset.Slot ? EquipOutcome.AlreadyWorn : EquipOutcome.Sent;
     }
 
     /// <summary>Saves the configuration.</summary>
@@ -353,7 +329,7 @@ internal sealed class GearbookState : IDisposable
     /// </summary>
     /// <remarks>
     /// Answered from <see cref="ArrangeAvailability"/>, the tick's own snapshot, for the same
-    /// reason <see cref="CheckCanEquip"/> is: the only caller is a draw callback. The arranger
+    /// reason <see cref="EquipAvailability"/> is: the only caller is a draw callback. The arranger
     /// asks the same question again on the framework thread before every move, because the answer
     /// can change between a player reading a button and pressing it, and again between one move
     /// and the next.
