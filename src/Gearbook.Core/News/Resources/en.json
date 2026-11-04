@@ -3,7 +3,6 @@
     {
       "version": "1.1.0",
       "date": "2026-11-04",
-      "summary": "The bar understands better what is on it: the right plugins now come with the sets, and changing job on another computer no longer confuses it.",
       "added": [
         "A shortcut to GatherBuddy Reborn whenever gatherers are on the bar. Like the other shortcuts, only if you allow them in the settings."
       ],
