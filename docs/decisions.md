@@ -578,3 +578,24 @@ Each entry: date, decision, rationale, and what was rejected.
   The provenance lines in `CLAUDE.md` and `.github/workflows/content-checks.yml` are updated to
   3.1.0 and today's date (M-19); neither file's content otherwise changed, because the foundation's
   own templates for both are unchanged in substance since 2.0.0.
+
+- **(2026-10-10) The shortcuts at the end of the bar follow the gearsets on it, not the view.
+  This supersedes the "where they appear" part of the entry of 2026-08-16.** That entry tied
+  Artisan to the crafting views and the cosmic shortcut to crafting and gathering views, and kept
+  Eorzea Arsenal to the combat views. A favourites or tag bar therefore never offered anything,
+  however many crafters it held, which is where the owner noticed it.
+
+  The rule now reads the categories of the sets actually shown: crafting brings Artisan; combat,
+  crafting or gathering brings Eorzea Arsenal, which compares crafting and gathering gear against
+  a target as well now; crafting or gathering brings the cosmic shortcut, still only inside that
+  content. It lives in the core (`ExternalToolPlacement`), so it is tested without a game, and the
+  bar derives the categories together with its cached contents rather than per frame.
+
+  Rejected: showing Eorzea Arsenal on every non-empty bar, which is what "any of the three
+  categories" amounts to today. The owner preferred keeping it tied to the shown sets, so that a
+  set that is none of the three, should such a thing appear, does not pull a best-in-slot shortcut
+  onto the bar. A job the table does not describe counts as no category for the same reason.
+
+- **(2026-10-10) The release branch is `release/1.1.0`, renamed from `release/1.0.1`.** The
+  shortcut change above is a feature, so the next version is a minor step rather than a patch. The
+  branch was renamed while no pull request targeted it, which GB-07 anticipated as the cheap path.
