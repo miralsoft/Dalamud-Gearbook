@@ -622,3 +622,18 @@ Each entry: date, decision, rationale, and what was rejected.
   the index above, whose stale case between two sets of the same job no job check can catch. The
   mark on the bar stays; only the refusal goes, and with it the per-set equip check, which had no
   other reason left.
+
+- **(2026-11-04) The bar can offer GatherBuddy Reborn, with gathering sets.** The owner uses it and
+  asked for it beside the others. Its internal name, `GatherBuddyReborn`, is read off the installed
+  manifest (7.5.6.1) rather than guessed; the original GatherBuddy is a different plugin and is not
+  matched, because its name was not checked. Like Artisan, it is a plugin that can automate play;
+  Gearbook only opens its main window, the same call the installer's own button makes, so the
+  2026-08-16 reasoning for Artisan applies unchanged. The symbol is a seedling from the host's
+  icon font, chosen from what the installed Dalamud actually ships and distinct from the hammer,
+  the target and the moon already on the bar. The tool is appended to the stored enumeration,
+  never inserted, since the hidden shortcuts are saved by number.
+
+- **(2026-11-04) The About tab keeps only the version, and whether it stays at all is open.** The
+  owner judged the automation sentence to be information for whoever builds the plugin, not for
+  whoever plays with it, and the repository address redundant beside the installer. Both went.
+  What is left is one line; see `open-points.md`.

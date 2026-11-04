@@ -52,6 +52,10 @@ internal sealed class ExternalTools : IExternalTools
         [ExternalTool.Artisan] = ["Artisan"],
         [ExternalTool.Cosmic] = ["ICE"],
         [ExternalTool.Arsenal] = ["EorzeaArsenalPlugin", "EorzeaArsenal", "Eorzea Arsenal"],
+
+        // Read off the installed manifest (7.5.6.1), which states it outright. The original
+        // GatherBuddy is a different plugin and is not matched, since its name was not checked.
+        [ExternalTool.GatherBuddy] = ["GatherBuddyReborn"],
     };
 
     /// <inheritdoc />
