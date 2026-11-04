@@ -3,7 +3,6 @@
     {
       "version": "1.1.0",
       "date": "2026-11-04",
-      "summary": "Die Leiste versteht besser, was auf ihr steht: die passenden Plugins kommen jetzt mit den Sets, und ein Jobwechsel an einem anderen Rechner bringt sie nicht mehr durcheinander.",
       "added": [
         "Eine Verknüpfung zu GatherBuddy Reborn, sobald Sammler auf der Leiste stehen. Wie bei den anderen Verknüpfungen nur, wenn du sie in den Einstellungen erlaubst."
       ],
