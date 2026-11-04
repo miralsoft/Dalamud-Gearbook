@@ -39,6 +39,8 @@ internal sealed unsafe class GearsetReader : IGearsetReader
     /// </remarks>
     private const byte NoGlamourPlate = 0;
 
+    private int? lastStaleIndex;
+
     /// <inheritdoc />
     public IReadOnlyList<GearsetSnapshot> Read()
     {
@@ -74,6 +76,11 @@ internal sealed unsafe class GearsetReader : IGearsetReader
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// The game's index is checked against the player's actual job before it is believed
+    /// (<see cref="CurrentGearset"/>): it comes from the gearset data on this computer and goes
+    /// stale when the job was changed elsewhere.
+    /// </remarks>
     public int? CurrentSlot()
     {
         var module = RaptureGearsetModule.Instance();
@@ -83,7 +90,38 @@ internal sealed unsafe class GearsetReader : IGearsetReader
         }
 
         var current = module->CurrentGearsetIndex;
-        return current >= 0 && current < MaxGearsets ? current : null;
+        if (current < 0 || current >= MaxGearsets || !module->IsValidGearset(current))
+        {
+            return null;
+        }
+
+        var entry = module->GetGearset(current);
+        if (entry is null)
+        {
+            return null;
+        }
+
+        uint slotJob = entry->ClassJob;
+        uint? actualJob = GearbookServices.PlayerState.IsLoaded
+            ? GearbookServices.PlayerState.ClassJob.RowId
+            : null;
+
+        var verified = CurrentGearset.Verify(current, slotJob, actualJob);
+
+        // Logged once per stale index rather than on every read, since the stale state lasts
+        // until the player next switches and this is read every few seconds.
+        var stale = verified is null && actualJob is > 0;
+        if (stale && lastStaleIndex != current && actualJob is uint job)
+        {
+            GearbookServices.Log.Information(
+                "The game names gearset {Slot} as worn, but it belongs to job {SlotJob} while the player is on job {ActualJob}. Treating the worn set as unknown.",
+                current,
+                slotJob,
+                job);
+        }
+
+        lastStaleIndex = stale ? current : null;
+        return verified;
     }
 
     /// <inheritdoc />

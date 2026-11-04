@@ -113,7 +113,6 @@
   "switch.blocked.inCutscene": "Nicht während einer Zwischensequenz.",
   "switch.blocked.occupied": "Gerade nicht möglich.",
   "switch.blocked.notLoggedIn": "Nicht im abgemeldeten Zustand.",
-  "switch.alreadyActive": "Trägst du bereits.",
   "switch.failed": "Das Spiel hat den Wechsel abgelehnt. Es wurde nichts angelegt.",
 
   "settings.tab.general": "Allgemein",

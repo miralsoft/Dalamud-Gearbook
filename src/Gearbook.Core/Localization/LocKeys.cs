@@ -140,7 +140,6 @@ public static class LocKeys
     /// </summary>
     public const string GearsetFavouriteHint = "gearset.favouriteHint";
     public const string SwitchBlockedNotLoggedIn = "switch.blocked.notLoggedIn";
-    public const string SwitchAlreadyActive = "switch.alreadyActive";
     public const string SwitchFailed = "switch.failed";
 
     public const string SettingsTabGeneral = "settings.tab.general";

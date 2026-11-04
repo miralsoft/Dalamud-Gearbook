@@ -21,9 +21,6 @@ internal interface IGameStateProbe
     /// </summary>
     bool IsOccupied { get; }
 
-    /// <summary>The gearset currently worn, by the game's own number, or null.</summary>
-    int? CurrentGearsetSlot { get; }
-
     /// <summary>The player is standing in one of the cosmic exploration zones.</summary>
     bool IsInCosmicExploration { get; }
 }
@@ -66,13 +63,6 @@ internal sealed class GameStateProbe : IGameStateProbe
         ConditionFlag.OccupiedInCutSceneEvent,
     ];
 
-    private readonly IGearsetReader reader;
-
-    public GameStateProbe(IGearsetReader reader)
-    {
-        this.reader = reader;
-    }
-
     /// <inheritdoc />
     public bool IsLoggedIn => GearbookServices.ClientState.IsLoggedIn;
 
@@ -85,9 +75,6 @@ internal sealed class GameStateProbe : IGameStateProbe
 
     /// <inheritdoc />
     public bool IsOccupied => GearbookServices.Condition.Any(OccupiedFlags);
-
-    /// <inheritdoc />
-    public int? CurrentGearsetSlot => reader.CurrentSlot();
 
     /// <inheritdoc />
     public bool IsInCosmicExploration => CosmicZones.Value.Contains(GearbookServices.ClientState.TerritoryType);
