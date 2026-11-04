@@ -18,9 +18,6 @@ internal enum EquipOutcome
     /// <summary>Busy with something the game will not interrupt.</summary>
     Occupied,
 
-    /// <summary>It is already worn.</summary>
-    AlreadyWorn,
-
     /// <summary>The game refused it. Nothing was equipped.</summary>
     Refused,
 }
@@ -62,30 +59,22 @@ internal interface IGearsetEquipper
     EquipOutcome Equip(int slot, EquipTrigger trigger);
 
     /// <summary>
-    /// Why a gearset cannot be equipped right now, or <see cref="EquipOutcome.Sent"/> when it
-    /// can. What the interface asks before greying a tile out, so that the reason in the tooltip
-    /// and the reason in the log are the same answer from the same code.
+    /// Why no gearset can be equipped right now, or <see cref="EquipOutcome.Sent"/> when one can.
+    /// What the interface asks before greying a tile out, so that the reason in the tooltip and
+    /// the reason in the log are the same answer from the same code.
     /// </summary>
     /// <remarks>
-    /// A set missing a piece is deliberately not one of the reasons. The game handles that case
-    /// itself: it asks whether to use a substitute and lets the player decide. Refusing here
-    /// would take away something the player has in the game's own window, which is a worse
-    /// failure than letting a dialog appear.
-    /// </remarks>
-    EquipOutcome CheckCanEquip(int slot);
-
-    /// <summary>
-    /// Whether the game will accept a change of gear at all right now, without asking about a
-    /// particular set.
-    /// </summary>
-    /// <remarks>
-    /// Split out of <see cref="CheckCanEquip"/> because a second thing needs the answer: the
-    /// component that reorders the gearset list must not run while the game is refusing to touch
-    /// gear either. Two lists of conditions would drift, and the one nobody is looking at is the
-    /// one that would be missing the condition that mattered.
-    ///
-    /// Reads the host's condition flags and nothing else, so the interface may ask it while
-    /// drawing.
+    /// <para>
+    /// Nothing about the particular set is a reason, on purpose. A set missing a piece is handled
+    /// by the game itself, which offers a substitute and lets the player decide. The set already
+    /// worn is not refused either: the game re-equips it, which is how a player restores a set
+    /// after changing a piece by hand, and the plugin's idea of which set is worn can be stale.
+    /// Refusing either would take away something the player has in the game's own window.
+    /// </para>
+    /// <para>
+    /// The component that reorders the gearset list asks the same question, because it must not
+    /// run while the game is refusing to touch gear either. Two lists of conditions would drift.
+    /// </para>
     /// </remarks>
     EquipOutcome CheckCanChangeGear();
 }

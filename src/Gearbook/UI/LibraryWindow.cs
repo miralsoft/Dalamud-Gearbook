@@ -646,7 +646,7 @@ internal sealed class LibraryWindow : Window
             ? job.Name
             : loc.Get(LocKeys.CommonUnknownJob));
 
-        var blocked = state.CheckCanEquip(selected);
+        var blocked = state.EquipAvailability;
         using (ImRaii.Disabled(blocked != EquipOutcome.Sent))
         {
             if (ImGui.Button(loc.Get(LocKeys.LibraryDetailEquip)))

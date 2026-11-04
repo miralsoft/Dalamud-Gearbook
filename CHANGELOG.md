@@ -39,7 +39,10 @@ A withdrawn release stays here, marked as withdrawn, rather than being deleted.
   wrong gearset as worn and refused to switch to it as "already worn". The game's current gearset
   index comes from the gearset data stored on this computer and goes stale; it is now checked
   against the player's actual job, and an index whose set belongs to another job counts as
-  unknown. The check is `CurrentGearset` in the core, under test.
+  unknown. The check is `CurrentGearset` in the core, under test. Separately, the set marked as
+  worn is no longer refused at all: the game re-equips it, which is how a player restores a set
+  after swapping a piece by hand, and the refusal was a restriction the game itself does not
+  have. That also covers the stale case the job check cannot see, two sets of the same job.
 
 ## [1.0.0] - 2026-08-16
 

@@ -54,31 +54,11 @@ internal sealed unsafe class GearsetEquipper : IGearsetEquipper
     }
 
     /// <inheritdoc />
-    public EquipOutcome CheckCanEquip(int slot)
-    {
-        var allowed = CheckCanChangeGear();
-        if (allowed != EquipOutcome.Sent)
-        {
-            return allowed;
-        }
-
-        // A set missing a piece is not refused here. The game answers that case itself, by
-        // asking whether to use a suitable substitute, and the player decides. Nothing in this
-        // plugin touches that dialog; it appears because the game put it there.
-        if (gameState.CurrentGearsetSlot == slot)
-        {
-            return EquipOutcome.AlreadyWorn;
-        }
-
-        return EquipOutcome.Sent;
-    }
-
-    /// <inheritdoc />
     public EquipOutcome Equip(int slot, EquipTrigger trigger)
     {
         // The check runs again here rather than trusting the interface to have run it. The
         // interface asked a frame ago, and combat can start in between.
-        var allowed = CheckCanEquip(slot);
+        var allowed = CheckCanChangeGear();
         if (allowed != EquipOutcome.Sent)
         {
             GearbookServices.Log.Debug(
