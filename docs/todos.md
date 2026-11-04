@@ -30,6 +30,16 @@ either a running client or a decision.
 - [ ] Push, and confirm both workflows go green on the server
 - [ ] Follow `release.md` end to end
 
+## After 1.1.0
+
+- [ ] Raise the declared foundation version from 3.1.0 to 5.2.0 (M-17), reasons and scope in
+      `decisions.md` (2026-11-04): declare PowerShell and adopt its profile for `build.ps1` and
+      `scripts/` (analyzer normal form, encoding, CI workflow); re-copy the hooks and
+      `content-checks.yml` with the declared identities in `.miralsoft-enforcement`; move C-03 to
+      `dotnet format whitespace` plus the build and set IDE0005 in `.editorconfig`; read
+      `build.ps1 -SkipChecks` and the CI steps against R-23 and S-16; update the provenance lines
+      (M-19).
+
 ## Later, decided and deferred
 
 - [ ] The Eorzea Arsenal best-in-slot integration. This side is built and inert; the other side

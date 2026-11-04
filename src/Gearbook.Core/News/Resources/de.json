@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "1.1.0",
+      "date": "2026-11-04",
+      "summary": "Die Leiste versteht besser, was auf ihr steht: die passenden Plugins kommen jetzt mit den Sets, und ein Jobwechsel an einem anderen Rechner bringt sie nicht mehr durcheinander.",
+      "added": [
+        "Eine Verknüpfung zu GatherBuddy Reborn, sobald Sammler auf der Leiste stehen. Wie bei den anderen Verknüpfungen nur, wenn du sie in den Einstellungen erlaubst."
+      ],
+      "changed": [
+        "Welche Verknüpfungen zu anderen Plugins erscheinen, richtet sich jetzt nach den Sets auf der Leiste, nicht mehr nach der Ansicht. Favoriten und Schlagwörter bekommen sie also auch.",
+        "Eorzea Arsenal erscheint auch bei Handwerkern und Sammlern, nicht mehr nur bei Kampfklassen.",
+        "In jeder Sortierung steht innerhalb einer Gruppe das Set mit der höchsten Gegenstandsstufe oben.",
+        "Das Set, das du gerade trägst, lässt sich wieder anklicken. Das Spiel legt es dann neu an, etwa nachdem du ein Teil von Hand getauscht hast.",
+        "Die Erklärungen in den Einstellungen der Leiste stehen jetzt hinter dem (?) statt als Absatz darunter."
+      ],
+      "fixed": [
+        "Nach einem Jobwechsel an einem anderen Rechner oder ohne Plugins zeigte die Leiste das falsche Set als getragen und ließ dich nicht dorthin wechseln."
+      ]
+    },
+    {
       "version": "1.0.0",
       "date": "2026-08-16",
       "summary": "Die erste öffentliche Fassung. Fast alles daran kam aus dem Spielen mit dem Plugin im echten Client, also von dort, wo sich zeigt, was ein Entwurf nicht vorhersagen kann.",
