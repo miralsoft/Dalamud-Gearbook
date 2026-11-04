@@ -12,7 +12,22 @@ A withdrawn release stays here, marked as withdrawn, rather than being deleted.
 
 ## [Unreleased]
 
+### Added
+
+- **A shortcut to GatherBuddy Reborn** at the end of the bar, shown with gathering sets and
+  subject to the same switch and per-tool choice as the others. Its internal name,
+  `GatherBuddyReborn`, was read off the installed manifest. The tool is appended to the stored
+  enumeration rather than inserted, and a test pins the stored numbers, because the hidden
+  shortcuts are saved by number.
+
 ### Changed
+
+- **Explanations in the bar settings sit behind a `(?)`** like everywhere else, rather than as a
+  paragraph under the switch: the shortcuts' help and the note on the bar's order. The latter also
+  lost a sentence that defended the design rather than describing the setting.
+- **The About tab keeps only the version.** The line on automation is for the README and the
+  plugin description, where somebody deciding whether to install reads it, and the repository
+  address is in the installer already.
 
 - **The shortcuts at the end of the bar follow the gearsets on it, not the view that put them
   there.** A favourites or tag bar holding crafters now offers Artisan, which before only the
