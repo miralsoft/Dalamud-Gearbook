@@ -31,6 +31,8 @@ internal sealed class GearbookServices
 
     [PluginService] internal static ITextureProvider Textures { get; private set; } = null!;
 
+    [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
+
 
     /// <summary>
     /// Whether a cutscene is running, as the host reports it.
