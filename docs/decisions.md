@@ -599,3 +599,26 @@ Each entry: date, decision, rationale, and what was rejected.
 - **(2026-10-10) The release branch is `release/1.1.0`, renamed from `release/1.0.1`.** The
   shortcut change above is a feature, so the next version is a minor step rather than a patch. The
   branch was renamed while no pull request targeted it, which GB-07 anticipated as the cheap path.
+
+- **(2026-11-04) The game's current gearset index is checked against the player's actual job.**
+  `RaptureGearsetModule.CurrentGearsetIndex` comes from the gearset data stored on the computer the
+  game runs on, not from the server. Changing job on another computer, or while playing without
+  plugins, leaves it naming the set worn last time here. The owner hit exactly that: the bar marked
+  a samurai set as worn while they stood there as a miner, and refused to switch back to samurai.
+
+  The index is now compared with the job from Dalamud's `IPlayerState`, established from the
+  installed `Dalamud.xml` rather than recalled. A set of another job, or a job not yet known, makes
+  the worn set unknown rather than wrong (S-12): nothing is marked and nothing is refused. The rule
+  is `CurrentGearset` in the core, tested with job ids read from the installed game.
+
+  Rejected: writing the corrected index back into the game. The plugin reads gearsets and equips
+  them; changing the game's own bookkeeping is not something it does on its own (the automation
+  boundary), and the next real switch corrects the index anyway.
+
+- **(2026-11-04) The set marked as worn is no longer refused.** Until now pressing it greyed out as
+  "already worn". The game itself re-equips the current set when it is chosen again, which is how a
+  player restores a set after swapping a piece by hand, so the refusal was a restriction invented by
+  the tool, the same mistake the 2026-08-15 entry on incomplete sets corrected. It also rested on
+  the index above, whose stale case between two sets of the same job no job check can catch. The
+  mark on the bar stays; only the refusal goes, and with it the per-set equip check, which had no
+  other reason left.
