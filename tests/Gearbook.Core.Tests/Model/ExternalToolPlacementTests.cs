@@ -21,9 +21,26 @@ public class ExternalToolPlacementTests
     }
 
     [Fact]
-    public void Gathering_sets_bring_arsenal()
+    public void Gathering_sets_bring_gatherbuddy_and_arsenal()
     {
-        Assert.Equal([ExternalTool.Arsenal], For(false, JobCategory.Gathering));
+        Assert.Equal([ExternalTool.GatherBuddy, ExternalTool.Arsenal], For(false, JobCategory.Gathering));
+    }
+
+    [Fact]
+    public void Gatherbuddy_is_offered_only_with_gathering_sets()
+    {
+        Assert.DoesNotContain(ExternalTool.GatherBuddy, For(true, JobCategory.Crafting, JobCategory.Combat));
+    }
+
+    [Fact]
+    public void The_stored_numbers_of_the_tools_never_move()
+    {
+        // The hidden shortcuts are saved by number. A moved number would hide or show the wrong
+        // shortcut for everybody who had already chosen, so a new tool is only ever appended.
+        Assert.Equal(0, (int)ExternalTool.Artisan);
+        Assert.Equal(1, (int)ExternalTool.Cosmic);
+        Assert.Equal(2, (int)ExternalTool.Arsenal);
+        Assert.Equal(3, (int)ExternalTool.GatherBuddy);
     }
 
     [Fact]
@@ -32,7 +49,7 @@ public class ExternalToolPlacementTests
         Assert.Equal(
             [ExternalTool.Artisan, ExternalTool.Arsenal, ExternalTool.Cosmic],
             For(true, JobCategory.Crafting));
-        Assert.Equal([ExternalTool.Arsenal, ExternalTool.Cosmic], For(true, JobCategory.Gathering));
+        Assert.Equal([ExternalTool.GatherBuddy, ExternalTool.Arsenal, ExternalTool.Cosmic], For(true, JobCategory.Gathering));
         Assert.Equal([ExternalTool.Arsenal], For(true, JobCategory.Combat));
     }
 
@@ -40,7 +57,7 @@ public class ExternalToolPlacementTests
     public void A_mixed_bar_offers_each_tool_once_in_a_fixed_order()
     {
         Assert.Equal(
-            [ExternalTool.Artisan, ExternalTool.Arsenal, ExternalTool.Cosmic],
+            [ExternalTool.Artisan, ExternalTool.GatherBuddy, ExternalTool.Arsenal, ExternalTool.Cosmic],
             For(true, JobCategory.Gathering, JobCategory.Combat, JobCategory.Crafting));
     }
 

@@ -342,6 +342,7 @@ internal sealed class BarWindow : Window
         ExternalTool.Artisan => FontAwesomeIcon.Hammer,
         ExternalTool.Arsenal => FontAwesomeIcon.Bullseye,
         ExternalTool.Cosmic => FontAwesomeIcon.Moon,
+        ExternalTool.GatherBuddy => FontAwesomeIcon.Seedling,
         _ => FontAwesomeIcon.QuestionCircle,
     };
 
