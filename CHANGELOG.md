@@ -12,6 +12,12 @@ A withdrawn release stays here, marked as withdrawn, rather than being deleted.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-04
+
+Minor rather than a patch because of the GatherBuddy shortcut and the shortcuts now following the
+sets on the bar; the rest is fixes and polish. The release notes for players carry only what a
+player of 1.0.0 can notice, so the GB-03 draw-callback fix below is in this file and not in them.
+
 ### Added
 
 - **A shortcut to GatherBuddy Reborn** at the end of the bar, shown with gathering sets and

@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "1.1.0",
+      "date": "2026-11-04",
+      "summary": "The bar understands better what is on it: the right plugins now come with the sets, and changing job on another computer no longer confuses it.",
+      "added": [
+        "A shortcut to GatherBuddy Reborn whenever gatherers are on the bar. Like the other shortcuts, only if you allow them in the settings."
+      ],
+      "changed": [
+        "Which shortcuts to other plugins appear now follows the sets on the bar rather than the view, so favourites and tags get them too.",
+        "Eorzea Arsenal appears with crafters and gatherers as well, not only with combat jobs.",
+        "In every sort order, the set with the highest item level comes first within its group.",
+        "The set you are wearing can be pressed again. The game re-equips it, for example after you swapped a piece by hand.",
+        "The explanations in the bar settings now sit behind the (?) instead of as a paragraph underneath."
+      ],
+      "fixed": [
+        "After changing job on another computer or without plugins, the bar showed the wrong set as worn and would not let you switch to it."
+      ]
+    },
+    {
       "version": "1.0.0",
       "date": "2026-08-16",
       "summary": "The first public release. Nearly all of it came out of using the plugin in a real client, which is where the things a design cannot predict turn up.",
