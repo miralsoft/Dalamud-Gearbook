@@ -637,3 +637,30 @@ Each entry: date, decision, rationale, and what was rejected.
   owner judged the automation sentence to be information for whoever builds the plugin, not for
   whoever plays with it, and the repository address redundant beside the installer. Both went.
   What is left is one line; see `open-points.md`.
+
+- **(2026-11-04) The version goes to 1.1.0, and the declared foundation version stays at 3.1.0
+  for this release.** Minor, because the release adds a shortcut and changes which shortcuts
+  appear; nothing a player configured is changed or removed.
+
+  **The foundation review (M-17).** Done rather than assumed: the clone was pulled, `VERSION` reads
+  5.2.0, and the changelog was read from 3.1.0 onward. Two majors lie in between. What they would
+  ask of this project, read against it:
+
+  - 3.2.0 (M-18 exception for hosted projects) and 3.3.0 (R-22, ask before a metered CI run): no
+    work. This project is external, and its repository is public, where GitHub's standard runners
+    are not metered.
+  - 4.0.0 (the operations area `O`): not bound, since a plugin ships as an installable artifact and
+    is not operated out of its repository. Its S-16 and R-23 do apply and want a reading of
+    `build.ps1 -SkipChecks` and the CI steps.
+  - 4.1.0 (D-17, release notes report only what a user of the last release can notice): followed
+    voluntarily for these notes already, because it is about exactly the text being written.
+  - 5.0.0 to 5.2.0: the real work. The repository contains PowerShell (`build.ps1`, `scripts/`), for
+    which there is now a profile with its own analyzer, encoding rules and CI workflow; the hooks
+    and `content-checks.yml` changed, with several declared identities in `.miralsoft-enforcement`;
+    and the C# profile moves C-03's check to `dotnet format whitespace` plus the build and sets
+    IDE0005's severity in `.editorconfig`.
+
+  Rejected: raising to 5.2.0 inside this release. The release is finished and verified; adopting
+  two majors would put a PowerShell lint pass, re-copied enforcement and CI changes in front of it,
+  each of which can fail on its own and none of which changes what players get. It is recorded in
+  `todos.md` as the next piece of work, so it is not left to drift past the next release too.

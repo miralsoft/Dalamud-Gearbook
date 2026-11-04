@@ -258,21 +258,21 @@ because the tick runs every frame regardless; nothing here waits for the three-s
 that gates the expensive reconciliation. Build clean, format clean, all 286 tests still passing (the
 change touches only the plugin project, which has no unit tests of its own by design).
 
-## Toward `1.1.0` (2026-10-10)
+## `1.1.0`, cut on 2026-11-04
 
-Work for the next version collects on `release/1.1.0` (GB-07), renamed from `release/1.0.1` once
-the shortcut change below made it a minor rather than a patch release. The version in
-`Directory.Build.props` is still `1.0.0` on purpose: it is raised once, when the release is cut
-(C-13), together with the release notes for `1.1.0` in both languages, which the tests require to
-name the version being built.
+Work collected on `release/1.1.0` (GB-07), renamed from `release/1.0.1` once the shortcut change
+made it a minor release. The cut raised `Directory.Build.props` to `1.1.0` (C-13), wrote the
+release notes in both languages and closed the changelog section. The built manifest reports
+`1.1.0.0` at API level 15, and `build.ps1` passed in full: 303 tests, format clean, no warnings.
 
-Merged into the release branch so far: the foundation raise to 3.1.0 with the GB-03 draw-callback
-fix, the item level as every sort order's tie-break, the shortcuts following the gearsets shown
-rather than the view, and (2026-11-04) the current gearset checked against the actual job with
-the "already worn" refusal removed (see `decisions.md`). Verified by build, format check and 301
-passing tests on the merged release branch.
+Contents: the foundation raise to 3.1.0 with the GB-03 draw-callback fix, the item level as every
+sort order's tie-break, the shortcuts following the gearsets shown rather than the view, the
+current gearset checked against the actual job with the "already worn" refusal removed, the
+GatherBuddy Reborn shortcut, and the bar settings' explanations behind `(?)`. The declared
+foundation version stays at 3.1.0 for this release; why, and the work to raise it, is in
+`decisions.md` and `todos.md`.
 
-Not yet looked at in a running client, and worth doing before the release is cut:
+Not confirmed in a running client as far as this repository records, at the time of the cut:
 
 1. A favourites bar holding a crafter shows Artisan and Eorzea Arsenal; a combat-only bar shows
    only Eorzea Arsenal; the cosmic shortcut appears only inside cosmic exploration.
