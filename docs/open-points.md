@@ -59,6 +59,18 @@ entry of that date in `decisions.md`.
   three candidates it matched is still not known, and the list stays until it is, because removing
   two of three by guess is how it would break.
 
+  New evidence, 2026-11-04: the public index, which is generated from each built manifest, lists
+  Eorzea Arsenal 1.2.0.0 with `InternalName` `EorzeaArsenalPlugin`, so its manifest states the name
+  now. Reading the installed copy's manifest would settle it and let the list shrink to that one
+  entry.
+
+- **(open since 2026-11-04) Whether the installed plugin shows its own icon.** The framework
+  profile says an installed plugin reads its picture from its own directory, while the list of
+  available plugins fetches `IconUrl`. The release archive carries no `images/icon.png`, in 1.1.0
+  as in 1.0.0, so the installed-plugins view may show the default picture. Look at it in the
+  installer; if it is the default, copying the icon into the package is a build change for the
+  next version.
+
 ## Waiting on the owner
 
 - **(open since 2026-11-04) Whether the settings keep an About tab.** It holds only the version

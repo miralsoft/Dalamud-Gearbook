@@ -258,7 +258,17 @@ because the tick runs every frame regardless; nothing here waits for the three-s
 that gates the expensive reconciliation. Build clean, format clean, all 286 tests still passing (the
 change touches only the plugin project, which has no unit tests of its own by design).
 
-## `1.1.0`, cut on 2026-11-04
+## `1.1.0`, released on 2026-11-04
+
+**Released and confirmed by inspecting the result (D-07).** Merged to `main` as a linear rebase of
+the release branch; tag `v1.1.0` pushed only after the `Build` run on that exact commit was green.
+That run first failed at downloading Dalamud from goatcorp (connection closed by the remote host,
+nothing compiled) and passed on a re-run of the same commit. The release workflow published both
+assets; the manifest inside `latest.zip` reads `1.1.0.0` at API level 15; `pluginmaster.json` is an
+array with the same version; and `https://xivarsenal.app/plugins.json` serves Gearbook `1.1.0.0`
+as `application/json` since 21:23 UTC, after a hand-triggered index rebuild without inputs. The
+archive's file list is identical to 1.0.0's.
+
 
 Work collected on `release/1.1.0` (GB-07), renamed from `release/1.0.1` once the shortcut change
 made it a minor release. The cut raised `Directory.Build.props` to `1.1.0` (C-13), wrote the

@@ -82,11 +82,17 @@ update, not a release.
 Between a published release and a player seeing it, two waits sit in the chain. Both are normal.
 Undocumented, a normal wait reads as a fault and sends somebody hunting one that does not exist.
 
-- **The aggregate index rebuilds on a schedule.** Its interval is defined in
-  `miralsoft/Dalamud-Plugins` and is not restated here, because a copy of somebody else's schedule
-  goes stale silently. Look it up there the first time this procedure is run and record the figure
-  in this section.
-- **The public address is cached.** Same: the duration belongs to whoever serves it.
+- **The aggregate index rebuilds on a schedule.** Read on 2026-11-04 from `index.yml` in
+  `miralsoft/Dalamud-Plugins`: hourly at minute 17 (`17 * * * *`). A release published just after
+  that minute waits nearly an hour; 1.1.0 missed a run by fourteen seconds. The schedule belongs to
+  that repository and can change there, so recheck it rather than trusting this line.
+- **The public address is cached.** Measured on 2026-11-04 from the response header:
+  `Cache-Control: public, max-age=600`, so up to ten minutes after the index has rebuilt. For 1.1.0
+  the new entry was served about three minutes after a hand-triggered rebuild.
+
+Confirming the public address (D-16): `https://xivarsenal.app/plugins.json` answers
+`application/json`, while an invented path on the same host answers 200 with `text/html`. Read the
+content type and the Gearbook entry's `AssemblyVersion`, never the status code alone.
 
 The index build can be set off by hand to skip the first wait. That is allowed even though the
 index is another repository, because it reaches the same state on its own schedule either way and
