@@ -267,6 +267,16 @@ the shortcut change below made it a minor rather than a patch release. The versi
 name the version being built.
 
 Merged into the release branch so far: the foundation raise to 3.1.0 with the GB-03 draw-callback
-fix, the item level as every sort order's tie-break, and the shortcuts following the gearsets
-shown rather than the view (see `decisions.md`). Verified by build, format check and 297 passing
-tests; the shortcut change has not yet been looked at in a running client.
+fix, the item level as every sort order's tie-break, the shortcuts following the gearsets shown
+rather than the view, and (2026-11-04) the current gearset checked against the actual job with
+the "already worn" refusal removed (see `decisions.md`). Verified by build, format check and 301
+passing tests on the merged release branch.
+
+Not yet looked at in a running client, and worth doing before the release is cut:
+
+1. A favourites bar holding a crafter shows Artisan and Eorzea Arsenal; a combat-only bar shows
+   only Eorzea Arsenal; the cosmic shortcut appears only inside cosmic exploration.
+2. Wear a set on this computer, change to another job's set on a second computer or without
+   plugins, log in here: that set is not marked as worn and switches when pressed. The plugin log
+   should carry one line naming the stale index.
+3. Pressing the set currently worn re-equips it rather than being refused.
