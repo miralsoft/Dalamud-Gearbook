@@ -202,7 +202,7 @@ internal sealed class SettingsWindow : Window
             changed = true;
         }
 
-        UiTheme.Caption(loc.Get(LocKeys.SettingsBarSortFollows));
+        UiTheme.HelpMarker(loc.Get(LocKeys.SettingsBarSortFollows));
 
         ImGui.Spacing();
 
@@ -215,7 +215,7 @@ internal sealed class SettingsWindow : Window
             changed = true;
         }
 
-        UiTheme.Caption(loc.Get(LocKeys.SettingsBarToolsHelp));
+        UiTheme.HelpMarker(loc.Get(LocKeys.SettingsBarToolsHelp));
 
         // The individual choices sit under the switch that turns the whole idea on, and only
         // while it is on. Offering them above it would ask which shortcuts to show before
@@ -658,13 +658,5 @@ internal sealed class SettingsWindow : Window
         }
 
         ImGui.TextUnformatted(loc.Get(LocKeys.SettingsAboutVersion, GearbookVersion.Current));
-
-        ImGui.Spacing();
-        ImGui.PushTextWrapPos(0f);
-        ImGui.TextUnformatted(loc.Get(LocKeys.SettingsAboutNoAutomation));
-        ImGui.PopTextWrapPos();
-
-        ImGui.Spacing();
-        UiTheme.Muted($"{loc.Get(LocKeys.SettingsAboutRepository)}: https://github.com/miralsoft/Dalamud-Gearbook");
     }
 }

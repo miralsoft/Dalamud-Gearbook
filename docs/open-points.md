@@ -61,6 +61,11 @@ entry of that date in `decisions.md`.
 
 ## Waiting on the owner
 
+- **(open since 2026-11-04) Whether the settings keep an About tab.** It holds only the version
+  now. A whole tab for one line is a lot of chrome; the version also appears in the installer and
+  in the release notes window. The alternative proposed is a muted version line at the foot of the
+  General tab and no About tab.
+
 The icon question that sat here was closed on 2026-08-16. The file is exactly 512 by 512, which is
 what `PluginImageCache.PluginIconWidth` requires, and it holds up at the size the installer draws
 it. The advice in this entry to judge it at the size it is actually drawn at was then not followed

@@ -47,11 +47,18 @@ public static class ExternalToolPlacement
         var gathering = shown.Contains(JobCategory.Gathering);
         var combat = shown.Contains(JobCategory.Combat);
 
-        var tools = new List<ExternalTool>(3);
+        var tools = new List<ExternalTool>(4);
 
+        // The tools for one discipline first, then the ones covering several, so a tile keeps
+        // its place relative to its neighbours as the bar's contents change.
         if (crafting)
         {
             tools.Add(ExternalTool.Artisan);
+        }
+
+        if (gathering)
+        {
+            tools.Add(ExternalTool.GatherBuddy);
         }
 
         // Eorzea Arsenal compares crafting and gathering gear against a target as well as combat

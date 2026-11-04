@@ -191,8 +191,6 @@ public static class LocKeys
     public const string SettingsNewsAutoOpen = "settings.news.autoOpen";
     public const string SettingsPerCharacterNote = "settings.perCharacterNote";
     public const string SettingsAboutVersion = "settings.about.version";
-    public const string SettingsAboutRepository = "settings.about.repository";
-    public const string SettingsAboutNoAutomation = "settings.about.noAutomation";
 
     public const string NewsUnread = "news.unread";
     public const string NewsEmpty = "news.empty";
